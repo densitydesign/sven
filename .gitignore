@@ -1,0 +1,4 @@
+# 
+# ignore settings and all pyc files
+#
+settings.py
