@@ -1,6 +1,4 @@
-import os
-import sys
-import mimetypes
+import os, sys, re, mimetypes
 from datetime import datetime
 
 path = '/var/www/sven.densitydesign.org'
@@ -38,6 +36,12 @@ def sync( options, parser ):
 	for doc in docs:
 		parts = os.path.splitext(doc)[0].split("_",3)
 		mime_type	=  mimetypes.guess_type( path + "/" + doc )[0]
+		
+		# exclude .{ext}.txt from being taken
+		if re.search( "\.[^\.]{3,4}\.[^\.]{3}$", doc ) is not None:
+			print "[sync] skipping dual extension filenames.!", parts
+			continue
+		
 		
 		if len( parts ) != 4:
 			print "[sync] file name is not valid! skipping...", parts

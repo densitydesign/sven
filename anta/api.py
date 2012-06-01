@@ -7,7 +7,8 @@ from django.conf import settings
 import os, json, datetime
 
 from sven.anta.utils import *
-
+from django.contrib.auth.models import User
+ 
 #
 # API ACCESS
 # ==========
@@ -17,6 +18,9 @@ from sven.anta.utils import *
 
 def index(request):
 	response = _json( request )
+	#user = User.objects.create_user('daniele', 'lennon@thebeatles.com', 'danielepassword')
+	#user.is_staff = True
+	#user.save()
 	return render_to_json( response )
 	
 	
@@ -121,17 +125,20 @@ def get_document(request, document_id):
 	if text is None:
 		return throw_error( response, "unable to provide txt version of the document")
 	
-	f = open( text, "r")
+	# f = open( text, "r")
 		
-	response['document'] = {
-		'id':d.id,
+	response['document'] = { 'id':d.id,
 		'title':d.title,
 		'date':d.ref_date.isoformat(),
 		'mime_type':d.mime_type,
 		'url': d.url.url,
-		'content': f.read()
+		'tags': []
 	}
 	
+	for t in d.tags.all():
+		response['document']['tags'].append({
+			'id':t.id, 'name':t.name	
+		})
 	
 		# transform
 	# f = open( url, "r")
