@@ -2,3 +2,6 @@
 # ignore settings and all pyc files
 #
 settings.py
+manage.py
+sven.wsgi
+media/
