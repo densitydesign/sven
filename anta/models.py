@@ -82,6 +82,15 @@ class Document_Tag( models.Model):
 	class Meta:
 		unique_together = ("document", "tag")
 
+class Distance( models.Model ):
+	alpha = models.ForeignKey( Document, related_name="alpha" )
+	omega = models.ForeignKey( Document, related_name="omega" )
+	cosine_similarity = models.FloatField( default='0')
+	euclidean_similarity = models.FloatField( default='0')
+	manhattan_similarity = models.FloatField( default='0')
+	
+	class Meta:
+		unique_together = ("alpha", "omega")
 	
 class Sentence( models.Model ):
 	# the old dumb way to index a document
