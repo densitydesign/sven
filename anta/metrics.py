@@ -18,7 +18,8 @@ from sven.anta.distiller import distill
 from sven.anta.utils import *
 from sven.core.utils import dictfetchall
 from django.db.models import Count
-
+from django.db import connection, transaction
+from pattern.vector import Document as pvDocument, Corpus as pvCorpus
 
 """
 select all stemmed list
@@ -49,7 +50,7 @@ def tfidf( corpus, language, parser ):
 	
 	number_of_documents = Document.objects.filter(corpus=corpus,language=language.upper()).count()
 	
-	from django.db import connection, transaction
+	
 	cursor = connection.cursor()
 	
 	cursor.execute("SELECT COUNT( DISTINCT ds.document_id ) as distribution, s.stemmed FROM `anta_document_segment` ds JOIN anta_segment s ON ds.segment_id = s.id JOIN anta_document d ON d.id = ds.document_id WHERE s.language=%s AND d.corpus_id = %s GROUP BY s.stemmed ORDER BY distribution DESC, stemmed ASC", [ language.upper(), corpus.id])
@@ -76,11 +77,68 @@ def tfidf( corpus, language, parser ):
 	print corpus.name, number_of_documents
 	
 
-def similarity( corpus, language ):
+def similarity( corpus, language, parser ):
+	
+	try:
+		corpus = Corpus.objects.get( name=corpus )
+	except:
+		return error( message="corpus was not found!", parser=parser )
+	
+	
+	cursor = connection.cursor()
+	
+	cursor.execute("""
+		SELECT REPLACE(stemmed,"-"," ") as stemmed, d.id as doc_id
+		FROM anta_document_segment ds 
+		JOIN anta_segment s ON ds.segment_id = s.id 
+		JOIN anta_document d ON ds.document_id = d.id
+		WHERE d.corpus_id=%s AND d.language=%s
+		""",[ corpus.id, language.upper() ]
+	) # we do not need ORDER BY d.id, ds.id
+	
+	# build corpus 
+	documents = {}
+	
+	for row in dictfetchall(cursor):
+		if row['doc_id'] not in documents:
+			documents[ row['doc_id'] ] = []
+		documents[ row['doc_id'] ].append( row['stemmed'] )	
+		
+	# translate corpus id
+	pattern_id_translation = {}
+	
+	# reformat documents, join space separated stemmed segment values.
+	for d in documents:
+		documents[d] = pvDocument( " ".join( documents[d] ) )
+		pattern_id_translation[ documents[d].id ] = d
+		
+	print pattern_id_translation
+	
+	# store document in corpus.
+	c = pvCorpus( documents.values() )
+	
+	# computate and save similarities
+	for d in documents:
+		for n in c.neighbors( documents[d], top=3 ):
+			alpha_id = pattern_id_translation[ documents[d].id ]
+			omega_id = pattern_id_translation[ n[1].id ]
+			cosine_similarity = n[0]
+			
+			try:
+				dist = Distance.objects.get( alpha_id=alpha_id, omega_id=omega_id )
+				print "distantce exists:", dist.id, cosine_similarity
+			except:
+				dist = Distance( alpha_id=alpha_id, omega_id=omega_id )
+				print "create Distance object", dist.id, cosine_similarity
+			#	print a distance exist between these two document	
+			dist.cosine_similarity = cosine_similarity
+			dist.save()
+			# print documents[d].id, alpha_id,omega_id
+		
 	return
 	
 def main( argv):
-	usage = "usage: %prog -c corpus_name -l language"
+	usage = "usage: %prog -c corpus_name -l language -f function [tfidf|similarity]"
 	parser = OptionParser( usage=usage )
 	parser.add_option(
 		"-c", "--corpus", dest="corpus",
@@ -88,6 +146,10 @@ def main( argv):
 	parser.add_option(
 		"-l", "--language", dest="language",
 		help="language")
+	
+	parser.add_option(
+		"-f", "--function", dest="func",
+		help="function")
 	
 	( options, argv ) = parser.parse_args()
 	
@@ -97,8 +159,16 @@ def main( argv):
 	if options.language is None:
 		error( message="Use -l to specify the language", parser=parser )
 	
-		
-	tfidf(options.corpus, options.language, parser )
+	if options.func is None:
+		error( message="Use -f to specify the desired function.", parser=parser )
+	
+	if options.func == "tfidf":	
+		tfidf(options.corpus, options.language, parser )
+		return
+	if options.func == "similarity":
+		similarity(options.corpus, options.language, parser )
+		return
+	error( message="sorry, the desired function was not found!", parser=parser )
 	
 	
 if __name__ == '__main__':
