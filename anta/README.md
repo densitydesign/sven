@@ -1,6 +1,31 @@
 ANTA 
 ====
 
+tfidf computation process + similarity
+--------------------------------------
+
+1. fill media/corpus_name 
+
+2. use appropriate filenames while uploading. Format accepted 
+    
+    ACTOR1-ACTOR2_LANGUAGE_YYYMMDD_TITLE SPCE SEPARATED.EXT
+
+3. use sync script to sync the database with the media space 
+
+    ~/sven/anta/$ python sync -c corpus_name
+
+4. use ampoule script to extract summarization 
+
+    ~/sven/anta/$ python ampoule.py -c corpus_name
+
+5. use metrics.py to manage tfidf computation (specify corpus AND language) 
+
+    ~/sven/anta/$ python metrics.py -c corpus_name -f tfidf -l EN
+
+6. use metrics.py to manage similarity between documents, using cosine similarity (change function ) 
+
+    ~/sven/anta/$ python metrics.py -c corpus_name -f similarity -l EN
+
 useful sql queries 
 ------------------
 
