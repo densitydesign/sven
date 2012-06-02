@@ -19,7 +19,8 @@ Overlapping: get document by tag
         WHERE t.type="actor" 
     GROUP BY name
 
-How to get a **cosine similarity** table between documents
+How to get a **cosine similarity** table between documents 
+
     SELECT 
         d1.id as alpha_id, d1.title as alpha_title, d1.language as alpha_language,
         d2.id as omega_id, d2.title as omega_title, d2.language as omega_language,
