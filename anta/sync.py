@@ -68,7 +68,7 @@ def sync( options, parser ):
 		# tag rule, by underscore (actor(s)[minus spaced], lang[EN|NL|FR], data[YYYYMMDD], title )
 		# ACTOR1-ACTOR2_EN_
 		# underscore groups
-		print actors
+		print "[info] actors found:",actors
 		
 		# save documents
 		try:
@@ -85,17 +85,23 @@ def sync( options, parser ):
 			
 			# create tag / retrieve aldready created one
 			try:
-				t = Tag.objects.get( name=a )
+				t = Tag.objects.get( name=a, type="actor" )
 			except:
-				t = Tag( name=a )
+				t = Tag( name=a, type="actor" )
 				t.save()
 			
 			try:
 				dt = Document_Tag( document=d, tag=t )
 				dt.save()
 			except:
+				print "[warning] document tag relationship exists."
 				continue
-			
+				"""
+				SELECT d.language,d.title, t.name, t.type 
+				FROM `anta_document_tag` dt  JOIN anta_document d ON dt.document_id = d.id 
+				JOIN anta_tag t ON dt.tag_id = t.id 
+				WHERE t.id = 13
+				"""
 			
 		# register modification
 		d.save()
