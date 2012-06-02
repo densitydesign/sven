@@ -1,4 +1,3 @@
-
 ANTA 
 ====
 
@@ -19,3 +18,13 @@ Overlapping: get document by tag
     JOIN anta_tag t ON dt.tag_id = t.id 
         WHERE t.type="actor" 
     GROUP BY name
+
+How to get a **cosine similarity** table between documents
+    SELECT 
+        d1.id as alpha_id, d1.title as alpha_title, d1.language as alpha_language,
+        d2.id as omega_id, d2.title as omega_title, d2.language as omega_language,
+        y.cosine_similarity 
+    FROM `anta_distance` y 
+    JOIN anta_document d1 ON y.alpha_id = d1.id 
+    JOIN anta_document d2 on y.omega_id = d2.id 
+    ORDER BY y.`cosine_similarity`  DESC
