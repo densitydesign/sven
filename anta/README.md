@@ -8,7 +8,12 @@ tfidf computation process + similarity
 
 2. use appropriate filenames while uploading. Format accepted 
 
-        ACTOR1-ACTOR2_LANGUAGE_YYYMMDD_TITLE SPCE SEPARATED.EXT 
+        ACTOR1-ACTOR2_LANGUAGE_YYYYMMDD_TITLE SPCE SEPARATED.EXT 
+        
+    where language is a two chars attribute, like 'EN' or 'NL', e.g:
+    
+        EU-USA-UK_EN_20080518_The Mysterious Island.pdf
+        
 
 3. use sync script to sync the database with the media space 
  
