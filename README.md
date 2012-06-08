@@ -1,12 +1,14 @@
 sven
 ====
 
-sven django project
+A sven django project. 
+The fake installation path we use in this readme is `/home/path/to/sven/`: it should be changed according to your system configuration.
 
 
 
-installation
-------------
+how to install sven
+-------------------
+Three step procedure (django should already be installed)
 
 1. settings.py 
 
@@ -49,4 +51,28 @@ installation
 	    
 2. sven.wsgi
 
+	Modify the `path` according to your sven installation directory (i.e. the django project)
 	
+		path = '/home/path/to/sven'
+		if path not in sys.path:
+		    sys.path.append(path)
+
+	    
+Apache 2.x configuration
+------------------------
+
+Follow the mod_wsgi installation instruction if mod_wsgi is not installed. 
+Add and properly configure the `WSGIScriptAlias` directive: 
+
+	WSGIScriptAlias /sven /home/path/to/sven/sven.wsgi
+	 <Directory /home/path/to/sven>
+	  Order allow,deny
+	  Allow from all
+	 </Directory>
+	 
+Then *reload* apache server.
+	 
+Django project installation
+---------------------------
+
+Simply run `python manage.py syncdb` from your sven django directory.
