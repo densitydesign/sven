@@ -46,7 +46,7 @@ def decant( options, parser ):
 	# get document corpus
 	print corpus.name
 
-	documents = Document.objects.filter(corpus=corpus.id).all()
+	documents = Document.objects.filter(corpus=corpus.id, status="IN").all()
 	for d in documents:
 		print
 		print " document ",d.id

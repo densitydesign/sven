@@ -72,12 +72,13 @@ def sync( options, parser ):
 		
 		# save documents
 		try:
-			d = Document.objects.get( url=doc )
+			d = Document.objects.get( url=doc, corpus=corpus )
 			print "[sync] file already stored"
 
 		except:
 			# file do not exist, ty to uppload it
 			d = Document( url=doc, mime_type=mime_type, ref_date=date, corpus=corpus, status='IN', language=language, title=title )
+			d.save()
 			print "[sync] file now added"
 		
 		# store actors as tags and attach with document_tags
@@ -96,12 +97,12 @@ def sync( options, parser ):
 			except:
 				print "[warning] document tag relationship exists."
 				continue
-				"""
-				SELECT d.language,d.title, t.name, t.type 
-				FROM `anta_document_tag` dt  JOIN anta_document d ON dt.document_id = d.id 
-				JOIN anta_tag t ON dt.tag_id = t.id 
-				WHERE t.id = 13
-				"""
+			#	"""
+			#	SELECT d.language,d.title, t.name, t.type 
+			#	FROM `anta_document_tag` dt  JOIN anta_document d ON dt.document_id = d.id 
+			#	JOIN anta_tag t ON dt.tag_id = t.id 
+			#	WHERE t.id = 13
+			#	"""
 			
 		# register modification
 		d.save()
