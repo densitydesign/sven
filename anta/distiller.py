@@ -25,7 +25,6 @@ def endistill( filename, regexp="NP", stopwords=["the","this","a", "he", "me"] )
 	
 	text = pattern.en.Text( pattern.en.parse( content, lemmata=True ) )
 	document =  [ p_search('NP', s) for s in text ]
-	
 	return evaporate( document, stopwords=dict.fromkeys( stopwords, True ), keywords=Document( content, exclude=stopwords ).keywords(top=20) )
 
 
@@ -35,7 +34,10 @@ def evaporate( document, stopwords, keywords ):
 	results = {'keywords':keywords, 'stopwords': stopwords, 'segments':[], 'concepts':{} }
 	
 	for matches in document:
+		
 		for match in matches:
+			print match
+			print match.string
 			# true if the segment-mathc contains at least one salient word (not in stopword)
 			contains_concept = False
 			

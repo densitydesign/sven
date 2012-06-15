@@ -76,3 +76,13 @@ Django project installation
 ---------------------------
 
 Simply run `python manage.py syncdb` from your sven django directory.
+
+
+
+Note about Anta migration
+-------------------------
+
+		SELECT d.title, t.content, c.content FROM `documents_tags` dt 
+		JOIN tags t ON dt.id_tag = t.id_tag 
+		JOIN documents d ON dt.id_document = d.id_document
+		JOIN categories c ON t.id_category = c.id_category

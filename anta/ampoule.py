@@ -54,6 +54,8 @@ def decant( options, parser ):
 		print
 		
 		# a = Analysis( document=d, )
+		print "[info] document mimetype:",d.mime_type
+		
 		
 		textified =  textify( d, settings.MEDIA_ROOT )
 		

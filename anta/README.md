@@ -104,3 +104,16 @@ Hence, get "similarity" between *actors* by their documents similarity (intermed
     GROUP BY alpha_actor, omega_actor
     ORDER BY average_cosine_similarity
 
+get documents where PAIRS of concept occur
+
+	SELECT * FROM anta_document_segment ds 
+	JOIN `anta_segment` s on ds.segment_id = s.id 
+		WHERE stemmed LIKE '%diaspor%' OR content LIKE '%democr%' 
+	ORDER BY tf DESC
+
+get number of analysed document (raw)
+	
+	SELECT COUNT( DISTINCT ds.document_id ) 
+	FROM  `anta_document_segment` ds
+	JOIN `anta_document` d ON ds.document_id = d.id
+		WHERE d.corpus_id = 1

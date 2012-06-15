@@ -15,7 +15,7 @@ def textify( d, absolute_url ):
 	print "[info] executing texify function for ", output
 	
 	
-	if d.mime_type is "text/plain":
+	if d.mime_type == "text/plain":
 		print "[info]","file id:",d.id," is already a text/plain"
 		return output
 	
