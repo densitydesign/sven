@@ -136,6 +136,15 @@ based upon [this impementation](http://www.supermind.org/blog/927/working-mysql-
 	
 	DELIMITER ;
 
+This is a sample raw SQL sample query 
+
+	SELECT * FROM 
+	  `anta_segment` s1, 
+	  `anta_segment` s2 
+	WHERE s1.id != s2.id 
+	AND ABS( LENGTH( s1.stemmed ) - LENGTH( s2.stemmed ) ) < 4 
+	AND LEVENHSTEIN_RATIO( s1.stemmed, s2.stemmed) > 75
+ 	LIMIT 10
 
 Note about Anta migration
 -------------------------
