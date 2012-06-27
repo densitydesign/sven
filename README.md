@@ -1,12 +1,14 @@
 sven
 ====
 
-sven django project
+A sven django project. 
+The fake installation path we use in this readme is `/home/path/to/sven/`: it should be changed according to your system configuration.
 
 
 
-installation
-------------
+how to install sven
+-------------------
+Three step procedure (django should already be installed)
 
 1. settings.py 
 
@@ -49,4 +51,105 @@ installation
 	    
 2. sven.wsgi
 
+	Modify the `path` according to your sven installation directory (i.e. the django project)
 	
+		path = '/home/path/to/sven'
+		if path not in sys.path:
+		    sys.path.append(path)
+
+	    
+Apache 2.x configuration
+------------------------
+
+Follow the mod_wsgi installation instruction if mod_wsgi is not installed. 
+Add and properly configure the `WSGIScriptAlias` directive: 
+
+	WSGIScriptAlias /sven /home/path/to/sven/sven.wsgi
+	 <Directory /home/path/to/sven>
+	  Order allow,deny
+	  Allow from all
+	 </Directory>
+	 
+Then *reload* apache server.
+	 
+Django project installation
+---------------------------
+
+Simply run `python manage.py syncdb` from your sven django directory.
+
+Levenshtein function installation
+---------------------------------
+
+Tested on mysql server 5.1, Levenshtein string comparison function along with its levenshtein_ratio,
+based upon [this impementation](http://www.supermind.org/blog/927/working-mysql-5-1-levenshtein-stored-procedure)
+
+	DELIMITER $$
+	--
+	-- Functions
+	--
+	CREATE DEFINER=`anta`@`localhost` FUNCTION `LEVENSHTEIN`(s1 VARCHAR(255), s2 VARCHAR(255)) RETURNS int(11)
+	    DETERMINISTIC
+	BEGIN
+	  DECLARE s1_len, s2_len, i, j, c, c_temp, cost INT;
+	  DECLARE s1_char CHAR;
+	  DECLARE cv0, cv1 VARBINARY(256);
+	  SET s1_len = CHAR_LENGTH(s1), s2_len = CHAR_LENGTH(s2), cv1 = 0x00, j = 1, i = 1, c = 0;
+	  IF s1 = s2 THEN
+	    RETURN 0;
+	  ELSEIF s1_len = 0 THEN
+	    RETURN s2_len;
+	  ELSEIF s2_len = 0 THEN
+	    RETURN s1_len;
+	  ELSE
+	    WHILE j <= s2_len DO
+	      SET cv1 = CONCAT(cv1, UNHEX(HEX(j))), j = j + 1;
+	    END WHILE;
+	    WHILE i <= s1_len DO
+	      SET s1_char = SUBSTRING(s1, i, 1), c = i, cv0 = UNHEX(HEX(i)), j = 1;
+	      WHILE j <= s2_len DO
+	        SET c = c + 1;
+	        IF s1_char = SUBSTRING(s2, j, 1) THEN SET cost = 0; ELSE SET cost = 1; END IF;
+	        SET c_temp = CONV(HEX(SUBSTRING(cv1, j, 1)), 16, 10) + cost;
+	        IF c > c_temp THEN SET c = c_temp; END IF;
+	        SET c_temp = CONV(HEX(SUBSTRING(cv1, j+1, 1)), 16, 10) + 1;
+	        IF c > c_temp THEN SET c = c_temp; END IF;
+	        SET cv0 = CONCAT(cv0, UNHEX(HEX(c))), j = j + 1;
+	      END WHILE;
+	      SET cv1 = cv0, i = i + 1;
+	    END WHILE;
+	  END IF;
+	  RETURN c;
+	END$$
+
+	CREATE DEFINER=`anta`@`localhost` FUNCTION `levenshtein_ratio`( s1 VARCHAR(255), s2 VARCHAR(255) ) RETURNS int(11)
+	    DETERMINISTIC
+	BEGIN 
+	    DECLARE s1_len, s2_len, max_len INT; 
+	    SET s1_len = LENGTH(s1), s2_len = LENGTH(s2); 
+	    IF s1_len > s2_len THEN  
+	      SET max_len = s1_len;  
+	    ELSE  
+	      SET max_len = s2_len;  
+	    END IF; 
+	    RETURN ROUND((1 - LEVENSHTEIN(s1, s2) / max_len) * 100); 
+	  END$$
+	
+	DELIMITER ;
+
+This is a sample raw SQL sample query 
+
+	SELECT * FROM 
+	  `anta_segment` s1, 
+	  `anta_segment` s2 
+	WHERE s1.id != s2.id 
+	AND ABS( LENGTH( s1.stemmed ) - LENGTH( s2.stemmed ) ) < 4 
+	AND LEVENHSTEIN_RATIO( s1.stemmed, s2.stemmed) > 75
+ 	LIMIT 10
+
+Note about Anta migration
+-------------------------
+
+		SELECT d.title, t.content, c.content FROM `documents_tags` dt 
+		JOIN tags t ON dt.id_tag = t.id_tag 
+		JOIN documents d ON dt.id_document = d.id_document
+		JOIN categories c ON t.id_category = c.id_category

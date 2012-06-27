@@ -1,7 +1,9 @@
 import os, sys, re, mimetypes
 from datetime import datetime
 
-path = '/var/www/sven.densitydesign.org'
+# get path of the django project
+path = ("/").join( sys.path[0].split("/")[:-2] )
+
 if path not in sys.path:
     sys.path.append(path)
 
@@ -19,6 +21,8 @@ def sync( options, parser ):
 	print "[sync] corpus:",options.corpus
 	print "[sync] corpsu path:", path
 	print "[sync] path exists:", os.path.exists( path )
+	print "[sync] autoformat:", options.autoformat
+	
 	
 	if not os.path.exists( path ):
 		error( message="path created using corpus name does not exist!", parser=parser )
@@ -37,27 +41,34 @@ def sync( options, parser ):
 		parts = os.path.splitext(doc)[0].split("_",3)
 		mime_type	=  mimetypes.guess_type( path + "/" + doc )[0]
 		
+		
 		# exclude .{ext}.txt from being taken
 		if re.search( "\.[^\.]{3,4}\.[^\.]{3}$", doc ) is not None:
 			print "[sync] skipping dual extension filenames.!", parts
 			continue
 		
+		# automatically include .txt files
+		print "[sync] detecting mime type!", mime_type
 		
-		if len( parts ) != 4:
+		if len( parts ) == 4 and options.autoformat:
 			print "[sync] file name is not valid! skipping...", parts
-			continue
-		
-		actors		= parts[0].split("-")
-		language	= parts[1]
-		try:
-			date	= datetime.strptime( parts[2], "%Y%m%d" ) 
-		except:
-			print "[sync] date forma is not standard, substitute with datetime.now"
-			date	= datetime.now()
 			
-		title		= parts[3].replace("_"," ")
-		
-		
+			actors		= parts[0].split("-")
+			language	= parts[1]
+			try:
+				date	= datetime.strptime( parts[2], "%Y%m%d" ) 
+			except:
+				print "[sync] date forma is not standard, substitute with datetime.now"
+				date	= datetime.now()
+				
+			title		= parts[3].replace("_"," ")
+		else:
+			print "[WARNING] autoformat option is False or file name does not handle information about language and date. Hence, default applied"
+			actors =[]
+			language = 'EN'
+			date = datetime.now()
+			title = os.path.splitext(doc)[0]
+			
 		print
 		print "[sync] saving file:", doc, mime_type
 		print "[sync] file title:", title		
@@ -127,12 +138,21 @@ def main( argv):
 		"-l", "--lang", dest="language",
 		default="EN",
 		help="corpus language (char=2), e.g 'nl' or 'en', default 'en'. will be saved only for NEWLY added documents")
+	
+	parser.add_option(
+		"-f", "--autoformat", dest="autoformat",
+		help="corpus language (char=2), e.g 'nl' or 'en', default 'en'. will be saved only for NEWLY added documents")
+	
 	( options, argv ) = parser.parse_args()
 	
 	
 	if options.corpus is None:
 		error( message="Use -c to specify the corpus", parser=parser )
 	
+	if options.autoformat is None:
+		options.autoformat = False
+	else:
+		options.autoformat = True
 		
 	sync(options, parser )
 

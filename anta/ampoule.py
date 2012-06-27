@@ -20,12 +20,37 @@ from sven.anta.log import log
 from sven.anta.distiller import distill
 from sven.anta.utils import *
 from pattern.metrics import levenshtein, similarity, DICE
+from sven.anta.freebase import fsearch
 #
 #    =================
 #    ---- ampoule ----
 #    =================
 # 
 
+def freebase( options, parser ):
+	# needs to have an api key provided
+	# options['api_key']
+	
+	try:
+		corpus = Corpus.objects.get( name=options.corpus )
+	except:
+		return error( message="corpus was not found! use sync.py script to load corpora", parser=parser )
+	
+	document_segments = Document_Segment.objects.filter(document__corpus = corpus)
+	num_of_segments = document_segments.count()
+	
+	
+	print "[info] freebase analysis"
+	print "[info] freebase api key:", options.freebasekey
+	print "[info] num of segments:", num_of_segments
+	
+	for s in document_segments[:3]:
+		print s.segment.content, s.segment.language
+		print fsearch({'query':s.segment.content, 'key':options.freebasekey, 'lang':s.segment.language.lower()})
+	
+#
+# Find and store duplicate candidates
+#
 def duplicates( options, parser ):
 	# get corpus, else exit
 	try:
@@ -77,13 +102,17 @@ def duplicates( options, parser ):
 	print "found", c, "duplicates"
 	
 	#print levenshtein("aituo", "atuio")
-	
+
+#
+# perform a regular expression to correct segment
+# @todo
+#
 def executere(options, parser ):
 	try:
 		corpus = Corpus.objects.get( name=options.corpus )
 	except:
 		return error( message="corpus was not found! use sync.py script to load corpora", parser=parser )
-
+	
 
 # decant function,
 # foreach documents
@@ -140,6 +169,10 @@ def decant( options, parser ):
 		print " ---------------------------------------"
 		print
 		
+
+		# a = Analysis( document=d, )
+		print "[info] document mimetype:",d.mime_type
+
 		textified =  textify( d, settings.MEDIA_ROOT )
 		
 		if textified == False:
@@ -248,6 +281,11 @@ def main( argv):
 		"-f", "--function", dest="function",
 		help="function to be performed. Default to 'ampoule', to computate tf")
 	
+	parser.add_option(
+		"-k", "--freebasekey", dest="freebasekey", default="",
+		help="freebase api key (use with function 'freebase'")
+	
+	
 	( options, argv ) = parser.parse_args()
 	
 	if options.corpus is None:
@@ -257,6 +295,8 @@ def main( argv):
 		return decant(options, parser )
 	elif options.function == "duplicates":
 		return duplicates(options, parser )
+	elif options.function == "freebase":
+		return freebase( options, parser )
 		
 	error( message="function '"+options.function+"'was not found!", parser=parser )
 	
