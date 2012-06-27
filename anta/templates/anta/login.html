@@ -1,0 +1,23 @@
+{% extends 'anta/middle.html' %}
+{% block title %}Login{% endblock %}
+
+{% block custom_sidebar %}
+	{% if loginerror %}
+		{{ loginerror }}
+	{% endif %}
+	<form action="{% url anta_login %}" method="POST">
+		{% csrf_token %}
+		{{ loginform.as_p }}
+		<input type="submit" value="login">
+	</form>
+{% endblock %}
+
+{% block custom_page %}
+	<h1>"Anta backoffice"</h1>
+	{{ login_error }}
+	<div class="pseudo-section">
+		<h2> Need Help?</h2>
+		If you've exhausted the above resources and haven't found what you're looking for, we've got you covered. Please take one last spin through the FAQ and forums (seriously, there are lots of answers there!) and, if you're still perplexed, contact us. Make sure to include a detailed description of your problem, including what page you were on and what you were doing when the issue occurred. The more information we have, the easier it is for us to help you.
+	</div>
+	
+{% endblock %}

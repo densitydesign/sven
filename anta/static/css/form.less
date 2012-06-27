@@ -1,0 +1,153 @@
+//
+//    =======================
+//    ---- FORM ELEMENTS ----
+//    =======================
+//
+
+@base-color: #69C82F;
+@base-dark-color: darken( @base-color, 7%  );
+@base-light-color: lighten( @base-color, 15% );
+@base-text-color: white;
+
+@blue-base-color: #00aeff;
+@blue-base-dark-color: darken( @blue-base-color, 7%  );
+@blue-base-light-color: lighten( @blue-base-color, 15% );
+@blue-base-text-color: white;
+
+@green-base-color: #69E82F;
+@green-base-dark-color: darken( @green-base-color, 7%  );
+@green-base-light-color: lighten( @green-base-color, 15% );
+@green-base-text-color: white;
+
+@bad-base-color: #ccc;
+@bad-base-dark-color:  darken( @bad-base-color, 7%  );
+@bad-base-light-color: lighten( @bad-base-color, 7% );
+@bad-base-text-color: white;
+
+@input-height:36px;
+
+.decline-button( @base-color, @base-text-color: white ){
+	@base-dark-color: darken( @base-color, 7%  );
+	@base-light-color: lighten( @base-color, 15% );
+
+	.gradient( @dark-color, @base-dark-color, @-base-light-color );
+	.border-distribute( darken( @base-dark-color, 7%) );
+	.box-shadow(0 0 6px @base-light-color );
+	background-repeat: repeat-x;
+		
+	&:hover{
+		background-color: @base-dark-color; 
+		background-position-y: -35px;
+		text-decoration: none;	
+		.box-shadow(0 0 12px @base-light-color );
+	}	
+}
+
+label{
+	line-height:2em;	
+}
+
+input[type="text"], input[type="password"], input[type="number"], input[type="email"], input[type="tel"], textarea{
+	border:1px solid @bad-base-dark-color;
+	height:	@input-height;
+	font-size: .9em;
+	display:block;
+	padding: 6px 0 7px 6px;
+	width:98%;
+	
+	-webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+	.box-shadow( inset 0 1px 3px rgba(0,0,0,.15) );
+	.border-radius(3px);
+	//.transition( border-color, .3s);
+	//.transition( background-color, .3s);
+	&.lite{
+		background-color: fade( white, 45%);
+		border:1px solid @bad-base-dark-color;
+	}
+	
+	
+	
+	&.invalid{
+		background-color: fade( #cc1400, 20%);
+		border: 1px solid #cc1400;
+	}
+	
+}
+
+textarea{
+	height: 	@input-height*3;	
+}
+input[type="submit"], input[type="button"], input[type="reset"],button, .button{
+	font-family: 'MisoRegular', sans-serif;
+	text-transform: uppercase;
+	font-size:18px;
+	line-height:1em;
+	padding: 8px 15px 8px 15px;
+	margin: 8px auto;
+	color: @base-text-color;
+	
+	.gradient( @base-dark-color, @base-dark-color, @base-light-color );
+	.border-radius(3px);
+	.border-distribute( @base-dark-color );
+	.box-shadow(0 0 6px @base-light-color );
+	
+	background-repeat: repeat-x;
+	
+	
+	&:hover{
+		background-color: @base-dark-color; 
+		background-position-y: -35px;
+		text-decoration: none;	
+		.box-shadow(0 0 16px @base-light-color );
+	}
+	
+	&.blue{
+		.gradient( @bad-base-dark-color, @bad-base-dark-color, @bad-base-light-color );
+		.border-distribute( darken( @bad-base-dark-color, 7%) );
+		.box-shadow(0 0 6px @bad-base-light-color );
+		background-repeat: repeat-x;
+		
+		&:hover{
+			background-color: @bad-base-dark-color; 
+			background-position-y: -35px;
+			text-decoration: none;	
+			.box-shadow(0 0 12px @bad-base-light-color );
+	
+		}
+	}
+	
+	&.green{
+		.gradient( @green-base-dark-color, @green-base-dark-color, @green-base-light-color );
+		.border-distribute( darken( @green-base-dark-color, 7%) );
+		.box-shadow(0 0 6px @green-base-light-color );
+		background-repeat: repeat-x;
+		
+		
+		//&:hover{
+		//	background-color: @green-base-dark-color; 
+		//	background-position-y: -35px;
+		//	text-decoration: none;	
+		//	.box-shadow(0 0 12px @green-base-light-color );
+	
+		//}
+	}
+	
+	&.bad{
+		color: @bad-base-text-color;
+		
+		.gradient( @bad-base-dark-color, @bad-base-dark-color, @bad-base-light-color );
+		.border-distribute( darken( @bad-base-dark-color, 7%) );
+		.box-shadow(0 0 6px @bad-base-light-color );
+		
+		background-repeat: repeat-x;
+		
+		&:hover{
+		
+			background-color: @bad-base-dark-color; 
+			background-position-y: -35px;
+			text-decoration: none;	
+			.box-shadow(0 0 12px @bad-base-light-color );
+	
+		}
+	}	
+}

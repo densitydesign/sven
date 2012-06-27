@@ -1,0 +1,23 @@
+{% extends "anta/middle.html" %}
+{% load i18n %}
+Hello, Anta World!
+
+{% block custom_page %}
+	<h1>{% trans "Documents" %}</h1>	
+	<ul id="item-list-documents" class="item-list">
+	{% for d in documents %}
+		<li class="document item"> 
+			{{ d.title }}
+			{{ d.mime_type }}
+			
+			{{ d.language }}
+			<div class="tags">
+			{% for t in d.tags.all %}
+				<span class="tag">{{t.name}} <a href="/remove/{{t.id}}">x</a></span>
+				
+			{% endfor %}
+			</div>
+		</li>
+	{% endfor %}
+	</ul>
+{% endblock %}

@@ -1,0 +1,76 @@
+// twitter bootstrap
+//
+// Mixins.less
+// Snippets of reusable CSS to develop faster and keep code readable
+// -----------------------------------------------------------------
+
+.gradient(@color: #F5F5F5, @start: #EEE, @stop: #FFF) {
+  background-color: @color;
+  background: -webkit-gradient(linear,left bottom,left top,color-stop(0, @start),color-stop(1, @stop));
+  background: -ms-linear-gradient(bottom, @start,@stop);
+  background: -moz-linear-gradient(center bottom,@start 0%,@stop 100%);
+}
+
+.background-gradient( @from:#0000000, @to: #303030 ){
+	
+	// fallback
+	background:  @from;
+	// background: url(images/linear_bg_2.png);
+	background-repeat: repeat-x;
+  
+	// Safari 4-5, Chrome 1-9
+	background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(@from), to(@to));
+  
+	// Safari 5.1, Chrome 10+
+	background: -webkit-linear-gradient(top, @to, @from);
+  
+	// Firefox 3.6+
+	background: -moz-linear-gradient(top, @to, @from);
+  
+	// IE 10
+	background: -ms-linear-gradient(top, @to, @from);
+  
+	// Opera 11.10+
+	background: -o-linear-gradient(top, @to, @from);
+}
+
+.border-radius(@radius: 5px) {
+  -webkit-border-radius: @radius;
+     -moz-border-radius: @radius;
+          border-radius: @radius;
+}
+
+.bordered( @top-color: #EEE, @right-color: #EEE, @bottom-color: #EEE, @left-color: #EEE ) {
+  border-top: solid 1px @top-color;
+  border-left: solid 1px @left-color;
+  border-right: solid 1px @right-color;
+  border-bottom: solid 1px @bottom-color;
+}
+
+.border-distribute( @color: #EEE, @diff:8% ){
+	.bordered( lighten( @color, @diff ), @color, darken(@color,@diff), lighten( @color, @diff / 2) )
+}
+
+.box-shadow( @shadow: 0 1px 3px rgba(0,0,0,.25)) {
+  -webkit-box-shadow: @shadow;
+     -moz-box-shadow: @shadow;
+          box-shadow: @shadow;
+}
+
+.columnify( @columns:2, @gap:2.5em ){
+	-moz-column-count:  @columns;
+	-moz-column-gap:  @gap;
+	-webkit-column-count:  @columns;
+	-webkit-column-gap: @gap;
+	column-count:  @columns;
+	column-gap: @gap;	
+}
+
+.transition( @property:all, @duration:.3s, @easing:linear ){
+	 -webkit-transition: @arguments;
+    -moz-transition: @arguments;
+    -ms-transition: @arguments;
+    -o-transition: @arguments;
+    transition: @arguments;	
+}
+

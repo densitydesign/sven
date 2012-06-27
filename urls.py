@@ -5,6 +5,7 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('',
+	url(r'^anta/', include('sven.anta.urls')),
 	url(r'^api/anta/', include('sven.core.urls')), # anta api
     # url(r'^api/set-relation/corpus/(.?)/', anta.api.set_relation, name="anta_api_set_relation"),
     

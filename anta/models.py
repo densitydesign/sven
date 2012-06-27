@@ -18,12 +18,15 @@ DOCUMENT_STATUS_CHOICES = (
 )
 
 ANALYSIS_CHOICES = (
-	(u'TX', u'textify'),
-    (u'OUT', u'excluded'),
+	(u'PT', u'PATTERN'),
+    (u'AL', u'ALCHEMY'),
+    (u'OC', u'OPENCALAIS'),
+    (u'WI', u'WIKIPEDIA'),
 )
 
 ANALYSIS_STATUS_CHOICES = (
 	(u'OK', u'completed'),
+	(u'CRE',u'creation'),
     (u'PD', u'pending'),
     (u'ERR', u'error'),
 )
@@ -72,6 +75,7 @@ class Document( models.Model ):
 	ref_date =  models.DateTimeField(  default=datetime.now(), blank=None, null=None )
 	corpus = models.ForeignKey( Corpus )
 	tags = models.ManyToManyField( Tag, through='Document_Tag' )
+	
 	def __unicode__(self):
 		return self.title
 
@@ -116,12 +120,16 @@ class Relation( models.Model ):
 		unique_together = ("source", "target") 
 
 class Analysis(models.Model ):
-	document= models.ForeignKey( Document )
-	start_date = models.DateField( blank=True )
-	end_date = models.DateField( blank=True )
-	type = models.CharField( max_length=2, choices=ANALYSIS_CHOICES )
-	result = models.CharField( max_length=3, choices= ANALYSIS_STATUS_CHOICES )
+	corpus	 = models.OneToOneField( Corpus )
+	document = models.ForeignKey( Document, blank=True, null=True ) # current document under analysis, ordered by
+	start_date = models.DateTimeField( blank=True, null=True )
+	end_date = models.DateTimeField( blank=True, null=True )
+	type = models.CharField( max_length=2, choices=ANALYSIS_CHOICES ) # type of routine, like PT for Pattern routine.
+	status = models.CharField( max_length=3, choices= ANALYSIS_STATUS_CHOICES )
 	
+	class Meta:
+		unique_together = ("corpus", "type")
+
 # 
 #
 # TEXT ANALYSIS

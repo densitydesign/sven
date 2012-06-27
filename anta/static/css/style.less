@@ -1,0 +1,696 @@
+//
+//    ==============
+//    ---- Anta ----
+//    ==============
+//
+
+@import "mixins.less";
+@import "grid.less";
+@import "form.less";
+
+
+//
+//    ================
+//    ---- colors ----
+//    ================
+//
+@original-color	:	#484E5C;
+@dark-color		:	lighten(#484E5C, 50%);
+@light-color	:	lighten( #484E5C, 62% );
+@border-color	:	darken(@dark-color, 20%); 
+@black			:	#383838;
+
+
+//
+//    ================
+//    ---- pixels ----
+//    ================
+//
+
+@header-height	:	55px;
+@footer-height	:	80px;
+@grid-padding	: 	12px;
+@spring-width	:	128px;
+@spring-height	:	128px;
+@spring-padding	:	0px;
+@toast-width	:	320px;
+
+
+//
+//    ==========================
+//    ---- semantic.js grid ----
+//    ==========================
+//
+
+@columns: 12;
+@total-width: 960px;
+@gutter-width: @grid-padding;
+.col_2{ .column(2);	&.alpha{ margin-left:0}}
+.col_3{ .column(3);	&.alpha{ margin-left:0}}
+.col_4{ .column(4);	}
+.col_5{ .column(5);	}
+.col_6{ .column(6); }
+.col_7{ .column(7);	}
+.push_1{ .push(1); }
+.clear{ clear:both;	}
+
+
+//
+//    ================
+//    ---- mixins ----
+//    ================
+//
+
+.spring( @col:0, @row:0, @width:@spring-width, @height:@spring-height, @padding:@spring-padding){
+	width: @width;
+	height: @height;
+	background: url("../../img/spring.png");
+	background-repeat:no-repeat;
+	.spring-position( @col, @row, @width,  @height, @padding );
+}
+
+.spring-position( @col:0, @row:0, @width:@spring-width, @height:@spring-height, @padding:0 ){
+	background-position-x: -( @col * ( @width + @padding ) + @padding );
+	background-position-y: -( @row * ( @height + @padding ) + @padding );
+}
+
+
+//
+//    ==============
+//    ---- FORM ----
+//    ==============
+//
+
+@input-height:22px;
+
+
+//
+//    ==============
+//    ---- tags ----
+//    ==============
+//
+
+html{
+	height:100%;
+	min-height:100%;
+	width:100%;
+	min-width:100%;
+	margin:0;
+	padding:0;
+}
+
+
+body{
+	width:100%;
+	min-width:100%;
+	margin:0;
+	padding:0;
+	background-color: lighten( @light-color, 4%);
+	color: #383838;
+	font-size:15px;
+	line-height:1.6em;
+	font-family:'OpenSansRegular', sans-serif;	
+	padding: @header-height+@grid-padding 0 @footer-height+@grid-padding 0;
+}
+
+a{
+	color: @black;
+	text-decoration:none;
+	&:visited{
+		color: @black;	
+	}	
+}
+
+h1,h2,h3{
+	font-family:'MisoRegular', sans-serif;	
+	text-transform:uppercase;
+	margin: @grid-padding 0;
+	text-shadow: 1px 1px 2px @light-color;
+	font-weight: normal;
+}
+
+h1{
+	font-size:1.7em;
+	line-height:normal;
+}
+
+h2{
+	font-size:1.4em;	
+}
+
+ul, ol {
+	margin: 0;
+	padding: 0;
+}
+
+li{
+	list-style-type: none;
+}
+
+header{
+	position:fixed;
+	top:0px;	
+	width:100%;
+	height: @header-height;
+	background: @light-color;
+	z-index:9999;
+	border-bottom: 1px solid darken( @light-color, 7% );
+	a{
+		background:transparent;
+		color:black;	
+	}
+}
+
+#header-inner{
+	width: @total-width;
+	padding: @grid-padding 0;
+	margin: 0 auto;	
+}
+
+#header-shadow{
+	background: url("../../img/grid/blurred-shadow-02.png") no-repeat top left;
+	position: absolute;
+	.column(12);
+	height: 30px;
+	top: @header-height;
+	z-index: 3;
+	pointer-events: none;	
+}
+
+
+#logo{
+	margin-top: @grid-padding * 1.5;	
+	
+}
+
+#wrapper{
+	width: @total-width;
+	margin: 0 auto;
+	
+	
+}
+
+sidebar{
+	.column(3);	
+}
+
+section{
+	.column(9);
+	
+	
+	h1{
+		border-bottom:	1px solid darken(@light-color, 7%);
+		padding: 0;
+		padding-bottom: @grid-padding;
+		margin: 0;
+	}
+}
+
+#page {
+	border:1px solid darken(@light-color, 7%);
+	background: white;
+	padding: @grid-padding;	
+	.border-radius(3px);
+	
+	.box-shadow( 1px 1px 1px rgba(0,0,0,.15) );
+	.pseudo-section{
+		padding: @grid-padding 0;	
+	}
+}
+.page{
+	#page();
+	margin-bottom: @grid-padding;	
+}
+
+footer{
+	background: black;	
+}
+
+label{
+	display:block;	
+}
+
+.pseudo-section{
+	border-bottom:	1px solid darken(@light-color, 7%);
+	padding: @grid-padding;	
+	&.omega{
+		border-bottom:	1px solid transparent;
+			
+	}
+}
+
+.floating{
+	float:left;
+	&.right{
+		float:right;	
+	}
+}
+
+.gravatar{
+	background: @light-color;
+	padding: @grid-padding / 3;
+	border:	1px solid darken(@light-color, 3%);
+	margin-right: @grid-padding;
+}
+
+.blockquote{
+	background:darken(@light-color, 3%);
+	border: 1px solid darken(@light-color, 13%);
+	padding: @grid-padding / 2;
+	
+}
+
+.user-specs{
+	line-height:40px;		
+}
+
+#search-user{
+	.item-list {
+		background: darken(@light-color, 3%);	
+		padding: @grid-padding 0;
+		border: 1px solid darken(@light-color, 13%);
+		margin-left:3px;
+		font-size: .8em;
+		
+	}
+	.item{
+		margin:0;
+		padding: @grid-padding/2;
+		&:hover{
+			background: @dark-color;
+			color: black;	
+		}
+	}
+
+}
+
+
+//
+//    =============================
+//    ---- SINGLE ITEM & LISTS ----
+//    =============================
+//
+
+.item-list{
+	//.box-shadow( 0 1px 3px rgba(0,0,0,.15) );
+	//border: 1px solid @bad-base-dark-color;
+	//.border-radius(3px);
+}
+
+.item{
+	border-bottom:	1px solid darken(@light-color, 7%);
+	padding: @grid-padding;
+	//background: whitesmoke;
+	.title{
+		font-family:'OpenSansSemibold', sans-serif;	
+	}
+	.transition(background-color, .3s );
+	&:hover{
+		background-color: lighten( @light-color, 2%);
+	}
+	
+	&.omega{
+		border-bottom:	1px transparent;
+	}
+	.checkbox{
+		width:32px;
+		
+		text-align:center;
+	}
+	
+	.icon{
+		width: 32px;	
+		height:32px;
+		display:inline-block;
+		
+	}
+	
+	a{
+		&:hover{
+			text-decoration:underline;	
+		}	
+	}
+	
+	.actions{
+		margin:@grid-padding / 2;
+		padding:@grid-padding / 2;
+		border-left:	1px solid darken(@light-color, 7%);
+		.remove{
+			background: url("../../img/icons/32-Cross-dark.png") center center;	
+		}
+		.edit{
+			background: url("../../img/icons/32-Pencil-Edit.png") center center;
+		}
+	}
+	.meta{
+		width:32px;
+		margin:@grid-padding / 2;
+		padding:@grid-padding / 2;
+		border-left:	1px solid darken(@light-color, 7%);
+	}
+	.date{
+		color: darken( @light-color, 20%);
+		font-size:.8em;
+		float:right;
+	}
+	.tags{
+		span{
+			padding: 2px 4px;
+			line-height:2em;
+			margin: 2px;
+			font-size:.9em;
+			border-bottom:1px solid darken(@light-color, 24%);
+		}	
+	}
+}
+	
+	
+.user{
+	
+}
+	
+	
+	
+.message{
+	
+	.author{
+		color: darken( @bad-base-color, 20%);
+		font-family:'OpenSansSemibold', sans-serif;
+		font-size:.8em;
+	}
+	.date{
+		color: darken( @bad-base-color, 20%);
+		font-size:.8em;
+		float:right;
+	}
+	.content{
+		width:100%;	
+	}
+	
+	&.by-me{
+		background: lighten( @light-color, 1%);	
+		&:hover{
+			background-color: lighten( @light-color, 4%);
+		}
+	}
+	
+	.read{
+		background: url("../../img/icons/16-Check.png") no-repeat center center;
+		width: 16px;
+		height:24px;	
+		margin-right: @grid-padding /2;
+	}
+	.unread{
+		background: url("../../img/icons/16-Alert-2.png") no-repeat center center;
+		width: 16px;
+		height:24px;	
+		margin-right: @grid-padding /2;
+	}
+}	
+
+.absence{
+	.vacation{
+		background: url("../../img/icons/32-Bandaid.png") no-repeat center center;
+		width: 32px + @grid-padding /2;
+		height:32px + @grid-padding /2;	
+		margin-right: @grid-padding /2;
+	}
+	
+	.accepted{
+		background: url("../../img/icons/16-Check.png") no-repeat center center;
+		width: 16px;
+		height:24px;	
+		margin-right: @grid-padding /2;
+	}
+	.unaccepted{
+		background: url("../../img/icons/16-Alert-2.png") no-repeat center center;
+		width: 16px;
+		height:24px;	
+		margin-right: @grid-padding /2;
+	}	
+}
+	
+.menu-item{
+	margin: 0 @grid-padding/2;
+	h3{
+		padding: 0 @grid-padding/2;
+	}
+	position:relative;
+	float:right;
+	border-bottom: 3px transparent;
+	&.selected, &:hover{
+		border-bottom: 3px solid darken(@light-color, 7%);
+		background:white;
+	}
+	height:@header-height - @grid-padding - 3;
+}
+
+.more{
+	text-align:center;
+	border:1px solid darken(@light-color, 7%);
+	background:@light-color;
+	
+	a{
+		line-height:2.5em;
+		display:block;
+	}	
+	.transition(background-color,.2s);
+	.border-radius(2px);
+	&:hover{
+		background: lighten(@light-color, 7%);		
+	}
+}
+
+#todays-specials{
+	.column(3);
+	position:fixed;
+	border:1px solid @dark-color;
+	background: @light-color;
+	margin:0;	
+	.border-radius(3px);
+	
+	.box-shadow( 1px 1px 1px rgba(0,0,0,.15) );
+	.transition(bottom,.2s, ease-in-out);
+	bottom: -200px;	
+	height:200px;
+	h1{
+		margin-top:0;	
+	}
+}
+
+
+//
+//    ============================
+//    ---- SCORE & DASHBOARDS ----
+//    ============================
+//
+
+.score{
+	text-align:center;
+	h1{
+		margin-bottom: @grid-padding;
+		text-align:center;	
+		font-size:3.6em;
+	}	
+	.detail{
+			
+	}
+}
+
+
+
+
+//
+//    ======================
+//    ---- TOAST PLUGIN ----
+//    ======================
+//
+
+.toast-container {
+	width: @toast-width;
+	z-index: 1999999999;
+	// min-height:100px;
+	position: fixed;
+    left: 50%;
+    top: 50%;
+    
+	&.toast-position-middle-center {
+    	margin-left: -@toast-width/2;
+    	margin-top: -40px;
+    }
+    &.toast-position-top-left {
+    	left: 20px;
+    	top: 20px;
+	}
+}
+
+
+* html .toast-container {
+	position: absolute;
+}
+
+.toast-item {
+	height: auto;
+	opacity: 0.95;
+	padding: 0 0 0 0;
+	font-size: 14px;
+	line-height: 20px;
+	display: block;
+	text-shadow: 1px 1px 1px darken( @original-color, 15%);
+	position: relative;
+	margin: 0 0 12px 0;
+	.border-radius(3px);
+	background: fade(@original-color, 90%);
+	border: 1px solid darken( @original-color, 7%);
+	.box-shadow( 0px 0px 8px  fade( @original-color, 45%));
+	color: @light-color;
+	h1{
+		text-shadow: 1px 1px 1px darken( @original-color, 15%);
+		color: @light-color;
+		border-bottom: 1px solid lighten( @original-color, 15%);
+		margin: 12px;
+		line-height:1em;
+		padding: 0 46px 12px 0;	
+	}
+	
+	p{
+    	text-align: left;
+    	margin: 0 12px 14px 12px;
+    	
+	}
+
+}
+
+.toast-item-close {
+    background:url("../../img/icons/32-Cross-white.png");
+    width:32px;
+    height:32px;
+    position: absolute;
+    top:7px;
+    right:7px;
+}
+
+.toast-item-image {
+    width:32px;
+    height: 32px;
+    margin-left: 10px;
+    margin-top: 10px;
+    margin-right: 10px;
+    float:left;
+}
+
+.toast-item-image-notice {
+    /*background:url("../../img/icons/32-Alert.png");*/
+    display:none;
+}
+
+.toast-item-image-success {
+    background:url(../../images/success.png);
+}
+
+.toast-item-image-warning {
+    background:url(../../images/warning.png);
+}
+
+.toast-item-image-error {
+    background:url(../../images/error.png);
+}
+
+//
+//   ==========================
+//   ---- MODALS, modified ----
+//   ==========================
+//
+
+// Recalculate z-index where appropriate
+
+@zindexModalBackdrop: 99999;
+@zindexModal: 999999;
+
+// Background
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: @zindexModalBackdrop;
+  background-color: darken( @dark-color, 70%);
+  // Fade for backdrop
+  .transition( opacity, .3s ); 
+	
+  &.fade { 
+  	opacity: 0; 
+  	
+  }
+}
+
+.modal-backdrop,
+.modal-backdrop.fade.in {
+	opacity:.8;
+}
+
+// Base modal
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: @zindexModal;
+  overflow: auto;
+  width: 560px;
+  margin: -150px 0 0 -280px;
+  background-color: @light-color;
+  border: 1px solid #999;
+  border: 1px solid rgba(0,0,0,.3);
+  .border-radius(6px);
+  .box-shadow(0 3px 7px rgba(0,0,0,0.3));
+  // .background-clip(padding-box);
+  .transition( top, .3s, ease-in ); 
+	
+  &.fade {
+    .transition(e('opacity .3s linear, top .3s ease-out'));
+    
+    top: -50%;
+  }
+  &.fade.in { top: 50%; }
+}
+.modal-header {
+  padding: 9px 15px;
+  border-bottom: 1px solid #eee;
+  // Close icon
+  .close { margin-top: 2px; }
+}
+
+// Body (where all modal content resides)
+.modal-body {
+  overflow-y: auto;
+  max-height: 400px;
+  padding: 15px;
+}
+// Remove bottom margin if need be
+.modal-form {
+  margin-bottom: 0;
+}
+
+// Footer (for actions)
+.modal-footer {
+  padding: @grid-padding/2 @grid-padding;
+  margin-bottom: 0;
+  text-align: right; // right align buttons
+  background-color: #f5f5f5;
+  border-top: 1px solid #ddd;
+  .border-radius(0 0 6px 6px);
+  .box-shadow(inset 0 1px 0 white);
+  .clearfix(); // clear it in case folks use .pull-* classes on buttons
+
+  // Properly space out buttons
+  .btn + .btn {
+    margin-left: 5px;
+    margin-bottom: 0; // account for input[type="submit"] which gets the bottom margin like all other inputs
+  }
+  // but override that for button groups
+  .btn-group .btn + .btn {
+    margin-left: -1px;
+  }
+}
+

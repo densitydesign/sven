@@ -4,16 +4,26 @@ from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from sven.anta.models import *
 from django.conf import settings
+from django.contrib.auth import login, logout
 import os, json, datetime
 
 from sven.anta.utils import *
 from django.contrib.auth.models import User
  
 #
-# API ACCESS
-# ==========
+#    ========================
+#    ---- JSON API CONST ----
+#    ========================
 #
-# json text/plain reponse
+API_LOGIN_REQUESTED_URL = '/sven/anta/api/login-requested'	 # needs to be logged in
+API_ACCESS_DENIED_URL = '/sven/anta/api/access-denied'	 # needs to be logged in and th corpus should be cool
+
+
+
+#
+#    ==================================
+#    ---- ASSISTANT JSON API VIEWS ----
+#    ==================================
 #
 
 def index(request):
@@ -24,7 +34,7 @@ def index(request):
 	return render_to_json( response )
 	
 	
-@login_required
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def add_relation(request):
 	response = _json( request )
 	corpus = request.REQUEST.get('corpus','')
@@ -147,12 +157,50 @@ def get_document(request, document_id):
 	
 	
 	return render_to_json( response )
+
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def dummy_gummy( request ):
+	# test only view, with request
+	response = _json( request )
+	return render_to_json( response )
+	
+def logout_view( request ):
+	logout( request )
+	response = _json( request )
+	return render_to_json( response )
+	
+
 #
-# API VIEW HELPER
-# ===============
+#    =======================
+#    ---- ACCESS DENIED ----
+#    =======================
 #
 
-def _get_corpus( corpus ):
+def login_requested( request ):
+	response = _json( request )
+	return throw_error( response, error="you're not authenticated", code="auth failed" )
+
+
+
+
+
+def access_denied( request ):
+	response = _json( request )
+	return throw_error( response, error="access denied", code="forbidden" )
+
+
+
+#
+#    ==========================
+#    ---- API VIEW HELPERS ----
+#    ==========================
+#
+#    try except handling on the road
+#
+
+	
+
+def _get_corpus( corpus, user=None ):
 	# given a corpus name return None or a corpus object
 	try:
 		c = Corpus.objects.get(name=corpus)
@@ -170,6 +218,7 @@ def _get_document( document_id ):
 
 def _json( request ):
 	j =  {"status":"ok"}
+	j['meta'] = {'offset':0,'limit':10 }
 	
 	if request.user is not None:
 		j['user'] = request.user.username
@@ -179,7 +228,7 @@ def render_to_json( response ):
 	
 	return HttpResponse( json.dumps( response ), mimetype="text/plain")
 
-def throw_error( response, error="", status="ko" ):
+def throw_error( response, error="", status="ko", code="404" ):
 	response[ 'error' ] = error
 	response[ 'status' ] = status
 	
