@@ -31,6 +31,11 @@ tfidf computation process + similarity
 
         ~/sven/anta/$ python metrics.py -c corpus_name -f similarity -l EN
 
+7. test freebase search function result per language, positional args 
+
+     	~/sven/anta/$ python freebase.py Nirvana it
+
+
 useful sql queries 
 ------------------
 
