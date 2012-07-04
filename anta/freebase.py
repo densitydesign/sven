@@ -11,7 +11,7 @@ from urllib import urlencode
 
 FREEBASE_API_URL = "https://www.googleapis.com/freebase/v1/"
 
-def _search( params, notable_only=True, universe=None ):
+def fsearch( params, notable_only=True, universe=None ):
 	url = FREEBASE_API_URL + "search?" + urlencode( params )
 	response = load( url )
 	
@@ -51,7 +51,7 @@ def main( argv ):
 	
 	print params
 	
-	print _search( params )
+	print fsearch( params )
 	
 
 
