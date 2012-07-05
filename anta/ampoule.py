@@ -1,9 +1,9 @@
 import os,sys,mimetypes
 from datetime import datetime
-from warnings import filterwarnings
-import MySQLdb as Database
+# from warnings import filterwarnings
+# import MySQLdb as Database
 
-filterwarnings('ignore', category = Database.Warning)
+# filterwarnings('ignore', category = Database.Warning)
 
 # get path of the django project
 path = ("/").join( sys.path[0].split("/")[:-2] )
@@ -20,7 +20,7 @@ from sven.anta.log import log
 from sven.anta.distiller import distill
 from sven.anta.utils import *
 from pattern.metrics import levenshtein, similarity, DICE
-from sven.anta.freebase import fsearch
+from sven.anta.freebase import search as fsearch
 #
 #    =================
 #    ---- ampoule ----

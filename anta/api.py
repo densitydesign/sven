@@ -5,9 +5,11 @@ from django.contrib.auth.decorators import login_required
 from sven.anta.models import *
 from django.conf import settings
 from django.contrib.auth import login, logout
+from django.core import serializers
 import os, json, datetime
 
 from sven.anta.utils import *
+from sven.anta.forms import *
 from django.contrib.auth.models import User
  
 #
@@ -32,7 +34,24 @@ def index(request):
 	#user.is_staff = True
 	#user.save()
 	return render_to_json( response )
+
+def get_corpora(request):
+	response = _json( request )
+	response['objects']	= [ c.json() for c in Corpus.objects.all() ]
+	return render_to_json( response )
+
+def get_corpus(request, corpus_id ):
+	response = _json( request )
 	
+	try:
+		response['corpus'] = Corpus.objects.get(name=corpus_id).json()
+	except:
+		response['corpus'] = None
+		return throw_error( response, "corpus does not exist...")
+	
+	
+	return render_to_json( response )
+
 	
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def add_relation(request):
@@ -95,27 +114,17 @@ def remove_relation(request, relation_id):
 	return render_to_json( response )
 
 @login_required
-def get_documents(request):
-	
+def get_documents(request, corpus):
 	response = _json( request )
 	
-	corpus = request.REQUEST.get('corpus','')
+	response['corpus'] = Corpus.objects.get(name=corpus).json()
+	try:
+		response['corpus'] = Corpus.objects.get(name=corpus).json()
+	except:
+		return throw_error( response, "aje corpus does not exist...")
 	
-	corpus = _get_corpus( corpus )
-	if corpus is None:
-		return throw_error( response, "corpus does not exist...")
+	response['objects'] = [d.json() for d in Document.objects.filter( corpus__name=corpus )]
 	
-	
-	docs = Document.objects.filter( corpus=corpus )
-	response['documents'] = []
-	
-	for d in docs :
-		response['documents'].append({
-			'id':d.id,
-			'title':d.title,
-			'date':d.ref_date.isoformat(),
-			'mime_type':d.mime_type
-		})
 		
 	#except:
 	#	return throw_error( response, "relation does not exist or you have no permission to modify it")
@@ -217,16 +226,30 @@ def _get_document( document_id ):
 		return None
 
 def _json( request ):
-	j =  {"status":"ok"}
-	j['meta'] = {'offset':0,'limit':10 }
+	j =  {"status":"ok", 'meta':{ 'indent':False } }
+	if request.REQUEST.has_key('indent'):
+		j['meta']['indent'] = True
+
+	form = ApiMetaForm( request.REQUEST )
+	if form.is_valid():
+		j['meta']['offset']	= form.cleaned_data['offset']
+		j['meta']['limit']	= form.cleaned_data['limit']
+	else:
+		j['meta']['offset']	= 0
+		j['meta']['limit']	= 25
+		j['meta']['errors']	= form.errors
+	# default values
 	
 	if request.user is not None:
 		j['user'] = request.user.username
 	return j
 	
 def render_to_json( response ):
-	
-	return HttpResponse( json.dumps( response ), mimetype="text/plain")
+	if response['meta']['indent']:
+		return HttpResponse( json.dumps( response, indent=4),  mimetype="text/plain")	
+	return HttpResponse( json.dumps( response ),  mimetype="text/plain")
+
+
 
 def throw_error( response, error="", status="ko", code="404" ):
 	response[ 'error' ] = error

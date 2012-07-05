@@ -17,6 +17,18 @@ DOCUMENT_STATUS_CHOICES = (
     (u'OUT', u'excluded'),
 )
 
+GRAPH_CHOICES = (
+	(u'Ge', u'gephi GEXF'),
+	(u'JS', u'json')
+)
+
+GRAPH_STATUS_CHOICES = (
+	(u'OK', u'completed'),
+	(u'CRE',u'creation'),
+    (u'PD', u'pending'),
+    (u'ERR', u'error'),
+)
+
 ANALYSIS_CHOICES = (
 	(u'PT', u'PATTERN'),
     (u'AL', u'ALCHEMY'),
@@ -56,6 +68,12 @@ class Corpus( models.Model ):
 	owner = models.ManyToManyField( User, through='Owners', null=True )
 	def __unicode__(self):
 		return self.name
+	
+	def json(self):
+		return { 
+			'id':self.id,
+			'name':self.name
+		}		
 
 class Tag( models.Model ):
 	name  = models.CharField( max_length=64 )
@@ -63,6 +81,12 @@ class Tag( models.Model ):
 	type  = models.CharField( max_length=32 )
 	def __unicode__(self):
 		return self.name
+	
+	def json(self):
+		return {
+			'id'	: self.id,
+			'name'	: self.name
+		}	
 
 class Document( models.Model ):
 	# the document in the corpus
@@ -78,6 +102,15 @@ class Document( models.Model ):
 	
 	def __unicode__(self):
 		return self.title
+	
+	def json(self):
+		return {
+			'id'	: self.id,
+			'title'	: self.title,
+			'date'	: self.ref_date.isoformat(),
+			'mime_type':self.mime_type,
+			'tags'	: [ t.json() for t in self.tags.all() ]
+		}
 
 class Document_Tag( models.Model):
 	document = models.ForeignKey( Document )
@@ -130,10 +163,24 @@ class Analysis(models.Model ):
 	class Meta:
 		unique_together = ("corpus", "type")
 
-# 
 #
-# TEXT ANALYSIS
-# =============
+#    ==================================
+#    ---- GRAPH MEASURES AND GEXFS ----
+#    ==================================
+#
+class Graph( models.Model ):
+	corpus	= models.ForeignKey( Corpus )
+	description = models.CharField( max_length=128 )
+	type	= models.CharField( max_length=2, choices=GRAPH_CHOICES )
+	date	= models.DateTimeField(  default=datetime.now(), blank=None, null=None )
+	url		= models.FileField( upload_to="graphs")
+	status	= models.CharField( max_length=2, choices=GRAPH_STATUS_CHOICES )
+
+
+# 
+#    =======================
+#    ---- TEXT ANALYSIS ----
+#    =======================
 #
 # "Tag" here refers to human annotation activity.
 #
@@ -147,9 +194,20 @@ class Concept( models.Model ):
 	language = models.CharField( max_length=2, choices=LANGUAGE_CHOICES )
 	relata	= models.ManyToManyField( Relatum, through="Semantic_Relation" )
 
+class Concept_Metrics( models.Model ):
+	concept = models.ForeignKey( Concept, unique=True )
+	betweenness_centrality	= models.FloatField( default='0') 
+	degree_centrality		= models.FloatField( default='0') 
+	closeness_centrality	= models.FloatField( default='0') 
+
 class Semantic_Relation( models.Model ):
 	concept = models.ForeignKey( Concept )
 	relatum	= models.ForeignKey( Relatum )
+
+# class Entity( models.Model ):
+	# freebase notable segments are entity attached
+	
+
 
 # Segment is the base class for POS tagging, it will contain NP, VP accoring to analysis chosen.
 class Segment( models.Model):	
