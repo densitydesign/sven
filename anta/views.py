@@ -10,7 +10,7 @@ from sven.anta.forms import LoginForm
 from sven.anta.models import *
 
 CUSTOM_SETTINGS = {
-	'STATIC_URL':'/anta/static/',
+	'STATIC_URL':'/static/',
 	'LOGIN_URL':'/sven/anta/login'
 }
 

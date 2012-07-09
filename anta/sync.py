@@ -22,7 +22,7 @@ def sync( options, parser ):
 	print "[sync] corpsu path:", path
 	print "[sync] path exists:", os.path.exists( path )
 	print "[sync] autoformat:", options.autoformat
-	
+	options.autoformat = True
 	
 	if not os.path.exists( path ):
 		error( message="path created using corpus name does not exist!", parser=parser )
@@ -69,7 +69,6 @@ def sync( options, parser ):
 			date = datetime.now()
 			title = os.path.splitext(doc)[0]
 			
-		print
 		print "[sync] saving file:", doc, mime_type
 		print "[sync] file title:", title		
 		print "[sync] file lang:", language
@@ -79,7 +78,7 @@ def sync( options, parser ):
 		# tag rule, by underscore (actor(s)[minus spaced], lang[EN|NL|FR], data[YYYYMMDD], title )
 		# ACTOR1-ACTOR2_EN_
 		# underscore groups
-		print "[info] actors found:",actors
+		#print "[info] actors found:",actors
 		
 		# save documents
 		try:
@@ -106,7 +105,7 @@ def sync( options, parser ):
 				dt = Document_Tag( document=d, tag=t )
 				dt.save()
 			except:
-				print "[warning] document tag relationship exists."
+		#		print "[warning] document tag relationship exists."
 				continue
 			#	"""
 			#	SELECT d.language,d.title, t.name, t.type 

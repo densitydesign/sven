@@ -230,6 +230,8 @@ def decant( options, parser ):
 				s = Segment.objects.get( content=segment[0][:128], language=d.language)
 			except:
 				s = Segment( content=segment[0][:128], stemmed="-".join(segment[1])[:128], language=d.language )
+				s.content.encode('UTF-8')
+				#print s.content
 				s.save()
 			
 			try:
