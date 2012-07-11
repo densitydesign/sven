@@ -186,9 +186,14 @@ class Graph( models.Model ):
 #
 
 class Relatum( models.Model ):
-	content = models.CharField( max_length=128 )
-	language = models.CharField( max_length=2, choices=LANGUAGE_CHOICES )
-	
+	# freebase notable segments are entity attached
+	content		= models.CharField( max_length=64 )
+	language	= models.CharField( max_length=2, choices=LANGUAGE_CHOICES )
+	slug		= models.CharField( max_length=64 ) # freebase id
+	name		= models.CharField( max_length=64 ) # freebase name
+	class Meta:
+		unique_together = ("slug", "language") 
+		
 class Concept( models.Model ):
 	content	= models.CharField( max_length=128 )
 	language = models.CharField( max_length=2, choices=LANGUAGE_CHOICES )
@@ -203,10 +208,9 @@ class Concept_Metrics( models.Model ):
 class Semantic_Relation( models.Model ):
 	concept = models.ForeignKey( Concept )
 	relatum	= models.ForeignKey( Relatum )
+	class Meta:
+		unique_together = ("concept", "relatum") 
 
-# class Entity( models.Model ):
-	# freebase notable segments are entity attached
-	
 
 
 # Segment is the base class for POS tagging, it will contain NP, VP accoring to analysis chosen.
@@ -224,10 +228,21 @@ class Segment( models.Model):
 	tags 		= models.ManyToManyField( Tag,  through="Segment_Tag" )
 	documents 	= models.ManyToManyField( Document, through="Document_Segment" ) # contains info about document term frequency
 	concepts	= models.ManyToManyField( Concept,  through="Segment_Concept" )
+	relata		= models.ManyToManyField( Relatum, through="Segment_Semantic_Relation" )
 	
 	class Meta:
 		unique_together = ("content", "language", "type") 
 		# a content which has the same pos tag and the same creation mode
+
+class Segment_Semantic_Relation( models.Model ):
+	segment = models.ForeignKey( Segment )
+	relatum	= models.ForeignKey( Relatum )
+	class Meta:
+		unique_together = ("segment", "relatum") 
+
+
+
+
 class Segment_Concept( models.Model ):
 	segment = models.ForeignKey( Segment )
 	concept = models.ForeignKey( Concept )

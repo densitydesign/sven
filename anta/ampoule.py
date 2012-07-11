@@ -13,6 +13,7 @@ if path not in sys.path:
     
 os.environ['DJANGO_SETTINGS_MODULE'] = 'sven.settings'
 from django.conf import settings
+from django.db.models import Count
 from optparse import OptionParser
 from sven.anta.models import *
 from sven.anta.sync import error
@@ -27,27 +28,75 @@ from sven.anta.freebase import search as fsearch
 #    =================
 # 
 
+def dbpedia():
+	print "dbpedia"
+
 def freebase( options, parser ):
 	# needs to have an api key provided
 	# options['api_key']
-	
+	# @todo handle transaction 
 	try:
 		corpus = Corpus.objects.get( name=options.corpus )
 	except:
 		return error( message="corpus was not found! use sync.py script to load corpora", parser=parser )
 	
-	document_segments = Document_Segment.objects.filter(document__corpus = corpus)
-	num_of_segments = document_segments.count()
+	# for each segments in given documents
+	# 
+	segments = Segment.objects.filter( documents__corpus = corpus).annotate(num_concepts=Count('concepts'))
+	num_of_segments = segments.count()
 	
 	
 	print "[info] freebase analysis"
 	print "[info] freebase api key:", options.freebasekey
 	print "[info] num of segments:", num_of_segments
 	
-	for s in document_segments[:3]:
-		print s.segment.content, s.segment.language
-		print fsearch({'query':s.segment.content, 'key':options.freebasekey, 'lang':s.segment.language.lower()})
 	
+	for s in segments:
+		
+		
+		# quick and dirty test
+		
+		
+		
+		#if s.num_concepts > 2:
+			
+		#	print s.concepts
+		#try:
+		print "[info] search:",s.content, s.language, s.num_concepts
+		results =  fsearch({'query':s.content, 'key':options.freebasekey, 'lang':s.language.lower()}, stop_universes=[
+			"/book/written_work", 
+			"book/book/,
+			"/film/film", "/music/track",
+			"/book/book_edition",
+			"/tv/tv_series_episode",
+			"/fictional_universe/work_of_fiction",
+			"/music/composition",
+			"/music/release",
+			"/tv/tv_program"
+		])
+		for r in results:
+			
+			# get existing relata
+			try:
+				relatum = Relatum.objects.get( slug=r['notable']['id'], language=s.language )
+			except:
+				relatum = Relatum( 
+					content		= r['name'],
+					language	= s.language,
+					slug		= r['notable']['id'],
+					name		= r['notable']['name']
+				)
+				relatum.save()
+			
+			# skip if relationship between relatum and segment exists
+			relation = Segment_Semantic_Relation( segment=s, relatum=relatum )
+			try:
+				relation.save()
+			except:
+				continue
+		
+		#print "[failed]",s.content, s.language, s.num_concepts
+		
 #
 # Find and store duplicate candidates
 #
