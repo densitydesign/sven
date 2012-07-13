@@ -22,7 +22,7 @@ def sync( options, parser ):
 	print "[sync] corpsu path:", path
 	print "[sync] path exists:", os.path.exists( path )
 	print "[sync] autoformat:", options.autoformat
-	options.autoformat = True
+	# options.autoformat = True
 	
 	if not os.path.exists( path ):
 		error( message="path created using corpus name does not exist!", parser=parser )

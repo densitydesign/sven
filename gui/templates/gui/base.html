@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+  <meta charset="utf-8">
+  <title>gui</title>
+
+  <meta name="description" content="gui user interface">
+  <meta name="author" content="SitePoint">
+
+  <!-- stylesheets here -->
+  <!--
+  <link rel="stylesheet" href="css/styles.css?v=1.0">
+  
+  <link rel="stylesheet" href="/static/sketch_ui/css/styles.css">
+  -->
+  <!-- stylesheets end -->
+  
+  <!--[if lt IE 9]>
+  <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  
+  {% block css_1 %}
+  {% endblock %}
+
+</head>
+
+<body>
+
+  
+  {% block content %}
+  {% endblock %}
+
+  <script src="{{custom.STATIC_URL}}/js/jquery.js"></script>
+  <script src="{{custom.STATIC_URL}}/js/api_sven.js"></script>
+  
+  {% block js_body %}
+  {% endblock %}
+
+
+</body>
+</html>

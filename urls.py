@@ -8,7 +8,7 @@ urlpatterns = patterns('',
 	url(r'^anta/', include('sven.anta.urls')),
 	url(r'^api/anta/', include('sven.core.urls')), # anta api
     # url(r'^api/set-relation/corpus/(.?)/', anta.api.set_relation, name="anta_api_set_relation"),
-    
+    url(r'^gui/', include('sven.gui.urls')), # sven gui
 	
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),

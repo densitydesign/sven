@@ -1,0 +1,147 @@
+{% extends "gui/base.html" %}
+
+{% block content %}
+
+    <h1>gui list view</h1>
+    <p>Seems like you're logged in as {{ user }}</p>
+    
+    <button id="test-query">Test query</button><br/>
+
+    
+    
+    <div id="console-div"></div>
+
+
+{% endblock %}
+
+<!-- this block contains javascript inside html body -->
+{% block js_body %}
+
+<script>
+
+    var sven = new svenjs.Sven("http://127.0.0.1:8000");  
+    
+    //Helper function to log errors and results to our console div
+    
+    function logErrorsAndResults(response){
+        /*
+        var errors = response.errors;
+        var results = response.results;
+        if(results && results.length){
+            $("#console-div").append("results:<br/>");
+            var l = results.length;
+            for(var i=0;i<l;i++){
+                result = results[i];
+                $("#console-div").append(JSON.stringify(result, null, 1) + "<br/>");
+            }
+        }
+        
+        $("#console-div").append("errors:" + errors + "<br/>");
+		*/
+		$("#console-div").append("results:<br/>");
+		$("#console-div").append(JSON.stringify(response) + "<br/>");
+    }
+    
+    
+/*
+    $("#test-meta-server").click(function(){
+
+        sketch.getServerMeta(function(response){
+        
+            $("#console-div").append("getServerMeta called<br/>");
+            logErrorsAndResults(response);
+        
+        });
+    
+    });
+    
+    
+    $("#test-meta-db").click(function(){
+
+        sketch.getDbMeta(function(response){
+        
+            $("#console-div").append("getDbMeta called<br/>");
+            logErrorsAndResults(response)
+        
+        });
+    
+    });
+    
+    $("#test-meta-parsers").click(function(){
+
+        sketch.getParsersMeta(function(response){
+        
+            $("#console-div").append("getParsersMeta called<br/>");
+            logErrorsAndResults(response);
+        
+        });
+    
+    });
+    
+*/
+    
+    
+    $("#test-query").click(function(){
+        sven.query(function(response){
+            console.log("response", response);
+            $("#console-div").append("query called<br/>");
+            logErrorsAndResults(response)
+        
+        });
+    
+    });
+    
+/*    
+    $("#test-objects").click(function(){
+    
+        var collection = $("#objects-collection").val()
+        var query = $("#objects-query").val();
+        
+
+        
+        //todo: check args...
+        var data = {query: query};
+        
+        console.log("objects:", collection, data);
+
+        sketch.objects(collection, data, function(response){
+            console.log("response", response);
+            $("#console-div").append("query called<br/>");
+            logErrorsAndResults(response)
+        
+        });
+    
+    });
+
+    
+    
+    
+    $("#test-import").click(function(){
+    
+        var collection = $("#import-collection").val()
+        var format = $("#import-format").val()
+        var data = $("#import-data").val();
+        var commit = $("#import-commit").attr('checked');
+        commit = Boolean(commit);
+        
+        console.log("import:", collection, format, data, commit);
+        
+        //todo: check args...
+
+        sketch.import(collection, format, data, commit, function(response){
+            console.log("response", response);
+            $("#console-div").append("import called<br/>");
+            logErrorsAndResults(response)
+        
+        });
+
+    
+    });
+
+*/
+
+</script>
+
+
+
+{% endblock %}
