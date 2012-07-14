@@ -19,8 +19,9 @@ from django.contrib.auth.models import User
 #
 API_LOGIN_REQUESTED_URL = '/sven/anta/api/login-requested'	 # needs to be logged in
 API_ACCESS_DENIED_URL = '/sven/anta/api/access-denied'	 # needs to be logged in and th corpus should be cool
-
-
+API_DEFAULT_OFFSET = 0
+API_DEFAULT_LIMIT = 50
+API_AVAILABLE_METHODS = [ 'PUT', 'DELETE', 'POST', 'GET' ]
 
 #
 #    ==================================
@@ -231,14 +232,48 @@ def _json( request ):
 		j['meta']['indent'] = True
 
 	form = ApiMetaForm( request.REQUEST )
-	if form.is_valid():
-		j['meta']['offset']	= form.cleaned_data['offset']
-		j['meta']['limit']	= form.cleaned_data['limit']
+	# get method
+	if request.REQUEST.has_key('method'):
+		j['meta']['method'] =  request.REQUEST.get('method')
 	else:
-		j['meta']['offset']	= 0
-		j['meta']['limit']	= 25
-		j['meta']['errors']	= form.errors
-	# default values
+		j['meta']['method'] = request.method
+
+	# test against available methods, default with GET
+	if not j['meta']['method']  in API_AVAILABLE_METHODS:
+		j['meta']['method'] = 'GET'
+		j['warnings'] = {'method':'default menthod GET applied, unhandled param "method" found in your request'}
+
+	# offset, limit + next, prev like twitter 
+	if j['meta']['method'] == 'GET':	
+
+		if request.REQUEST.has_key('offset') or request.REQUEST.has_key('limit') :
+			# check value
+			if form.is_valid():
+				j['meta']['offset']	= form.cleaned_data['offset'] if form.cleaned_data['offset'] else API_DEFAULT_OFFSET 
+				j['meta']['limit']	= form.cleaned_data['limit'] if form.cleaned_data['limit'] else API_DEFAULT_LIMIT 
+			else:
+				j['meta']['offset']	= API_DEFAULT_OFFSET 
+				j['meta']['limit']	= API_DEFAULT_LIMIT 
+				j['meta']['errors']	= form.errors
+		else:
+			# default values
+			j['meta']['offset']	= API_DEFAULT_OFFSET
+			j['meta']['limit']	= API_DEFAULT_LIMIT 
+		
+		# next and prev like twitter, leverage inside their own view
+		j['meta']['next'] = {
+			'offset': j['meta']['offset'] + j['meta']['limit'],
+			'limit':  j['meta']['limit']
+		}
+	
+		if j['meta']['offset']	> 0:
+			j['meta']['previous'] = {
+				'offset': max( j['meta']['offset'] - j['meta']['limit'],  API_DEFAULT_OFFSET ),
+				'limit': min( j['meta']['offset'],  j['meta']['limit'] )
+			}
+		
+
+
 	
 	if request.user is not None:
 		j['user'] = request.user.username
