@@ -107,9 +107,11 @@ class Document( models.Model ):
 		return {
 			'id'	: self.id,
 			'title'	: self.title,
+			'language'	: self.language,
 			'date'	: self.ref_date.isoformat(),
 			'mime_type':self.mime_type,
-			'tags'	: [ t.json() for t in self.tags.all() ]
+			'tags'	: [ t.json() for t in self.tags.all() ],
+			'corpus': self.corpus.json()
 		}
 
 class Document_Tag( models.Model):

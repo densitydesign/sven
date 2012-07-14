@@ -115,16 +115,26 @@ def remove_relation(request, relation_id):
 	return render_to_json( response )
 
 @login_required
-def get_documents(request, corpus):
+def documents(request):
 	response = _json( request )
+
+	# create documents
+	if response['meta']['method'] == 'POST':
+		return create_document( request, response )
 	
-	response['corpus'] = Corpus.objects.get(name=corpus).json()
-	try:
-		response['corpus'] = Corpus.objects.get(name=corpus).json()
-	except:
-		return throw_error( response, "aje corpus does not exist...")
 	
-	response['objects'] = [d.json() for d in Document.objects.filter( corpus__name=corpus )]
+	if request.REQUEST.has_key( 'corpus' ):
+		try:
+			response['corpus'] = Corpus.objects.get(name=corpus).json()
+		except:
+			return throw_error( response, "aje corpus does not exist...")
+		response['meta']['total'] = Document.objects.count()		
+		response['results'] = [d.json() for d in Document.objects.filter( corpus__name=corpus )]
+		return render_to_json( response )
+	
+	# all documents
+	response['meta']['total'] = Document.objects.count()
+	response['results'] = [d.json() for d in Document.objects.all()[ response['meta']['offset']:response['meta']['limit'] ] ]
 	
 		
 	#except:
@@ -133,7 +143,12 @@ def get_documents(request, corpus):
 	return render_to_json( response )
 
 @login_required
-def get_document(request, document_id):
+def create_document( request, response ):
+	return throw_error( response, "unsupported method")
+	
+
+@login_required
+def document(request, document_id):
 	response = _json( request )
 	
 	d = _get_document( document_id )
@@ -286,8 +301,10 @@ def render_to_json( response ):
 
 
 
-def throw_error( response, error="", status="ko", code="404" ):
-	response[ 'error' ] = error
+def throw_error( response, error="", status="ko", code="404", verbose="", friendly="" ):
+	response[ 'error' ] = error # developer message
 	response[ 'status' ] = status
-	
+	response[ 'errorCode' ] = code
+	response[ 'userMessage' ] = friendly
+
 	return HttpResponse( json.dumps( response ), mimetype="text/plain")
