@@ -32,7 +32,7 @@ urlpatterns = patterns('',
 	url(r'^api/documents/(\d+)/$', 'sven.anta.api.document', name='anta_api_document' ),    
 	
 	# relations
-	url(r'^api/relations/$', 'sven.anta.api.get_relations', name='anta_api_get_relations' ),    
+	url(r'^api/relations/$', 'sven.anta.api.relations', name='anta_api_relations' ),    
 	url(r'^api/relations/(\d+)/$', 'sven.anta.api.relation', name='anta_api_relation' ),    
 	
 	# corpus (sing.)

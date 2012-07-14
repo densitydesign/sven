@@ -10,7 +10,7 @@ def textify( d, absolute_url ):
 	print
 	
 	# return an absolute url
-	output = absolute_url + d.corpus.name + "/" + os.path.basename( d.url.url ).replace(" ", "_")
+	output = absolute_url + d.corpus.name + "/" + os.path.basename( d.url.url ).replace("%20"," ")
 	
 	print "[info] executing texify function for ", output
 	

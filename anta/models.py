@@ -50,15 +50,27 @@ ENTITY_STATUS_CHOICES = (
 )
 
 POLARITY_CHOICES = (
-	(u'POS', u'positive'),
+	(u'NNE', u'very negative'),
     (u'NEG', u'negative'),
-    (u'?', u'not defined'),
+	(u'NEU', u'neuter'),
+	(u'POS', u'positive'),
+	(u'PPO', u'very positive'),	
 )
 
 POS_CHOICES = (
 	(u'NP', u'Noun phrase'),
     (u'?', u'not defined'),
 )
+
+# user json function
+def user_json( user ):
+	return{
+		'id': user.id,
+		'username': user.username	
+	}
+
+User.add_to_class('json', user_json )
+
 
 # Create your models here.
 # from many database to just one. just a test.
@@ -102,7 +114,11 @@ class Document( models.Model ):
 	
 	def __unicode__(self):
 		return self.title
-	
+
+	# get tfidf most important segments grouped by concept
+	def segments( self ):
+		return 	[]
+
 	def json(self):
 		return {
 			'id'	: self.id,
@@ -153,6 +169,22 @@ class Relation( models.Model ):
 	owner = models.ForeignKey( User )
 	class Meta:
 		unique_together = ("source", "target") 
+
+	def intensity( self, min, max):
+		steps  = float(max - min) / len( POLARITY_CHOICES )
+		return min + steps * [p[0] for p in POLARITY_CHOICES].index( self.polarity )
+
+	def json(self, min=-1, max=1):
+		return {
+			'id'	: self.id,
+			'source'	: self.source.id,
+			'target'	: self.target.id,
+			'creation_date'	: self.creation_date.isoformat(),
+			'description'	: self.description,
+			'polarity'	: self.polarity,
+			'intensity'	: self.intensity( min=min, max=max),
+			'owner': self.owner.json()
+		}
 
 class Analysis(models.Model ):
 	corpus	 = models.OneToOneField( Corpus )

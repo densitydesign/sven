@@ -23,6 +23,9 @@ API_DEFAULT_OFFSET = 0
 API_DEFAULT_LIMIT = 50
 API_AVAILABLE_METHODS = [ 'PUT', 'DELETE', 'POST', 'GET' ]
 
+API_EXCEPTION_DOESNOTEXIST =	'DoesNotExist'
+API_EXCEPTION_FORMERRORS	=	'FormErrors'
+
 #
 #    ==================================
 #    ---- ASSISTANT JSON API VIEWS ----
@@ -53,68 +56,71 @@ def get_corpus(request, corpus_id ):
 	
 	return render_to_json( response )
 
-	
+
+
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
-def add_relation(request):
+def relations( request ):
 	response = _json( request )
-	corpus = request.REQUEST.get('corpus','')
-	source = request.REQUEST.get('source','')
-	target = request.REQUEST.get('target','')
-	description = request.REQUEST.get('description','')
-	polarity = request.REQUEST.get('polarity','?')
+
+	# create documents
+	if response['meta']['method'] == 'POST':
+		return create_relation( request, response )
 	
-	response['testaz'] = corpus
+	if request.REQUEST.has_key( 'corpus' ):
+		try:
+			response['corpus'] = Corpus.objects.get(name=corpus).json()
+		except:
+			return throw_error( response, error="aje, corpus does not exist...")
+		response['meta']['total'] = Relation.objects.filter( source__corpus__name=corpus, target__corpus__name=corpus).count()		
+		response['results'] = [r.json() for r in Relation.objects.filter( source__corpus__name=corpus, target__corpus__name=corpus) [response['meta']['offset']:response['meta']['limit'] ]  ]
+		return render_to_json( response )
 	
-	# test vars here @todo
-	corpus = _get_corpus( corpus )
-	if corpus is None:
-		return throw_error( response, "corpus does not exist...")
+
+	response['meta']['total'] = Relation.objects.count()
+	response['results'] = [r.json() for r in Relation.objects.all()[ response['meta']['offset']:response['meta']['limit'] ] ]
 	
-	source = _get_document( source )
-	if source is None:
-		return throw_error( response, "source id document does not exist or is not valid")
-	
-	target = _get_document( target ) 
-	if target is None:
-		return throw_error( response, "target id document does not exist or is not valid")
-	
-	if target.id == source.id:
-		return throw_error( response, "self-to-self relations are currently not supported, sorry")
-	
-		
-	# create relation oblject
-	try:
-		r = Relation( source=source, target=target, description=description, polarity=polarity, owner=request.user )
+	return render_to_json( response )
+
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def create_relation( request, response ):
+	response['owner'] = request.user.json()
+	form = ApiRelationForm( request.REQUEST, initial={'owner':request.user} )
+	if form.is_valid():
+		r = Relation( 
+			source=form.cleaned_data['source'], target=form.cleaned_data['target'],
+			polarity=form.cleaned_data['polarity'],description=form.cleaned_data['description'], 
+			owner=form.cleaned_data['owner']
+		)
 		r.save()
-	except:
-		return throw_error( response, "a relationship has already been extablished between these documents")
-	
-	response[ 'relation' ] = { 
-		'id': r.id,
-		'polarity': polarity,
-		'source': source.id,
-		'target': target.id
-	}
-	
-	return render_to_json( response )
+		response['created'] = r.json()
+		return render_to_json( response )
+	else:
+		return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS )
 
-@login_required
-def remove_relation(request, relation_id):
-	
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def relation( request, id ):
 	response = _json( request )
+	# all documents
+	r =  _get_relation( id )
+	if r is None:
+		return throw_error( response, "Relation %s does not exist...," % id, code=API_EXCEPTION_DOESNOTEXIST )	
 	
-	corpus = request.REQUEST.get('corpus','')
+	response['results'] = [r.json()]
+		
+	if response['meta']['method'] == 'DELETE':
+		r.delete()		
 	
-	corpus = _get_corpus( corpus )
-	if corpus is None:
-		return throw_error( response, "corpus does not exist...")
-	r = Relation.objects.get( id=relation_id, owner=request.user )
-	#except:
-	#	return throw_error( response, "relation does not exist or you have no permission to modify it")
 	
 	return render_to_json( response )
 
-@login_required
+
+#
+#    ==================
+#    ---- DOCUMENTS----
+#    ==================
+#	
+
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def documents(request):
 	response = _json( request )
 
@@ -136,21 +142,21 @@ def documents(request):
 	response['meta']['total'] = Document.objects.count()
 	response['results'] = [d.json() for d in Document.objects.all()[ response['meta']['offset']:response['meta']['limit'] ] ]
 	
-		
-	#except:
-	#	return throw_error( response, "relation does not exist or you have no permission to modify it")
 	
 	return render_to_json( response )
 
-@login_required
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def create_document( request, response ):
 	return throw_error( response, "unsupported method")
 	
 
-@login_required
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def document(request, document_id):
 	response = _json( request )
-	
+
+	# create or update a document
+	# @todo	
+
 	d = _get_document( document_id )
 	if d is None:
 		return throw_error( response, "dcument does not exist...")
@@ -162,26 +168,17 @@ def document(request, document_id):
 	
 	# f = open( text, "r")
 		
-	response['document'] = { 'id':d.id,
-		'title':d.title,
-		'date':d.ref_date.isoformat(),
-		'mime_type':d.mime_type,
-		'url': d.url.url,
-		'tags': []
-	}
-	
-	for t in d.tags.all():
-		response['document']['tags'].append({
-			'id':t.id, 'name':t.name	
-		})
-	
-		# transform
-	# f = open( url, "r")
-	# response['document']['content'] = f.read()
-	
-	
+	response['results'] = [ d.json() ]
+	response['text']	= open(text, 'r').read()
 	
 	return render_to_json( response )
+
+
+#
+#    ======================
+#    ---- OTHER STUFFS ----
+#    ======================
+#
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def dummy_gummy( request ):
@@ -221,6 +218,7 @@ def access_denied( request ):
 #    ==========================
 #
 #    try except handling on the road
+#    Intended for Internal use only.
 #
 
 	
@@ -241,6 +239,15 @@ def _get_document( document_id ):
 	except:
 		return None
 
+def _get_relation( relation_id ):
+	# given a relation id return None or the related Relation object
+	try:
+		r = Relation.objects.get(id=relation_id)
+		return r
+	except:
+		return None
+
+
 def _json( request ):
 	j =  {"status":"ok", 'meta':{ 'indent':False } }
 	if request.REQUEST.has_key('indent'):
@@ -252,6 +259,11 @@ def _json( request ):
 		j['meta']['method'] =  request.REQUEST.get('method')
 	else:
 		j['meta']['method'] = request.method
+
+	if request.REQUEST.has_key('filters'):
+		j['meta']['filters'] =  request.REQUEST.get('filters')
+	else:
+		j['meta']['filters'] = []
 
 	# test against available methods, default with GET
 	if not j['meta']['method']  in API_AVAILABLE_METHODS:
@@ -307,4 +319,4 @@ def throw_error( response, error="", status="ko", code="404", verbose="", friend
 	response[ 'errorCode' ] = code
 	response[ 'userMessage' ] = friendly
 
-	return HttpResponse( json.dumps( response ), mimetype="text/plain")
+	return render_to_json( response )
