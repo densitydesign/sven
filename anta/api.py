@@ -115,6 +115,29 @@ def relation( request, id ):
 
 
 #
+#    =================
+#    ---- CORPORA ----
+#    =================
+#	
+
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def corpus( request, id ):
+	response = _json( request )
+	# all documents
+	c =  _get_corpus( id )
+	if c is None:
+		return throw_error( response, "Corpus %s does not exist...," % id, code=API_EXCEPTION_DOESNOTEXIST )	
+	
+	response['results'] = [c.json()]
+		
+	if response['meta']['method'] == 'DELETE':
+		c.delete()		
+	
+	
+	return render_to_json( response )
+
+
+#
 #    ==================
 #    ---- DOCUMENTS----
 #    ==================
@@ -223,10 +246,10 @@ def access_denied( request ):
 
 	
 
-def _get_corpus( corpus, user=None ):
+def _get_corpus( corpus_id ):
 	# given a corpus name return None or a corpus object
 	try:
-		c = Corpus.objects.get(name=corpus)
+		c = Corpus.objects.get(id=corpus_id)
 		return c
 	except:
 		return None
