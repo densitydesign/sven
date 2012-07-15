@@ -267,6 +267,8 @@ class Segment( models.Model):
 	pos			= models.CharField( max_length=3, choices=POS_CHOICES )
 	language	= models.CharField( max_length=2, choices=LANGUAGE_CHOICES )
 	stemmed		= models.SlugField( max_length=128 ) # no space alphabetic ordered
+	stemmed_refined	= models.SlugField( max_length=128 ) # no space alphabetic ordered
+	
 	type 		= models.CharField( max_length=2, choices=CREATION_CHOICES, default='PT' )
 	
 	ref_tfidf	= models.FloatField( default='0') # will be calcolated according to tf from Document_Segment as AVG or MAX or MIN of tfidf
