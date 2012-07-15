@@ -47,7 +47,7 @@ def segments( options, parser ):
 		s.stemmed_refined = row['stemmed']
 		# s.stemmed
 		s.save()
-		break
+		# break
 
 def main( argv):
 	parser = OptionParser( usage="usage: %prog -f csv -c corpus_name [-d delimiter]" )
