@@ -21,7 +21,7 @@ def sync( options, parser ):
 	print "[sync] corpus:",options.corpus
 	print "[sync] corpsu path:", path
 	print "[sync] path exists:", os.path.exists( path )
-	print "[sync] autoformat:", options.autoformat
+	print "[sync] disable autoformat:", options.noautoformat
 	
 	
 	if not os.path.exists( path ):
@@ -38,47 +38,65 @@ def sync( options, parser ):
 	docs = os.listdir(path)
 	
 	for doc in docs:
-		parts = os.path.splitext(doc)[0].split("_",3)
-		mime_type	=  mimetypes.guess_type( path + "/" + doc )[0]
+		filename = os.path.splitext(doc)[0]
+		parts = filename.split("_",3)
+		
+		print
+		print "[sync] filename:", filename
 		
 		
 		# exclude .{ext}.txt from being taken
 		if re.search( "\.[^\.]{3,4}\.[^\.]{3}$", doc ) is not None:
 			print "[sync] skipping dual extension filenames.!", parts
 			continue
+
+		# guess mimetype
+		mime_type	=  mimetypes.guess_type( path + "/" + doc )[0]
+		
+		# guess date		
+		date = re.search( r'(\d{8})', filename )
+		
+		if date is None:
+			date = datetime.now()
+		else:
+			try:
+				date	= datetime.strptime( date.group(), "%Y%m%d" ) 
+			except:
+				print "[sync] date format %s is not valid, substituted with datetime.now" % date.group()
+				date	= datetime.now()
 		
 		# automatically include .txt files
-		print "[sync] detecting mime type!", mime_type
+		print "[sync] detecting mime type:", mime_type
+		print "[sync] detecting date:", date.isoformat()
+			
 		
-		if len( parts ) == 4 and options.autoformat:
-			print "[sync] file name is not valid! skipping...", parts
+		# if options.autoformat
+		# split by underscore (actor(s)[minus spaced], lang[EN|NL|FR], data[YYYYMMDD], title )
+		# string sample: ACTOR1-ACTOR2_EN_20120131_A long and misty title about something
+		#
+		if options.noautoformat:
+			actors =[]
+			language = 'EN'
+			date = datetime.now()
+			title = os.path.splitext(doc)[0]
+
+		elif len( parts ) == 4:
+			print "[sync] file name seems to be valid:", parts
 			
 			actors		= parts[0].split("-")
 			language	= parts[1]
-			try:
-				date	= datetime.strptime( parts[2], "%Y%m%d" ) 
-			except:
-				print "[sync] date forma is not standard, substitute with datetime.now"
-				date	= datetime.now()
-				
 			title		= parts[3].replace("_"," ")
 		else:
-			print "[WARNING] autoformat option is False or file name does not handle information about language and date. Hence, default applied"
+			print "[WARNING] autoformat option is True but the file name does not handle enough information. Default applied"
 			actors =[]
 			language = 'EN'
 			date = datetime.now()
 			title = os.path.splitext(doc)[0]
 			
-		print
 		print "[sync] saving file:", doc, mime_type
 		print "[sync] file title:", title		
 		print "[sync] file lang:", language
 		print "[sync] file date:", date
-		
-		# get tags
-		# tag rule, by underscore (actor(s)[minus spaced], lang[EN|NL|FR], data[YYYYMMDD], title )
-		# ACTOR1-ACTOR2_EN_
-		# underscore groups
 		print "[info] actors found:",actors
 		
 		# save documents
@@ -90,7 +108,7 @@ def sync( options, parser ):
 			# file do not exist, ty to uppload it
 			d = Document( url=doc, mime_type=mime_type, ref_date=date, corpus=corpus, status='IN', language=language, title=title )
 			d.save()
-			print "[sync] file now added"
+			print "[sync] file added:", d.id
 		
 		# store actors as tags and attach with document_tags
 		for a in actors:
@@ -105,9 +123,10 @@ def sync( options, parser ):
 			try:
 				dt = Document_Tag( document=d, tag=t )
 				dt.save()
+				
 			except:
 				print "[warning] document tag relationship exists."
-				continue
+				# continue
 			#	"""
 			#	SELECT d.language,d.title, t.name, t.type 
 			#	FROM `anta_document_tag` dt  JOIN anta_document d ON dt.document_id = d.id 
@@ -140,8 +159,8 @@ def main( argv):
 		help="corpus language (char=2), e.g 'nl' or 'en', default 'en'. will be saved only for NEWLY added documents")
 	
 	parser.add_option(
-		"-f", "--autoformat", dest="autoformat",
-		help="corpus language (char=2), e.g 'nl' or 'en', default 'en'. will be saved only for NEWLY added documents")
+		"-a", "--noautoformat", dest="noautoformat",
+		help="if is set, disable automatic actors recognition in filename string")
 	
 	( options, argv ) = parser.parse_args()
 	
@@ -149,10 +168,10 @@ def main( argv):
 	if options.corpus is None:
 		error( message="Use -c to specify the corpus", parser=parser )
 	
-	if options.autoformat is None:
-		options.autoformat = False
+	if options.noautoformat is None:
+		options.noautoformat = False
 	else:
-		options.autoformat = True
+		options.noautoformat = True
 		
 	sync(options, parser )
 

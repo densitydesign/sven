@@ -16,7 +16,7 @@ from django.conf import settings
 from django.db.models import Count
 from optparse import OptionParser
 from sven.anta.models import *
-from sven.anta.sync import error
+from sven.anta.sync import error, sync
 from sven.anta.log import log
 from sven.anta.distiller import distill
 from sven.anta.utils import *
@@ -65,7 +65,7 @@ def freebase( options, parser ):
 		print "[info] search:",s.content, s.language, s.num_concepts
 		results =  fsearch({'query':s.content, 'key':options.freebasekey, 'lang':s.language.lower()}, stop_universes=[
 			"/book/written_work", 
-			"book/book/,
+			"book/book/",
 			"/film/film", "/music/track",
 			"/book/book_edition",
 			"/tv/tv_series_episode",
@@ -162,6 +162,11 @@ def executere(options, parser ):
 	except:
 		return error( message="corpus was not found! use sync.py script to load corpora", parser=parser )
 	
+def basic( options, parser ):
+	print "[info] basic function, simple tf computation"
+	options.noautoformat = False
+	sync( options, parser )
+	decant( options, parser )
 
 # decant function,
 # foreach documents
@@ -259,7 +264,11 @@ def decant( options, parser ):
 			except:
 				# todo lemma version of a word according to language
 				t = Tag( name=candidate, type="keyword" )
-				t.save()
+				try:
+					t.save()
+				except:
+					print "[warning] unable to save as tag:", candidate
+					continue
 		 	
 		 	# set tag documnt relation
 		 	try:
@@ -272,15 +281,20 @@ def decant( options, parser ):
 		# segment
 		first = True
 		for segment in distilled['segments']:
+						
+
 			if len(segment[0]) > 128:
 				print "[warning] sample 'segment' will be truncated:", segment[0]
 				continue
 			try:
 				s = Segment.objects.get( content=segment[0][:128], language=d.language)
 			except:
-				s = Segment( content=segment[0][:128], stemmed="-".join(segment[1])[:128], language=d.language )
-				s.save()
-			
+				s = Segment( content=segment[0][:128], stemmed=re.sub("\s+", ' ', " ".join(segment[1])[:128] ), language=d.language )
+				try:
+					s.save()
+				except:
+					print "[warning] unable to save segment:", segment[0][:128]
+					continue
 			try:
 				sd = Document_Segment.objects.get( document=d, segment=s )
 			except:
@@ -293,11 +307,20 @@ def decant( options, parser ):
 			
 			# save concept and attach
 			for k in segment[1]:
+				# ignore numbers				
+				k = re.sub("[\d\-\.]+","", k)
+				if len(k) < 2:
+					continue
 				try:
 					c = Concept.objects.get( content=k, language=d.language)
 				except:
-					c = Concept( content=k, language=d.language )
-					c.save()
+					try:
+						c = Concept( content=k, language=d.language )
+
+						c.save()
+					except:
+						print "[warning] unable to save concept: ", k
+						continue
 				try:
 					sc = Segment_Concept.objects.get( segment=s, concept=c )
 				except:
@@ -340,13 +363,15 @@ def main( argv):
 	if options.corpus is None:
 		error( message="Use -c to specify the corpus", parser=parser )
 	
-	if options.function is None:
+	if options.function is "decant":
 		return decant(options, parser )
 	elif options.function == "duplicates":
 		return duplicates(options, parser )
 	elif options.function == "freebase":
 		return freebase( options, parser )
-		
+	else :
+		return basic(options, parser)	
+	
 	error( message="function '"+options.function+"'was not found!", parser=parser )
 	
 	

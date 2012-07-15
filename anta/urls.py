@@ -36,6 +36,9 @@ urlpatterns = patterns('',
 	url(r'^api/relations/(\d+)/$', 'sven.anta.api.relation', name='anta_api_relation' ),    
 	
 	# corpus (sing.)
+	# url(r'^api/corpus/$', 'sven.anta.api.corpora', name='anta_api_corpora' ),    
+	url(r'^api/corpus/(\d+)/$', 'sven.anta.api.corpus', name='anta_api_corpus' ),    
+		
 
 	# url(r'^api/get-corpora/$', 'sven.anta.api.get_corpora', name='anta_api_get_corpora' ),    
 	# url(r'^api/get-corpus/(\w+)/$', 'sven.anta.api.get_corpus', name='anta_api_get_corpus' ),    

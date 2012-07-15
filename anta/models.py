@@ -100,6 +100,21 @@ class Tag( models.Model ):
 			'name'	: self.name
 		}	
 
+class Relatum( models.Model ):
+	# freebase notable segments are entity attached
+	content		= models.CharField( max_length=64 )
+	language	= models.CharField( max_length=2, choices=LANGUAGE_CHOICES )
+	slug		= models.CharField( max_length=64 ) # freebase id
+	name		= models.CharField( max_length=64 ) # freebase name
+	class Meta:
+		unique_together = ("slug", "language") 
+		
+class Concept( models.Model ):
+	content	= models.CharField( max_length=128 )
+	language = models.CharField( max_length=2, choices=LANGUAGE_CHOICES )
+	relata	= models.ManyToManyField( Relatum, through="Semantic_Relation" )
+
+
 class Document( models.Model ):
 	# the document in the corpus
 	title = models.TextField()
@@ -111,7 +126,8 @@ class Document( models.Model ):
 	ref_date =  models.DateTimeField(  default=datetime.now(), blank=None, null=None )
 	corpus = models.ForeignKey( Corpus )
 	tags = models.ManyToManyField( Tag, through='Document_Tag' )
-	
+	concepts = models.ManyToManyField( Concept, through='Document_Concept' )
+
 	def __unicode__(self):
 		return self.title
 
@@ -127,6 +143,7 @@ class Document( models.Model ):
 			'date'	: self.ref_date.isoformat(),
 			'mime_type':self.mime_type,
 			'tags'	: [ t.json() for t in self.tags.all() ],
+			'concepts': [ c.json() for c in self.concepts.all() ],
 			'corpus': self.corpus.json()
 		}
 
@@ -219,19 +236,6 @@ class Graph( models.Model ):
 # "Tag" here refers to human annotation activity.
 #
 
-class Relatum( models.Model ):
-	# freebase notable segments are entity attached
-	content		= models.CharField( max_length=64 )
-	language	= models.CharField( max_length=2, choices=LANGUAGE_CHOICES )
-	slug		= models.CharField( max_length=64 ) # freebase id
-	name		= models.CharField( max_length=64 ) # freebase name
-	class Meta:
-		unique_together = ("slug", "language") 
-		
-class Concept( models.Model ):
-	content	= models.CharField( max_length=128 )
-	language = models.CharField( max_length=2, choices=LANGUAGE_CHOICES )
-	relata	= models.ManyToManyField( Relatum, through="Semantic_Relation" )
 
 class Concept_Metrics( models.Model ):
 	concept = models.ForeignKey( Concept, unique=True )
@@ -244,6 +248,15 @@ class Semantic_Relation( models.Model ):
 	relatum	= models.ForeignKey( Relatum )
 	class Meta:
 		unique_together = ("concept", "relatum") 
+
+class Document_Concept( models.Model):
+	document = models.ForeignKey( Document )
+	concept =  models.ForeignKey( Concept )
+	tf = models.FloatField( default=1 ) # term'concept' absolute frequency of the stemmed version of the segment
+	tfidf = models.FloatField( default='0') # calculated according to the document
+	
+	class Meta:
+		unique_together = ("document", "concept")
 
 
 
