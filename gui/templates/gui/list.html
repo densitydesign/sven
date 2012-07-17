@@ -5,7 +5,8 @@
     <h1>gui list view</h1>
     <p>Seems like you're logged in as {{ user }}</p>
     
-    <button id="test-query">Test query</button><br/>
+    <button id="test-query">Test documents</button><br/>
+    <button id="test-document">Test document</button><br/>
 
     
     
@@ -38,8 +39,8 @@
         
         $("#console-div").append("errors:" + errors + "<br/>");
 		*/
-		$("#console-div").append("results:<br/>");
-		$("#console-div").append(JSON.stringify(response) + "<br/>");
+		$("#console-div").append("results:<br/><pre>");
+		$("#console-div").append(JSON.stringify(response, null, 4) + "</pre><br/>");
     }
     
     
@@ -82,7 +83,17 @@
     
     
     $("#test-query").click(function(){
-        sven.query(function(response){
+        sven.getDocuments(function(response){
+            console.log("response", response);
+            $("#console-div").append("query called<br/>");
+            logErrorsAndResults(response)
+        
+        },{'limit':2, 'offset':0});
+    
+    });
+    
+    $("#test-document").click(function(){
+        sven.getDocument(1, function(response){
             console.log("response", response);
             $("#console-div").append("query called<br/>");
             logErrorsAndResults(response)
