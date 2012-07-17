@@ -11,7 +11,7 @@ from sven.anta.models import *
 
 CUSTOM_SETTINGS = {
 	'STATIC_URL':'/static/',
-	'LOGIN_URL':'/sven/anta/login'
+	'LOGIN_URL':'/anta/login'
 }
 
 @login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
