@@ -50,15 +50,27 @@ ENTITY_STATUS_CHOICES = (
 )
 
 POLARITY_CHOICES = (
-	(u'POS', u'positive'),
+	(u'NNE', u'very negative'),
     (u'NEG', u'negative'),
-    (u'?', u'not defined'),
+	(u'NEU', u'neuter'),
+	(u'POS', u'positive'),
+	(u'PPO', u'very positive'),	
 )
 
 POS_CHOICES = (
 	(u'NP', u'Noun phrase'),
     (u'?', u'not defined'),
 )
+
+# user json function
+def user_json( user ):
+	return{
+		'id': user.id,
+		'username': user.username	
+	}
+
+User.add_to_class('json', user_json )
+
 
 # Create your models here.
 # from many database to just one. just a test.
@@ -88,6 +100,21 @@ class Tag( models.Model ):
 			'name'	: self.name
 		}	
 
+class Relatum( models.Model ):
+	# freebase notable segments are entity attached
+	content		= models.CharField( max_length=64 )
+	language	= models.CharField( max_length=2, choices=LANGUAGE_CHOICES )
+	slug		= models.CharField( max_length=64 ) # freebase id
+	name		= models.CharField( max_length=64 ) # freebase name
+	class Meta:
+		unique_together = ("slug", "language") 
+		
+class Concept( models.Model ):
+	content	= models.CharField( max_length=128 )
+	language = models.CharField( max_length=2, choices=LANGUAGE_CHOICES )
+	relata	= models.ManyToManyField( Relatum, through="Semantic_Relation" )
+
+
 class Document( models.Model ):
 	# the document in the corpus
 	title = models.TextField()
@@ -99,17 +126,25 @@ class Document( models.Model ):
 	ref_date =  models.DateTimeField(  default=datetime.now(), blank=None, null=None )
 	corpus = models.ForeignKey( Corpus )
 	tags = models.ManyToManyField( Tag, through='Document_Tag' )
-	
+	concepts = models.ManyToManyField( Concept, through='Document_Concept' )
+
 	def __unicode__(self):
 		return self.title
-	
+
+	# get tfidf most important segments grouped by concept
+	def segments( self ):
+		return 	[]
+
 	def json(self):
 		return {
 			'id'	: self.id,
 			'title'	: self.title,
+			'language'	: self.language,
 			'date'	: self.ref_date.isoformat(),
 			'mime_type':self.mime_type,
-			'tags'	: [ t.json() for t in self.tags.all() ]
+			'tags'	: [ t.json() for t in self.tags.all() ],
+			'concepts': [ c.json() for c in self.concepts.all() ],
+			'corpus': self.corpus.json()
 		}
 
 class Document_Tag( models.Model):
@@ -152,6 +187,22 @@ class Relation( models.Model ):
 	class Meta:
 		unique_together = ("source", "target") 
 
+	def intensity( self, min, max):
+		steps  = float(max - min) / len( POLARITY_CHOICES )
+		return min + steps * [p[0] for p in POLARITY_CHOICES].index( self.polarity )
+
+	def json(self, min=-1, max=1):
+		return {
+			'id'	: self.id,
+			'source'	: self.source.id,
+			'target'	: self.target.id,
+			'creation_date'	: self.creation_date.isoformat(),
+			'description'	: self.description,
+			'polarity'	: self.polarity,
+			'intensity'	: self.intensity( min=min, max=max),
+			'owner': self.owner.json()
+		}
+
 class Analysis(models.Model ):
 	corpus	 = models.OneToOneField( Corpus )
 	document = models.ForeignKey( Document, blank=True, null=True ) # current document under analysis, ordered by
@@ -185,14 +236,6 @@ class Graph( models.Model ):
 # "Tag" here refers to human annotation activity.
 #
 
-class Relatum( models.Model ):
-	content = models.CharField( max_length=128 )
-	language = models.CharField( max_length=2, choices=LANGUAGE_CHOICES )
-	
-class Concept( models.Model ):
-	content	= models.CharField( max_length=128 )
-	language = models.CharField( max_length=2, choices=LANGUAGE_CHOICES )
-	relata	= models.ManyToManyField( Relatum, through="Semantic_Relation" )
 
 class Concept_Metrics( models.Model ):
 	concept = models.ForeignKey( Concept, unique=True )
@@ -203,10 +246,18 @@ class Concept_Metrics( models.Model ):
 class Semantic_Relation( models.Model ):
 	concept = models.ForeignKey( Concept )
 	relatum	= models.ForeignKey( Relatum )
+	class Meta:
+		unique_together = ("concept", "relatum") 
 
-# class Entity( models.Model ):
-	# freebase notable segments are entity attached
+class Document_Concept( models.Model):
+	document = models.ForeignKey( Document )
+	concept =  models.ForeignKey( Concept )
+	tf = models.FloatField( default=1 ) # term'concept' absolute frequency of the stemmed version of the segment
+	tfidf = models.FloatField( default='0') # calculated according to the document
 	
+	class Meta:
+		unique_together = ("document", "concept")
+
 
 
 # Segment is the base class for POS tagging, it will contain NP, VP accoring to analysis chosen.
@@ -216,6 +267,8 @@ class Segment( models.Model):
 	pos			= models.CharField( max_length=3, choices=POS_CHOICES )
 	language	= models.CharField( max_length=2, choices=LANGUAGE_CHOICES )
 	stemmed		= models.SlugField( max_length=128 ) # no space alphabetic ordered
+	stemmed_refined	= models.SlugField( max_length=128 ) # no space alphabetic ordered
+	
 	type 		= models.CharField( max_length=2, choices=CREATION_CHOICES, default='PT' )
 	
 	ref_tfidf	= models.FloatField( default='0') # will be calcolated according to tf from Document_Segment as AVG or MAX or MIN of tfidf
@@ -224,10 +277,21 @@ class Segment( models.Model):
 	tags 		= models.ManyToManyField( Tag,  through="Segment_Tag" )
 	documents 	= models.ManyToManyField( Document, through="Document_Segment" ) # contains info about document term frequency
 	concepts	= models.ManyToManyField( Concept,  through="Segment_Concept" )
+	relata		= models.ManyToManyField( Relatum, through="Segment_Semantic_Relation" )
 	
 	class Meta:
 		unique_together = ("content", "language", "type") 
 		# a content which has the same pos tag and the same creation mode
+
+class Segment_Semantic_Relation( models.Model ):
+	segment = models.ForeignKey( Segment )
+	relatum	= models.ForeignKey( Relatum )
+	class Meta:
+		unique_together = ("segment", "relatum") 
+
+
+
+
 class Segment_Concept( models.Model ):
 	segment = models.ForeignKey( Segment )
 	concept = models.ForeignKey( Concept )

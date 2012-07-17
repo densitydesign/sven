@@ -20,16 +20,31 @@ urlpatterns = patterns('',
     
 	# api
 	url(r'^api/$', 'sven.anta.api.index', name='anta_api_index'),    
+	
+	# special api urls, dummy gummy is a tester
 	url(r'^api/access-denied/$', 'sven.anta.api.access_denied', name='anta_api_access_denied' ),
 	url(r'^api/login-requested/$', 'sven.anta.api.login_requested', name='anta_api_login_requested' ),
 	url(r'^api/dummy-gummy/$', 'sven.anta.api.dummy_gummy', name='anta_api_dummy_gummy' ),
 	url(r'^api/logout/$', 'sven.anta.api.logout_view', name='anta_api_logout_view' ),
+
+	# documents
+	url(r'^api/documents/$', 'sven.anta.api.documents', name='anta_api_documents' ),    
+	url(r'^api/documents/(\d+)/$', 'sven.anta.api.document', name='anta_api_document' ),    
 	
-	url(r'^api/get-corpora/$', 'sven.anta.api.get_corpora', name='anta_api_get_corpora' ),    
-	url(r'^api/get-corpus/(\w+)/$', 'sven.anta.api.get_corpus', name='anta_api_get_corpus' ),    
+	# relations
+	url(r'^api/relations/$', 'sven.anta.api.relations', name='anta_api_relations' ),    
+	url(r'^api/relations/(\d+)/$', 'sven.anta.api.relation', name='anta_api_relation' ),    
 	
-	url(r'^api/get-documents/corpus/(\w+)/$', 'sven.anta.api.get_documents', name='anta_api_get_documents' ),    
-	url(r'^api/get-document/(\d+)/$', 'sven.anta.api.get_document', name='anta_api_get_document' ),    
+	# corpus (sing.)
+	# url(r'^api/corpus/$', 'sven.anta.api.corpora', name='anta_api_corpora' ),    
+	url(r'^api/corpus/(\d+)/$', 'sven.anta.api.corpus', name='anta_api_corpus' ),    
+		
+
+	# url(r'^api/get-corpora/$', 'sven.anta.api.get_corpora', name='anta_api_get_corpora' ),    
+	# url(r'^api/get-corpus/(\w+)/$', 'sven.anta.api.get_corpus', name='anta_api_get_corpus' ),    
+	
+	# url(r'^api/get-documents/corpus/(\w+)/$', 'sven.anta.api.get_documents', name='anta_api_get_documents' ),    
+	# url(r'^api/get-document/(\d+)/$', 'sven.anta.api.get_document', name='anta_api_get_document' ),    
 	    
 
     # Uncomment the next line to enable the admin:

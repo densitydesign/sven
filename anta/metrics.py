@@ -37,28 +37,39 @@ SELECT s.content as sample_content, GROUP_CONCAT(s.content) as concat_content, s
 """
 
 
-def tfidf( corpus, language, parser ):
+def tfidf( corpus, language, parser, column="stemmed" ):
+	print """
+	===========================
+	---- TFIDF COMPUTATION ----
+	===========================
 	"""
+	print "column:",column
 	
-	"""
+	
 	try:
+		# get corpus
 		corpus = Corpus.objects.get( name=corpus )
 	except:
-		
 		return error( message="corpus was not found!", parser=parser )
-	# get document corpus
 	
-	number_of_documents = Document.objects.filter(corpus=corpus,language=language.upper()).count()
+	print "corpus:",corpus.id, corpus.name
+	
+	number_of_documents = Document.objects.filter(corpus=corpus ).count()
+	print "document in corpus:",number_of_documents
 	
 	
 	cursor = connection.cursor()
 	
-	cursor.execute("SELECT COUNT( DISTINCT ds.document_id ) as distribution, s.stemmed FROM `anta_document_segment` ds JOIN anta_segment s ON ds.segment_id = s.id JOIN anta_document d ON d.id = ds.document_id WHERE s.language=%s AND d.corpus_id = %s GROUP BY s.stemmed ORDER BY distribution DESC, stemmed ASC", [ language.upper(), corpus.id])
+	cursor.execute("SELECT COUNT( DISTINCT ds.document_id ) as distribution, s." + column + " FROM `anta_document_segment` ds JOIN anta_segment s ON ds.segment_id = s.id JOIN anta_document d ON d.id = ds.document_id WHERE d.corpus_id = %s GROUP BY s."+column+" ORDER BY distribution DESC, "+ column +" ASC", [ corpus.id])
     
 	for row in dictfetchall(cursor):
 		
-		print row['stemmed'], row['distribution']
-		ds = Document_Segment.objects.filter(segment__stemmed=row['stemmed'], document__corpus=corpus, document__language=language.upper()).all().order_by('-tf')
+		print row[ column ], row['distribution']
+		kwargs = {
+    		'{0}__{1}'.format('document', 'corpus'): corpus,
+			'{0}__{1}'.format('segment', column ): row[ column ],
+		}
+		ds = Document_Segment.objects.filter( **kwargs ).all().order_by('-tf')
 		
 		df = float( row['distribution'] ) / number_of_documents
 		# computate tf idf for the given value
@@ -70,31 +81,33 @@ def tfidf( corpus, language, parser ):
 			s.save()
 			
 			if first:
-				print "[info] sample tfidf for '",row['stemmed'], '{', row['distribution'],"}': tf[",s.tf,"] df[", df, "] idf[",math.log(1/df),"] tfidf[", s.tfidf,"]"
+				print "sample tfidf for '",row[ column ], '{', row['distribution'],"}': tf[",s.tf,"] df[", df, "] idf[",math.log(1/df),"] tfidf[", s.tfidf,"]"
 				first = False
 	# cycle thouhg segments
 	
 	print corpus.name, number_of_documents
 	
 
-def similarity( corpus, language, parser ):
+def similarity( corpus, language, parser, column="stemmed" ):
+	print """
+	====================
+	---- SIMILARITY ----
+	====================
+	"""
 	
 	try:
 		corpus = Corpus.objects.get( name=corpus )
 	except:
-		return error( message="corpus was not found!", parser=parser )
+		return error( message="corpus '%s' was not found!" % corpus, parser=parser )
 	
+	print "corpus:",corpus.id, corpus.name
 	
+	number_of_documents = Document.objects.filter(corpus=corpus ).count()
+	print "document in corpus:",number_of_documents
+	
+	# get stemmed list per document
 	cursor = connection.cursor()
-	
-	cursor.execute("""
-		SELECT REPLACE(stemmed,"-"," ") as stemmed, d.id as doc_id
-		FROM anta_document_segment ds 
-		JOIN anta_segment s ON ds.segment_id = s.id 
-		JOIN anta_document d ON ds.document_id = d.id
-		WHERE d.corpus_id=%s AND d.language=%s
-		""",[ corpus.id, language.upper() ]
-	) # we do not need ORDER BY d.id, ds.id
+	cursor.execute("SELECT " + column + ", d.id as doc_id FROM anta_document_segment ds  JOIN anta_segment s ON ds.segment_id = s.id JOIN anta_document d ON ds.document_id = d.id WHERE d.corpus_id=%s",[ corpus.id ] ) # we do not need ORDER BY d.id, ds.id
 	
 	# build corpus 
 	documents = {}
@@ -102,7 +115,7 @@ def similarity( corpus, language, parser ):
 	for row in dictfetchall(cursor):
 		if row['doc_id'] not in documents:
 			documents[ row['doc_id'] ] = []
-		documents[ row['doc_id'] ].append( row['stemmed'] )	
+		documents[ row['doc_id'] ].append( row[ column ] )	
 		
 	# translate corpus id
 	pattern_id_translation = {}
@@ -112,20 +125,22 @@ def similarity( corpus, language, parser ):
 		documents[d] = pvDocument( " ".join( documents[d] ) )
 		pattern_id_translation[ documents[d].id ] = d
 		
-	print pattern_id_translation
+	print "pattern_id_translation table:", pattern_id_translation
+	print "document in corpus:",number_of_documents
+	print "similarity neighborood ",number_of_documents / 2
 	
 	# store document in corpus.
 	c = pvCorpus( documents.values() )
 	
 	# computate and save similarities
 	for d in documents:
-		for n in c.neighbors( documents[d], top=3 ):
+		for n in c.neighbors( documents[d], top=number_of_documents):
 			alpha_id = pattern_id_translation[ documents[d].id ]
 			omega_id = pattern_id_translation[ n[1].id ]
 			cosine_similarity = n[0]
 			
 			try:
-				dist = Distance.objects.get( alpha_id=alpha_id, omega_id=omega_id )
+				dist = Distance.objects.get( alpha__id=alpha_id, omega__id=omega_id )
 				print "distantce exists:", dist.id, cosine_similarity
 			except:
 				dist = Distance( alpha_id=alpha_id, omega_id=omega_id )
@@ -138,17 +153,18 @@ def similarity( corpus, language, parser ):
 	return
 	
 def main( argv):
-	usage = "usage: %prog -c corpus_name -l language -f function [tfidf|similarity]"
+	usage = "usage: %prog -c corpus_name -l language -f function [tfidf|similarity [-o column]]"
 	parser = OptionParser( usage=usage )
-	parser.add_option(
-		"-c", "--corpus", dest="corpus",
+	parser.add_option("-c", "--corpus", dest="corpus",
 		help="anta corpus_name to be metricsied. Computate tfidf")
-	parser.add_option(
-		"-l", "--language", dest="language",
+		
+	parser.add_option( "-l", "--language", dest="language", default="en",
 		help="language")
 	
-	parser.add_option(
-		"-f", "--function", dest="func",
+	parser.add_option("-f", "--function", dest="func",
+		help="function")
+	
+	parser.add_option( "-o", "--tfidfcolumn", dest="tfidfcolumn", default="stemmed",
 		help="function")
 	
 	( options, argv ) = parser.parse_args()
@@ -163,10 +179,10 @@ def main( argv):
 		error( message="Use -f to specify the desired function.", parser=parser )
 	
 	if options.func == "tfidf":	
-		tfidf(options.corpus, options.language, parser )
+		tfidf(options.corpus, options.language, parser, options.tfidfcolumn )
 		return
 	if options.func == "similarity":
-		similarity(options.corpus, options.language, parser )
+		similarity(options.corpus, options.language, parser, options.tfidfcolumn )
 		return
 	error( message="sorry, the desired function was not found!", parser=parser )
 	

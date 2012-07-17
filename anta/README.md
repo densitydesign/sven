@@ -122,3 +122,17 @@ get number of analysed document (raw)
 	FROM  `anta_document_segment` ds
 	JOIN `anta_document` d ON ds.document_id = d.id
 		WHERE d.corpus_id = 1
+		
+get top stemmed segment per actor:
+	
+	SELECT 
+	    t.*, ds.*, s.content, s.stemmed_refined, 
+	    count( distinct d.id) as distro 
+	FROM `anta_document_segment` ds 
+	JOIN anta_document_tag dt ON dt.document_id = ds.document_id 
+	JOIN anta_tag t ON t.id = dt.tag_id 
+	JOIN anta_segment s ON s.id = ds.segment_id 
+	    WHERE t.type='actor' 
+	GROUP BY t.id,  stemmed_refined 
+	ORDER BY distro DESC
+	

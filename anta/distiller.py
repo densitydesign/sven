@@ -1,15 +1,18 @@
+
+import json, codecs, sys, os
+
+# get path of the django project
+path = ("/").join( sys.path[0].split("/")[:-2] )
+if path not in sys.path:
+    sys.path.append(path)
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'sven.settings'
+
 from pattern.vector import Corpus, Document, stopwords, count
 from pattern.search import search as p_search
 import pattern.nl #     import parse as nlparse, split as nlsplit, Sentence as nlSentence, Text as nlText
 import pattern.en  #   import parse as enparse, Sentence as enSentence, Text as enText
 
-import json, codecs, sys, os
-
-path = '/var/www/sven.densitydesign.org'
-if path not in sys.path:
-    sys.path.append(path)
-
-os.environ['DJANGO_SETTINGS_MODULE'] = 'sven.settings'
 
 from django.conf import settings
 from optparse import OptionParser
@@ -36,8 +39,9 @@ def evaporate( document, stopwords, keywords ):
 	for matches in document:
 		
 		for match in matches:
-			print match
-			print match.string
+			
+			# print match
+			# print match.string
 			# true if the segment-mathc contains at least one salient word (not in stopword)
 			contains_concept = False
 			
@@ -46,9 +50,15 @@ def evaporate( document, stopwords, keywords ):
 			
 			for word in match:
 				
+				# clean word.lemma...
+				# print word.lemma
+				word.lemma = strip_punctuation( word.lemma )
+				# print word.lemma
+				# print
 				if len( word.lemma ) < 2 :
 					continue
 				
+
 				if word.lemma in stopwords:
 					continue
 				

@@ -12,7 +12,7 @@ from urllib import urlencode
 FREEBASE_API_URL = "https://www.googleapis.com/freebase/v1/"
 
 
-def search( params, notable_only=True, universe=None ):
+def search( params, notable_only=True, universe=None, stop_universes=None ):
 	url = FREEBASE_API_URL + "search?" + urlencode( params )
 	response = load( url )
 	
@@ -24,6 +24,11 @@ def search( params, notable_only=True, universe=None ):
 		filtered_response = []
 		for r in response['result']:
 			if 'notable' in r:
+				if stop_universes:
+					if r['notable']['id'] in stop_universes:
+						print "skipping...:", r['notable']['id']
+						continue
+				
 				if universe:
 					if re.search( universe.lower(), r['notable']['id'] ) is not None:
 						print "matches", universe,":",r['score'], r['notable']['id'], r['notable']['name'], r['name']
