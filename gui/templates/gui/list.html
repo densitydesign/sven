@@ -5,9 +5,22 @@
     <h1>gui list view</h1>
     <p>Seems like you're logged in as {{ user }}</p>
     
+    <label>source: </label><input name="source" id="source"/><br/>
+	<label>target: </label><input name="target" id="target"/><br/>
+	<label>polarity: </label><input name="polarity" id="polarity"/><br/>
+	<label>description: </label><input name="description" id="description"/><br/>
+    <button id="add-relation">Add relation</button><br/>
+    <br/>
+    <label>limit :</label><input name="limit" id="limit"/><br/>
+    <label>offset: </label><input name="offset "id="offset"/><br/>
     <button id="test-query">Test documents</button><br/>
+    <button id="test-relations">Test relations</button><br/>
+    <br/>
+    <label>id: <input name="idDocument" id="idDocument"/><br/>
     <button id="test-document">Test document</button><br/>
-
+    <button id="test-relation">Test relation</button><br/>
+    <button id="delete-relation">Delete relation</button><br/>
+	<br/>
     
     
     <div id="console-div"></div>
@@ -39,117 +52,114 @@
         
         $("#console-div").append("errors:" + errors + "<br/>");
 		*/
+
+		if (response.statusText){response = "error: " + response.statusText + " " + response.status};
 		$("#console-div").append("results:<br/><pre>");
 		$("#console-div").append(JSON.stringify(response, null, 4) + "</pre><br/>");
     }
     
-    
-/*
-    $("#test-meta-server").click(function(){
-
-        sketch.getServerMeta(function(response){
-        
-            $("#console-div").append("getServerMeta called<br/>");
-            logErrorsAndResults(response);
-        
-        });
-    
-    });
-    
-    
-    $("#test-meta-db").click(function(){
-
-        sketch.getDbMeta(function(response){
-        
-            $("#console-div").append("getDbMeta called<br/>");
-            logErrorsAndResults(response)
-        
-        });
-    
-    });
-    
-    $("#test-meta-parsers").click(function(){
-
-        sketch.getParsersMeta(function(response){
-        
-            $("#console-div").append("getParsersMeta called<br/>");
-            logErrorsAndResults(response);
-        
-        });
-    
-    });
-    
-*/
-    
-    
+	
+	    
     $("#test-query").click(function(){
+    
+    	var limit = $("#limit").val();
+    	var offset = $("#offset").val();
+    	var args = {};
+    	
+		if (limit || offset){
+    		args.limit = limit;
+    		args.offset = offset;
+    		}
+    	
         sven.getDocuments(function(response){
-            console.log("response", response);
-            $("#console-div").append("query called<br/>");
+
             logErrorsAndResults(response)
         
-        },{'limit':2, 'offset':0});
+        },args);
+    
+    });
+    
+    
+    $("#test-relations").click(function(){
+    
+    	var limit = $("#limit").val();
+    	var offset = $("#offset").val();
+    	var args = {};
+    	
+		if (limit || offset){
+    		args.limit = limit;
+    		args.offset = offset;
+    		}
+    	
+        sven.getRelations(function(response){
+
+            logErrorsAndResults(response)
+        
+        },args);
+    
+    });
+    
+    
+
+    $("#add-relation").click(function(){
+    
+    	var args = {};
+    	
+    	args.source = $("#source").val();
+    	args.target = $("#target").val();
+    	args.polarity = $("#polarity").val();
+    	args.description = $("#description").val();
+    	args.owner = {{ user.id }};
+    	
+    	console.log(args);
+    	
+        sven.addRelation(function(response){
+
+            logErrorsAndResults(response)
+        
+        },args);
+    
+    });
+
+    $("#delete-relation").click(function(){
+    	
+    	var id = $("#idDocument").val();
+    	
+        sven.deleteRelation(id, function(response){
+
+            logErrorsAndResults(response)
+        
+        });
     
     });
     
     $("#test-document").click(function(){
-        sven.getDocument(1, function(response){
-            console.log("response", response);
-            $("#console-div").append("query called<br/>");
+    	
+		var id = $("#idDocument").val();
+    	var args = {};
+    	
+        sven.getDocument(id, function(response){
+        
             logErrorsAndResults(response)
-        
-        });
-    
-    });
-    
-/*    
-    $("#test-objects").click(function(){
-    
-        var collection = $("#objects-collection").val()
-        var query = $("#objects-query").val();
-        
 
-        
-        //todo: check args...
-        var data = {query: query};
-        
-        console.log("objects:", collection, data);
-
-        sketch.objects(collection, data, function(response){
-            console.log("response", response);
-            $("#console-div").append("query called<br/>");
-            logErrorsAndResults(response)
-        
-        });
+        },args);
     
     });
 
-    
-    
-    
-    $("#test-import").click(function(){
-    
-        var collection = $("#import-collection").val()
-        var format = $("#import-format").val()
-        var data = $("#import-data").val();
-        var commit = $("#import-commit").attr('checked');
-        commit = Boolean(commit);
+    $("#test-relation").click(function(){
+    	
+		var id = $("#idDocument").val();
+    	var args = {};
+    	
+        sven.getRelation(id, function(response){
         
-        console.log("import:", collection, format, data, commit);
-        
-        //todo: check args...
-
-        sketch.import(collection, format, data, commit, function(response){
-            console.log("response", response);
-            $("#console-div").append("import called<br/>");
             logErrorsAndResults(response)
-        
-        });
 
+        },args);
     
     });
+    
 
-*/
 
 </script>
 

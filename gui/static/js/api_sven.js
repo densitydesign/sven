@@ -8,89 +8,129 @@ svenjs.Sven = function(url){
 
 };
 
-/* query function */
-svenjs.Sven.prototype.query = function(successCallback){
 
-    //var url = this.url + "/sketch/query/" + this.database + "/" + collection + "/" + command + "/";
-    var url = this.url + "/anta/api/documents/?indent";
-    console.log("query", url);
-    
-    $.ajax({
-        type: 'GET',
-        url: url,
-        success: successCallback,
-        dataType: 'json'
-    });
-    
-    
-};
 
-/* get documents */
-svenjs.Sven.prototype.documents = function(id, filters, fields, successCallback){
-
-    //var url = this.url + "/sketch/query/" + this.database + "/" + collection + "/" + command + "/";
-    var url = this.url + "/anta/api/documents/?indent";
-    //console.log("query", url);
-    
-    $.ajax({
-        type: 'GET',
-        url: url,
-        success: successCallback,
-        dataType: 'json'
-    });
-    
-    
-};
 
 /* get documents */
 svenjs.Sven.prototype.getDocuments = function(successCallback, args){
 	
-	if (args){
-		var limit = (args.limit == undefined)  ? null : args.limit;
-		var offset = (args.offset == undefined) ? null : args.offset;
-	//var filter = args.filter || null; //not yet implemented
-	//var fields = args.fields || null; //not yet implemented
-		}
-	
     //var url = this.url + "/sketch/query/" + this.database + "/" + collection + "/" + command + "/";
-    var url = this.url + "/anta/api/documents/?indent";
-    
-	if (limit != null){ url = url + "&limit=" + limit};
-	if (offset != null){ url = url + "&offset=" + offset};
+    var url = this.url + "/anta/api/documents/?indent=true";
 	
-    console.log("query", url);
     
     $.ajax({
         type: 'GET',
         url: url,
+        data: args,
+        complete: function(){
+        	console.log(this.url);
+    		},
         success: successCallback,
+        error: successCallback,
         dataType: 'json'
     });
-    
-    
+
 };
 
 /* get document */
 svenjs.Sven.prototype.getDocument = function(id, successCallback, args){
-	
-	if (args){
-		var fields = (args.fields == undefined)  ? null : args.fields;
-		}
+
 		
     //var url = this.url + "/sketch/query/" + this.database + "/" + collection + "/" + command + "/";
-    var url = this.url + "/anta/api/documents/" + id + "/" + "?indent";
-    console.log("query", url);
-    if (fields != null){
-    	//to implement
-    	};
-    
+    var url = this.url + "/anta/api/documents/" + id + "/" + "?indent=true";
+
     $.ajax({
         type: 'GET',
         url: url,
+        data: args,
         success: successCallback,
+        error: successCallback,
+        complete: function(){
+        	console.log(this.url);
+    		},
         dataType: 'json'
     });
     
     
 };
 
+/* get relations */
+svenjs.Sven.prototype.getRelations = function(successCallback, args){
+	
+    var url = this.url + "/anta/api/relations/?indent=true";
+	
+    
+    $.ajax({
+        type: 'GET',
+        url: url,
+        data: args,
+        complete: function(){
+        	console.log(this.url);
+    		},
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+
+};
+
+/* get relation */
+svenjs.Sven.prototype.getRelation = function(id, successCallback, args){
+
+		
+    //var url = this.url + "/sketch/query/" + this.database + "/" + collection + "/" + command + "/";
+    var url = this.url + "/anta/api/relations/" + id + "/" + "?indent=true";
+
+    $.ajax({
+        type: 'GET',
+        url: url,
+        data: args,
+        success: successCallback,
+        error: successCallback,
+        complete: function(){
+        	console.log(this.url);
+    		},
+        dataType: 'json'
+    });
+    
+    
+};
+
+/* add relation */
+svenjs.Sven.prototype.addRelation = function(successCallback, args){
+	
+    var url = this.url + "/anta/api/relations/?method=POST&indent=true";
+	
+    
+    $.ajax({
+        type: 'GET',
+        url: url,
+        data: args,
+        complete: function(){
+        	console.log(this.url);
+    		},
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+
+};
+
+/* delete relation */
+svenjs.Sven.prototype.deleteRelation = function(id, successCallback){
+	
+    var url = this.url + "/anta/api/relations/" + id + "/" + "?method=DELETE&indent=true";
+	
+    
+    $.ajax({
+        type: 'GET',
+        url: url,
+        complete: function(){
+        	console.log(this.url);
+    		},
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+
+};
