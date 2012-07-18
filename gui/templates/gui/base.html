@@ -19,8 +19,22 @@
   <!--[if lt IE 9]>
   <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
   <![endif]-->
-    <script src="{{custom.STATIC_URL}}/js/jquery.js"></script>
-  <script src="{{custom.STATIC_URL}}/js/api_sven.js"></script>
+  <script src="{{custom.STATIC_URL}}js/jquery.js"></script>
+  <script src="{{custom.STATIC_URL}}js/api_sven.js"></script>
+  <!-- d3 -->
+  <script src="{{ custom.STATIC_URL }}js/d3/d3.v2.min.js"></script>
+	
+  <!-- Sven -->
+  <script src="{{ custom.STATIC_URL }}js/sven/sven.js"></script>
+  <!-- Sven Utils -->
+  <script src="{{ custom.STATIC_URL }}js/sven/sven.utils.js"></script>
+  <!-- Sven Time -->
+  <script src="{{ custom.STATIC_URL }}js/sven/sven.time.js"></script>
+  <!-- Sven Viz -->
+  <script src="{{ custom.STATIC_URL }}js/sven/sven.viz.js"></script>
+  
+  <link rel="stylesheet" href="{{ custom.STATIC_URL }}css/style.css" type="text/css"/>
+	
   {% block css_1 %}
   {% endblock %}
 
