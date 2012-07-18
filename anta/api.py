@@ -77,7 +77,7 @@ def relations( request ):
 	
 
 	response['meta']['total'] = Relation.objects.count()
-	response['results'] = [r.json() for r in Relation.objects.all()[ response['meta']['offset']:response['meta']['limit'] ] ]
+	response['results'] = [r.json() for r in Relation.objects.all()[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
 	
 	return render_to_json( response )
 
@@ -163,7 +163,7 @@ def documents(request):
 	
 	# all documents
 	response['meta']['total'] = Document.objects.count()
-	response['results'] = [d.json() for d in Document.objects.all()[ response['meta']['offset']:response['meta']['limit'] ] ]
+	response['results'] = [d.json() for d in Document.objects.all()[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
 	
 	
 	return render_to_json( response )
