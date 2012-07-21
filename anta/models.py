@@ -134,6 +134,7 @@ class Document( models.Model ):
 	# get tfidf most important segments grouped by concept
 	def segments( self ):
 		return 	[]
+	
 
 	def json(self):
 		return {

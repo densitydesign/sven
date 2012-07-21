@@ -75,7 +75,7 @@ def relations( request ):
 		response['results'] = [r.json() for r in Relation.objects.filter( source__corpus__name=corpus, target__corpus__name=corpus) [response['meta']['offset']:response['meta']['limit'] ]  ]
 		return render_to_json( response )
 	
-
+		
 	response['meta']['total'] = Relation.objects.count()
 	response['results'] = [r.json() for r in Relation.objects.all()[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
 	
@@ -161,9 +161,14 @@ def documents(request):
 		response['results'] = [d.json() for d in Document.objects.filter( corpus__name=corpus )]
 		return render_to_json( response )
 	
-	# all documents
-	response['meta']['total'] = Document.objects.count()
-	response['results'] = [d.json() for d in Document.objects.all()[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+	if len(response['meta']['filters']) > 0:
+		# with filters: models static var
+		response['meta']['total'] = Document.objects.filter(**response['meta']['filters']).count()
+		response['results'] = [d.json() for d in Document.objects.filter(**response['meta']['filters'])[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+	else:
+		
+		response['meta']['total'] = Document.objects.count()		
+		response['results'] = [d.json() for d in Document.objects.all()[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
 	
 	
 	return render_to_json( response )
@@ -284,7 +289,10 @@ def _json( request ):
 		j['meta']['method'] = request.method
 
 	if request.REQUEST.has_key('filters'):
-		j['meta']['filters'] =  request.REQUEST.get('filters')
+		try:
+			j['meta']['filters'] = json.loads( request.REQUEST.get('filters') )
+		except:
+			j['meta']['filters'] = []
 	else:
 		j['meta']['filters'] = []
 
