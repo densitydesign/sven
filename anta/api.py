@@ -74,9 +74,13 @@ def relations( request ):
 		response['results'] = [r.json() for r in Relation.objects.filter( source__corpus__name=corpus, target__corpus__name=corpus) [response['meta']['offset']:response['meta']['limit'] ]  ]
 		return render_to_json( response )
 	
-		
-	response['meta']['total'] = Relation.objects.count()
-	response['results'] = [r.json() for r in Relation.objects.all()[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+	if len(response['meta']['filters']) > 0:
+		# with filters: models static var
+		response['meta']['total'] = Relation.objects.filter(**response['meta']['filters']).count()
+		response['results'] = [r.json() for r in Relation.objects.filter(**response['meta']['filters'])[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+	else:
+		response['meta']['total'] = Relation.objects.count()
+		response['results'] = [r.json() for r in Relation.objects.all()[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
 	
 	return render_to_json( response )
 
