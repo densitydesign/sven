@@ -11,7 +11,7 @@ import os, json, datetime
 from sven.anta.utils import *
 from sven.anta.forms import *
 from django.contrib.auth.models import User
- 
+
 #
 #    ========================
 #    ---- JSON API CONST ----
@@ -23,7 +23,8 @@ API_DEFAULT_OFFSET = 0
 API_DEFAULT_LIMIT = 50
 API_AVAILABLE_METHODS = [ 'PUT', 'DELETE', 'POST', 'GET' ]
 
-API_EXCEPTION_DOESNOTEXIST =	'DoesNotExist'
+API_EXCEPTION_DOESNOTEXIST	=	'DoesNotExist'
+API_EXCEPTION_DUPLICATED	=	'Duplicated'
 API_EXCEPTION_FORMERRORS	=	'FormErrors'
 
 #
@@ -53,9 +54,7 @@ def get_corpus(request, corpus_id ):
 		response['corpus'] = None
 		return throw_error( response, "corpus does not exist...")
 	
-	
 	return render_to_json( response )
-
 
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
@@ -84,12 +83,12 @@ def relations( request ):
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def create_relation( request, response ):
 	response['owner'] = request.user.json()
-	form = ApiRelationForm( request.REQUEST, initial={'owner':request.user} )
+	form = ApiRelationForm( request.REQUEST )
 	if form.is_valid():
 		r = Relation( 
 			source=form.cleaned_data['source'], target=form.cleaned_data['target'],
 			polarity=form.cleaned_data['polarity'],description=form.cleaned_data['description'], 
-			owner=form.cleaned_data['owner']
+			owner=request.user
 		)
 		r.save()
 		response['created'] = r.json()
@@ -119,6 +118,43 @@ def relation( request, id ):
 #    ---- CORPORA ----
 #    =================
 #	
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def corpora(request):
+	response = _json( request )
+
+	# create documents
+	if response['meta']['method'] == 'POST':
+		return create_corpus( request, response )
+	
+	if len(response['meta']['filters']) > 0:
+		# with filters: models static var
+		response['meta']['total'] = Corpus.objects.filter(**response['meta']['filters']).count()
+		response['results'] = [c.json() for c in Corpus.objects.filter(**response['meta']['filters'])[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+	else:
+		
+		response['meta']['total'] = Corpus.objects.count()		
+		response['results'] = [c.json() for c in Corpus.objects.all()[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+	
+	
+	return render_to_json( response )
+
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def create_corpus( request, response ):
+	response['owner'] = request.user.json()
+	
+	form = ApiCorpusForm( request.REQUEST, initial={'owner':request.user.id} )
+	if form.is_valid():
+		try:
+		
+			c = Corpus( name=form.cleaned_data['name'] )
+			c.save()
+		except:
+			return throw_error( response, "Corpus %s exists yet...," % form.cleaned_data['name'], code=API_EXCEPTION_DUPLICATED )
+		
+		response['created'] = c.json()
+		return render_to_json( response )
+	else:
+		return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS )
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def corpus( request, id ):
@@ -203,10 +239,44 @@ def document(request, document_id):
 
 
 #
+#    ==================
+#    ---- SPECIALS ----
+#    ==================
+#	 
+def start_metrics( request, corpus_id):
+	response = _json( request, enable_method=False )
+	
+	# standard analysis includes: metrics
+	a = _store_analysis( corpus=c, type="ST" )
+
+	c =  _get_corpus( corpus_id )
+	
+	if c is None:
+		# do sync
+
+		
+		return throw_error( response, "Corpus %s does not exist...," % corpus_id, code=API_EXCEPTION_DOESNOTEXIST )	
+	
+	
+	# get status
+	if a.status == 'CRE':
+		# start sync, open 
+		pass
+
+	# do sync
+	response['analysis'] = a.json()
+	return render_to_json( response )
+
+def start_alchemy(request, corpus):
+	pass
+
+#
 #    ======================
 #    ---- OTHER STUFFS ----
 #    ======================
 #
+
+	
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def dummy_gummy( request ):
@@ -246,10 +316,35 @@ def access_denied( request ):
 #    ==========================
 #
 #    try except handling on the road
-#    Intended for Internal use only.
+#    Intended for api internal use only.
 #
+def _store_analysis( corpus, type=""):
+	try:
+		# check if analysis exists
+		analysis = Analysis.objects.get(corpus=corpus, type=type)
+		
+		# close and create a brand new analysis only if status = ERR | OK
+		if analysis.status == "ERR":
+			# if error analysis failed: then close current analysis and start a brand new analysis
+			analysis.status = "RIP" # rest in peace
+			analysis.save()
+			analysis = Analysis( corpus=corpus, type=type, start_date=datetime.now(), status="CRE" )
+			analysis.save() # create a brand new
+			
+		elif analysis.status == "OK":
+			# analysis finished. Is it necessary to force restart?
+			analysis.status = "RET" # retired.
+			analysis.save()
+			analysis = Analysis( corpus=corpus, type=type, start_date=datetime.now(), status="CRE" )
+			analysis.save()	# create a brand new one
 
-	
+		# analysis is running...
+		return analysis 		
+
+	except Analysis.DoesNotExist:
+		analysis = Analysis( corpus=corpus, type=type, start_date=datetime.now(), status="CRE" )
+		analysis.save()	
+	return analysis
 
 def _get_corpus( corpus_id ):
 	# given a corpus name return None or a corpus object
@@ -276,10 +371,16 @@ def _get_relation( relation_id ):
 		return None
 
 
-def _json( request ):
+def _json( request, enable_method=True ):
 	j =  {"status":"ok", 'meta':{ 'indent':False } }
 	if request.REQUEST.has_key('indent'):
 		j['meta']['indent'] = True
+
+	if request.user is not None:
+		j['user'] = request.user.username
+	
+	if enable_method == False:
+		return j
 
 	form = ApiMetaForm( request.REQUEST )
 	# get method
@@ -333,8 +434,7 @@ def _json( request ):
 
 
 	
-	if request.user is not None:
-		j['user'] = request.user.username
+	
 	return j
 	
 def render_to_json( response ):
