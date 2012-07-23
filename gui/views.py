@@ -8,6 +8,7 @@ from django.contrib.auth import login, logout, authenticate
 
 from sven.anta.forms import LoginForm
 from sven.anta.models import *
+from sven.anta.api import *
 
 CUSTOM_SETTINGS = {
 	'STATIC_URL':'/static/',
@@ -15,8 +16,21 @@ CUSTOM_SETTINGS = {
 }
 
 #@login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
-def list(request):
+def documents(request, id_document=None):
+	data = {}
+	data['custom'] = CUSTOM_SETTINGS
+	#print document(request, id_document)
+	if id_document != None:
+		data['id_document'] = id_document
+		c = RequestContext(request, data)
+		return render_to_response("gui/document.html", c)
+	else:
+		c = RequestContext(request, data)
+		return render_to_response("gui/documents.html", c)
+	
+#@login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
+def timeline(request):
 	data = {}
 	data['custom'] = CUSTOM_SETTINGS
 	c = RequestContext(request, data)
-	return render_to_response("gui/list.html", c)
+	return render_to_response("gui/timeline.html", c)

@@ -6,8 +6,10 @@ from django.conf.urls.defaults import patterns, include, url
 import sven
 urlpatterns = patterns('',
 	
-	url(r'list/$', 'sven.gui.views.list', name='gui_list'),
-	#url(r'timeline/$', 'sven.gui.views.timeline', name='gui_timeline'),
+	url(r'documents/$', 'sven.gui.views.documents', name='gui_documents'),
+	#url(r'list/$', 'sven.gui.views.list', name='gui_list'), #old version
+	url(r'documents/(?P<id_document>\d+)/$', 'sven.gui.views.documents', name='gui_list'),
+	url(r'timeline/$', 'sven.gui.views.timeline', name='gui_timeline'),
 	#url(r'dynamic/$', 'sven.gui.views.dynamic', name='gui_dynamic'),
 )
 

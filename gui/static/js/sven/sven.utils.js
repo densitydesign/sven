@@ -11,7 +11,11 @@
 			sortOn,
 			sortType = 1,
 			keys,
-			render = {}
+			render = {},
+			event = d3.dispatch(
+				"click"
+				);
+
 		
 		datatable.update = function(){
 			
@@ -43,11 +47,13 @@
 					.sort(function (a, b) { return a == null || b == null ? 0 : stringCompare(a[sortOn], b[sortOn]); })
 					.attr("class",function(d,i){ return i % 2 ? "odd" : "even"; })
 					
+					
 		    var td = tr.selectAll("td")
-				.data(function(d){ return keys().map(function(k){ return { key: k, value: d[k] }; }) })
+				.data(function(d){ return keys().map(function(k){ return { key: k, value: d[k], id:d["id"] }; }) })
 				.enter().append("td")
 					.filter(function(d){ return keys().indexOf(d.key) != -1 ? true : false; })
 					.text(function(d){return d.value;})//function(d) { if (render.hasOwnProperty(d.key)) return render[d.key](d.value) else return d.value; })
+					.on("click",function(d){ event.click(window.location = "http://127.0.0.1:8000/gui/documents/" + d.id); });
 			
 			
 			function stringCompare(a, b) {
@@ -73,6 +79,12 @@
 		datatable.target = function(x) {
 			if (!arguments.length) return target;
 			target = x;
+			return datatable;
+		}
+		
+		datatable.on = function(type, listener) {
+			if (!arguments.length) return;
+			event.on(type,listener);
 			return datatable;
 		}
 		

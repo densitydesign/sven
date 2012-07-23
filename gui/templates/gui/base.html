@@ -33,9 +33,9 @@
   <!-- Sven Viz -->
   <script src="{{ custom.STATIC_URL }}js/sven/sven.viz.js"></script>
   
-  <link rel="stylesheet" href="{{ custom.STATIC_URL }}css/style.css" type="text/css"/>
 	
   {% block css_1 %}
+    <link rel="stylesheet" href="{{ custom.STATIC_URL }}css/style_gui.css" type="text/css"/>
   {% endblock %}
 
 </head>
@@ -43,14 +43,24 @@
 <body>
 
   
-  {% block content %}
+  
+  	<div id="wrapper">
+	<div id="header">
+		<span class="title">Sven</span>
+		<div id="nav">
+			<span><a href="/gui/documents">Documents</a></span>
+			<span><a href="/gui/timeline">Timeline</a></span>
+		</div>
+	</div>
+	<div id="content">
+	{% block content %}
   {% endblock %}
-
+	</div>
 
   
   {% block js_body %}
   {% endblock %}
-
+	</div>
 
 </body>
 </html>

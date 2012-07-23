@@ -1,14 +1,21 @@
+var query = new svenjs.Sven("http://127.0.0.1:8000");  
 
-console.log(data)
+query.getDocuments(function(response){
+
+var data = response.results;
+
 
 // take the documents
 //data = data.documents;
-data = d3.values(data.documents)
-var format = d3.time.format("%Y-%m-%d"),
-	minDate = format.parse("2010-06-10"),
-	maxDate = format.parse("2012-11-20");	
+data = d3.values(data)
+console.log(data)
+//var format = d3.time.format("%Y-%m-%d");
+var format = d3.time.format("%Y-%m-%dT%H:%M:%S");
 
-var offset = maxDate-minDate;
+	//minDate = format.parse("2010-06-10"),
+	//maxDate = format.parse("2012-11-20");	
+
+//var offset = maxDate-minDate;
 
 /* relazioni pure
 var relations = []
@@ -27,9 +34,9 @@ d3.range(50).forEach(function(){
 //var documents = {}
 
 data.forEach(function(d){
-	d.date = new Date(minDate.getTime() + Math.random()*offset);
-	d.actor = d.ACTOR;
+	d.date = format.parse(d.date);
 	d.id_document = d.id;
+	d.actor = d.tags[0].name;
 })
 
 
@@ -77,3 +84,5 @@ $(window).resize(function(){
 	
 })
 	*/
+	
+});
