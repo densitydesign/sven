@@ -35,6 +35,99 @@ tfidf computation process + similarity
 
      	~/sven/anta/$ python freebase.py Nirvana it
 
+Api Documentation
+-----------------
+
+Api function are defined inside the `anta/api.py` script.
+Their related urls are tastypie-like urls, that is, each url address is related to a Model Class and 
+outpus vary according to the http method used to GET a single model instance, to GET a list of instances or
+to DELETE or POST content.
+I localhost, this is the sample url to request a specific set of Relation objects: 
+
+     url: http://localhost/sven/anta/api/relations/?method=GET&indent&filters={%22creation_date__gt%22:%222011-10-12%2000:00%22,%22source__language%22:%22NL%22} 
+		
+Please note that `method` used is explicitely defined as request parameter.
+Result, in json, shows the usage of filters params with the django friendly filter function by dictornary:
+
+    {
+    "status": "ok", 
+    "meta": {
+        "indent": true, 
+        "next": {
+            "limit": 50, 
+            "offset": 50
+        }, 
+        "limit": 50, 
+        "filters": {
+            "creation_date__gt": "2011-10-12 00:00", 
+            "source__language": "NL"
+        }, 
+        "offset": 0, 
+        "total": 1, 
+        "method": "GET"
+    }, 
+    "user": "admin", 
+    "results": [
+        {
+            "polarity": "NEG", 
+            "source": 56, 
+            "intensity": -0.6, 
+            "target": 57, 
+            "owner": {
+                "username": "admin", 
+                "id": 2
+            }, 
+            "description": "basic", 
+            "id": 1, 
+            "creation_date": "2012-07-22T04:41:31"
+        }
+    ]
+    }
+    
+
+Like the method, other params could be used in a GET api.
+A POST request use a ModelForm to validate fields. A request like
+
+    http://localhost/sven/anta/api/relations/?indent&method=POST
+
+would generate an error because of the ModelForm Relation fields:
+
+    {
+    "status": "ko", 
+    "userMessage": "", 
+    "errorCode": "FormErrors", 
+    "meta": {
+        "indent": true, 
+        "method": "POST", 
+        "filters": []
+    }, 
+    "user": "admin", 
+    "error": {
+        "polarity": [
+            "This field is required."
+        ], 
+        "source": [
+            "This field is required."
+        ], 
+        "target": [
+            "This field is required."
+        ], 
+        "description": [
+            "This field is required."
+        ]
+    }, 
+    "owner": {
+        "username": "admin", 
+        "id": 2
+    }
+    }
+
+Delete an instance by giving the instance numeric id :
+
+    http://localhost/sven/anta/api/relations/1/?indent&method=DELETE
+    
+The update function is not yet available, but basically it's a method=POST request with the ref. id.
+
 
 useful sql queries 
 ------------------

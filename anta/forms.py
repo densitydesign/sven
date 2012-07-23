@@ -4,7 +4,7 @@ from django.forms import ModelForm
 
 from django.contrib.admin import widgets 
 from datetime import datetime
-from sven.anta.models import Relation
+from sven.anta.models import Relation, Corpus
 
 class LoginForm( forms.Form ):
 	username = forms.CharField( max_length=12, widget=forms.TextInput )
@@ -30,3 +30,7 @@ class ApiDocumentsFilter( forms.Form ):
 class ApiRelationForm(ModelForm):	
 	class Meta:
 		model = Relation	
+
+class ApiCorpusForm(ModelForm):	
+	class Meta:
+		model = Corpus	

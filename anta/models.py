@@ -76,11 +76,11 @@ User.add_to_class('json', user_json )
 # from many database to just one. just a test.
 class Corpus( models.Model ):
 	# the corpus of document. A user may have a lot of corpora
-	name = models.CharField( max_length=32 )
-	owner = models.ManyToManyField( User, through='Owners', null=True )
+	name = models.CharField( max_length=32, unique=True )
+	owner = models.ManyToManyField( User, through='Owners', null=True, blank=True )
 	def __unicode__(self):
 		return self.name
-	
+
 	def json(self):
 		return { 
 			'id':self.id,
@@ -134,6 +134,7 @@ class Document( models.Model ):
 	# get tfidf most important segments grouped by concept
 	def segments( self ):
 		return 	[]
+	
 
 	def json(self):
 		return {
@@ -183,7 +184,7 @@ class Relation( models.Model ):
 	creation_date = models.DateTimeField(default=datetime.now, blank=True)
 	description = models.CharField( max_length=160)
 	polarity = models.CharField( max_length=3, choices=POLARITY_CHOICES )
-	owner = models.ForeignKey( User )
+	owner = models.ForeignKey( User, blank=True, null=True )
 	class Meta:
 		unique_together = ("source", "target") 
 
@@ -211,8 +212,17 @@ class Analysis(models.Model ):
 	type = models.CharField( max_length=2, choices=ANALYSIS_CHOICES ) # type of routine, like PT for Pattern routine.
 	status = models.CharField( max_length=3, choices= ANALYSIS_STATUS_CHOICES )
 	
-	class Meta:
-		unique_together = ("corpus", "type")
+	def json(self, min=-1, max=1):
+		return {
+			'id'	: self.id,
+			'type'	: self.type,
+			'corpus'	: self.corpus.json(),
+			'document'	: self.document.json() if self.document else None,
+			'start_date'	: self.start_date.isoformat(),
+			'end_date'	: self.end_date.isoformat() if self.end_date else None,
+			'status'	: self.status
+		}
+
 
 #
 #    ==================================
