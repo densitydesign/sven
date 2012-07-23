@@ -274,6 +274,27 @@ def start_metrics( request, corpus_id):
 def start_alchemy(request, corpus):
 	pass
 
+
+def download_document(request, document_id):
+	
+	d = _get_document( document_id )
+	if d is None:
+		return throw_error( _json( request, enable_method=False ), "dcument does not exist...")
+	response = _json( request, enable_method=False )
+	
+	filename = settings.MEDIA_ROOT + d.corpus.name + "/" + os.path.basename( d.url.path )
+	response['filename'] = os.path.basename(filename)
+	
+	if not os.path.exists( filename ):
+		return throw_error( _json( request, enable_method=False ), "dcument does not exist...")
+	
+	#return render_to_json( response )
+	
+	response = HttpResponse( open( filename,'r' ).read(), content_type=d.mime_type) 
+	response['Content-Disposition']='attachment;filename="document_%s"'%d.id
+	response['Content-length'] = os.stat( filename ).st_size
+	return response
+    
 #
 #    ======================
 #    ---- OTHER STUFFS ----

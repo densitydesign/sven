@@ -10,6 +10,7 @@ urlpatterns = patterns('',
 	url(r'^$', 'sven.anta.views.index', name='anta_index'),
 	url(r'^login/$', 'sven.anta.views.login_view', name='anta_login'),
 	url(r'^logout/$', 'sven.anta.views.logout_view', name='anta_logout'),
+	
 	# Examples:
 	# url(r'^$', 'svenz.views.home', name='home'),
 	# url(r'^svenz/', include('svenz.foo.urls')),
@@ -38,10 +39,13 @@ urlpatterns = patterns('',
 	# corpus (sing.)
 	url(r'^api/corpus/$', 'sven.anta.api.corpora', name='anta_api_corpora' ),    
 	url(r'^api/corpus/(\d+)/$', 'sven.anta.api.corpus', name='anta_api_corpus' ),    
-		
+	
+	
 	
 	# specials
 	url(r'^api/start-metrics/(\d+)/$', 'sven.anta.api.start_metrics', name='anta_api_start_metrics' ),
+	url(r'^api/download/document/(\d+)/$', 'sven.anta.api.download_document', name='anta_api_download_document'),
+	
 
 	# url(r'^api/get-corpora/$', 'sven.anta.api.get_corpora', name='anta_api_get_corpora' ),    
 	# url(r'^api/get-corpus/(\w+)/$', 'sven.anta.api.get_corpus', name='anta_api_get_corpus' ),    
