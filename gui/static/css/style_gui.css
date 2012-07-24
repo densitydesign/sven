@@ -128,6 +128,54 @@ path.doc {
 .datatable tbody tr:hover{
 	background-color: #FFC;	
 }
+
+#source_document .tags {
+	width:50%;
+	float: right;
+	}
+	
+.doc_info {
+	float:left;
+}
+
+.doc_title {
+	text-transform: capitalize;
+}
+
+.doc_title h2 {
+	font-size: 15px;
+	margin-bottom: 5px;
+}
+
+.doc_actors {
+	color: gray;
+}
+
+.doc_preview {
+	margin-top: 35px;
+	float:left;
+}
+
+.text {
+	width:50%;
+	float:left;	
+}
+
+.relations {
+	float:left;
+	padding: 0 10px;
+}
+
+.rel_doc {
+	margin-top: 20px;
+}
+
+.relation {
+	border: 1px solid #999;
+	padding: 15px;
+	}
+
+
 svg {
   font: 8px sans-serif;
  }
@@ -229,14 +277,13 @@ input[type=text] {
 
 	}
 
-.date {
+.date, .relation_type {
 	color:#aaaaaa;
 	font-size:90%;
 	}
 	
 h3 {
 	margin: 5px 0 5px 0;
-	word-wrap:break-word;
 	}
 	
 .actor {

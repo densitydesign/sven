@@ -1,24 +1,44 @@
 {% extends "gui/base.html" %}
 
+{% block js_head %}
+	
+
+
+{% endblock %}
+
+
 {% block content %}
 
 
 <div id="actions">
 	
-	<span class="btn">Upload a new document</span>
+	<!--<span class="btn">Upload a new document</span>-->
 	
 </div>
 
-<div id="documents_list">
+<div id="source_document">
 	<div class="doc_info">
-		<div class="doc_date"></div>
-		<div class="doc_title"></div>
-		<div class="doc_actors"></div>
-		<div class="doc_tags"></div>
+		<div class="date"></div>
+		<div class="title"><h3></h3></div>
+		<div class="actor"></div>
 	</div>
+	<div class="tags"></div>
+	<div class="clear"></div>
 	<div class="doc_preview">
+		<div class="text">
+		
+		
+		
+		
+		
+		</div>
+		<div class="relations">
+			<span class="btn">Add relation</span>
+			<div class="rel_doc"></div>
+		</div>
+		<div class="clear"></div>
 	</div>
-	
+	<div class="clear"></div>
 </div>
 
 

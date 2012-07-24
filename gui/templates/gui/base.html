@@ -32,10 +32,13 @@
   <script src="{{ custom.STATIC_URL }}js/sven/sven.time.js"></script>
   <!-- Sven Viz -->
   <script src="{{ custom.STATIC_URL }}js/sven/sven.viz.js"></script>
-  
+      <link rel="stylesheet" href="{{ custom.STATIC_URL }}css/style_gui.css" type="text/css"/>
+
 	
   {% block css_1 %}
-    <link rel="stylesheet" href="{{ custom.STATIC_URL }}css/style_gui.css" type="text/css"/>
+  {% endblock %}
+  
+    {% block js_head %}
   {% endblock %}
 
 </head>

@@ -134,3 +134,25 @@ svenjs.Sven.prototype.deleteRelation = function(id, successCallback){
     });
 
 };
+
+/* download */
+svenjs.Sven.prototype.download = function(id, successCallback, args){
+
+		
+    //var url = this.url + "/sketch/query/" + this.database + "/" + collection + "/" + command + "/";
+    var url = this.url + "/anta/api/download/document/" + id;
+
+    $.ajax({
+        type: 'GET',
+        url: url,
+        data: args,
+        success: successCallback,
+        error: successCallback,
+        complete: function(){
+        	//console.log(this.url);
+    		},
+        dataType: 'json'
+    });
+    
+    
+};
