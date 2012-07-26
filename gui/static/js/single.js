@@ -13,12 +13,17 @@ query.getDocument(id_document, function(response){
     	var text = response.text;
     	var date = response.results[0].date.split('T')[0];
     	var title = response.results[0].title;
-    	var actor = response.results[0].tags[0].name;
+    	var actors = response.results[0].actors;
+    	var actorList = '';
+    	for (actor in actors) {
+    		actorList = actorList + actors[actor].name + " ";
+    		}
+    	d3.select(".actor").text(actorList);
     	var tags = response.results[0].tags;
-    	d3.select(".text").text(text);
+    	//d3.select(".text").text(text);
     	d3.select(".title h3").text(title);
     	d3.select(".date").text(date);
-    	d3.select(".actor").text(actor);
+    	
 		var tag = d3.select(".tags").selectAll("div.tag")
 				.data(tags)
 				.enter().append("div")

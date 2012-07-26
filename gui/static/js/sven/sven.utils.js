@@ -52,7 +52,7 @@
 				.data(function(d){ return keys().map(function(k){ return { key: k, value: d[k], id:d["id"] }; }) })
 				.enter().append("td")
 					.filter(function(d){ return keys().indexOf(d.key) != -1 ? true : false; })
-					.text(function(d){return d.value;})//function(d) { if (render.hasOwnProperty(d.key)) return render[d.key](d.value) else return d.value; })
+					.text(function(d){if (typeof(d.value) == 'object'){var actorsList = '';for (var i in d.value){actorsList = actorsList + d.value[i].name + ' '}; return actorsList;}else{return d.value};})
 					.on("click",function(d){ event.click(window.location = "http://127.0.0.1:8000/gui/documents/" + d.id); });
 			
 			

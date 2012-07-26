@@ -1,9 +1,10 @@
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
-
 'use strict';
 
-var kDefaultURL = 'http://127.0.0.1:8000/anta/api/download/document/1';
+
+
+//var kDefaultURL = 'http://127.0.0.1:8000/anta/api/download/document/1';
 var kDefaultScale = 'auto';
 var kDefaultScaleDelta = 1.1;
 var kUnknownScale = 0;
@@ -1756,6 +1757,7 @@ window.addEventListener('load', function webViewerLoad(evt) {
 
   if ('disableWorker' in hashParams)
     PDFJS.disableWorker = (hashParams['disableWorker'] === 'true');
+
 
   if (!PDFJS.isFirefoxExtension) {
     var locale = navigator.language;

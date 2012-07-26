@@ -36,7 +36,10 @@ d3.range(50).forEach(function(){
 data.forEach(function(d){
 	d.date = format.parse(d.date);
 	d.id_document = d.id;
-	d.actor = d.tags[0].name;
+	d.actor = '';
+	for (var i in d.actors){
+		d.actor = d.actor + d.actors[i].name + ' ';
+		}
 })
 
 

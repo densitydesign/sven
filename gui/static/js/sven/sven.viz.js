@@ -45,7 +45,6 @@
 			colorGroups.forEach(function(d){
 				color(d);
 			})
-			
 			var groups = interval(nodes).map(function(d){
 				return {
 					x:new Date(d.key),
@@ -139,7 +138,7 @@
 					.on("mouseover", function(d){ fill_tooltip(d);  $("#tooltip").show();})
 					.on("mousemove", function(){ var w = $("#tooltip").width(); var h = $("#tooltip").height(); $("#tooltip").css({top: (d3.event.pageY - h-20) + "px", left: (d3.event.pageX - w/2 ) + "px"});})
 					.on("mouseout", function(){ return $("#tooltip").hide();})
-					.on("click", updatePosition)
+					.on("click", function(d){ getRelations(d, d.id)})
 					.each(function(d){
 						d._visible = true;
 						d._node = this;
@@ -148,7 +147,18 @@
 						d._y = parseFloat(d3.select(this).attr("y"));
 					})
 			
+			var getRelations = function(d, source) {
+			query.getRelations(function(response){
 
+    		var relations = response.results;
+    		if (relations){
+    			console.log(relations)
+    			
+    			}
+    		d.relations = relations;
+    		drawOneLinks();
+    		},{filters:'{"source":' + source + '}'});
+    		};
 			/*
 			var rectLabel = group.selectAll("text.label")
 				.data(function(d){ return d.children; })
@@ -209,7 +219,7 @@
 				.attr("title", function(d){ return d.key; })
 		
 		d3.select(target).selectAll("div.details").remove()
-		drawLinks();
+		//drawLinks();
 	
 		
 				
@@ -399,6 +409,7 @@
 			//var relations = d3.entries(visibles).map(function(d){ return d.value.relations; })
 			
 			d3.entries(visibles).forEach(function(v){
+				console.log(v);
 				if (!v.value.hasOwnProperty('relations')) return;
 				v.value.relations.forEach(function(d){
 					
@@ -440,7 +451,59 @@
 	
 		}
 		
+		function drawOneLinks(){
+			
+			
+						
+			var visibles = {}
+			var paths = []
+			
+			rect.each(function(r){ visibles[r.id_document] = r; })
+			
+			//var relations = d3.entries(visibles).map(function(d){ return d.value.relations; })
+			
+			d3.entries(visibles).forEach(function(v){
+
+				if (!v.value.hasOwnProperty('relations')) return;
+				v.value.relations.forEach(function(d){
+					
+				if (!visibles.hasOwnProperty(d.source) && !visibles.hasOwnProperty(d.target)) return;
+				
+				var sourceNode,
+					targetNode;
+				sourceNode = visibles.hasOwnProperty(d.source) ? visibles[d.source] : v.value.date > blocks.nodesAsObject()[d.source].date ? sxNode.data()[0] : dxNode.data()[0];
+				targetNode = visibles.hasOwnProperty(d.target) ? visibles[d.target] : v.value.date < blocks.nodesAsObject()[d.target].date ? sxNode.data()[0] : dxNode.data()[0];
+				paths.push({ sourceNode:sourceNode, targetNode:targetNode, description:d.description });
+				})
+			})
+			
+			var link = linkGroups.selectAll("path.link")
+				.data(paths)
+				.enter().append("svg:path")
+				.attr("class","link")
+				.style("stroke-width",4)
+				.attr("d",function(d){ return curve([d.sourceNode,d.targetNode]); })
+				.on("mouseover",function(d){ console.log(d.description); })
+				
+			
+			/*
+
+			var visibleLinks = links.filter(function(d){
+				return visibles.indexOf(d.source) != -1 && visibles.indexOf(d.target) != -1 ? true : false; // ora solo quando entrambi
+			})
+			visibleLinks.forEach(function(d){ 
+				d.sourceNode = nodes.filter(function(n){ return n.id_document == d.source; })[0]
+				d.targetNode = nodes.filter(function(n){ return n.id_document == d.target; })[0]
+			//	console.log(curve([d.sourceNode,d.targetNode]))
+			})
+
+			//console.log(visibleLinks)
+
+			
+			*/
 		
+	
+		}
 						
 
 		var fill_tooltip = function(d){
