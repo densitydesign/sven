@@ -44,7 +44,7 @@ urlpatterns = patterns('',
 	
 	# specials
 	url(r'^api/start-metrics/(\d+)/$', 'sven.anta.api.start_metrics', name='anta_api_start_metrics' ),
-	url(r'^api/download/document/(\d+)/$', 'sven.anta.api.download_document', name='anta_api_download_document'),
+	url(r'^api/documents/download/(\d+)/$', 'sven.anta.api.download_document', name='anta_api_download_document'),
 	
 
 	# url(r'^api/get-corpora/$', 'sven.anta.api.get_corpora', name='anta_api_get_corpora' ),    

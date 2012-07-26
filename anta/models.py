@@ -143,7 +143,8 @@ class Document( models.Model ):
 			'language'	: self.language,
 			'date'	: self.ref_date.isoformat(),
 			'mime_type':self.mime_type,
-			'tags'	: [ t.json() for t in self.tags.all() ],
+			'tags'	: [ t.json() for t in self.tags.exclude(type="actor") ],
+			'actors': [ t.json() for t in self.tags.filter(type="actor") ],
 			'concepts': [ c.json() for c in self.concepts.all() ],
 			'corpus': self.corpus.json()
 		}
