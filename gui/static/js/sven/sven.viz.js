@@ -219,7 +219,7 @@
 				.attr("title", function(d){ return d.key; })
 		
 		d3.select(target).selectAll("div.details").remove()
-		//drawLinks();
+		drawLinks();
 	
 		
 				
