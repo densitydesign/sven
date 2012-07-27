@@ -11,6 +11,7 @@ import os, json, datetime
 from sven.anta.utils import *
 from sven.anta.forms import *
 from django.contrib.auth.models import User
+from django.db.models import Count
 
 #
 #    ========================
@@ -135,7 +136,6 @@ def corpora(request):
 		response['meta']['total'] = Corpus.objects.filter(**response['meta']['filters']).count()
 		response['results'] = [c.json() for c in Corpus.objects.filter(**response['meta']['filters'])[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
 	else:
-		
 		response['meta']['total'] = Corpus.objects.count()		
 		response['results'] = [c.json() for c in Corpus.objects.all()[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
 	
@@ -147,14 +147,26 @@ def create_corpus( request, response ):
 	response['owner'] = request.user.json()
 	
 	form = ApiCorpusForm( request.REQUEST, initial={'owner':request.user.id} )
-	if form.is_valid():
+	if form.is_valid():		
+		corpus_path = settings.MEDIA_ROOT + os.path.basename( form.cleaned_data['name'] )
+		response['corpus_path'] = corpus_path
+
 		try:
-		
+			# create corpus
+			
+			# create folder if does not exists
+			if not os.path.exists( corpus_path ):
+				os.makedirs( corpus_path )
+			
 			c = Corpus( name=form.cleaned_data['name'] )
 			c.save()
-		except:
-			return throw_error( response, "Corpus %s exists yet...," % form.cleaned_data['name'], code=API_EXCEPTION_DUPLICATED )
-		
+			
+			
+		except Exception, e:
+			return throw_error( response, error="Exception: %s" % e, code="fault" )
+
+
+			
 		response['created'] = c.json()
 		return render_to_json( response )
 	else:
@@ -274,6 +286,65 @@ def start_metrics( request, corpus_id):
 def start_alchemy(request, corpus):
 	pass
 
+def relations_graph(request, corpus_id):
+	response = _json( request, enable_method=False )
+	
+	c =  _get_corpus( corpus_id )
+	if c is None:
+		return throw_error( response, "Corpus %s does not exist...," % corpus_id, code=API_EXCEPTION_DOESNOTEXIST )	
+	
+	actors = Document_Tag.objects.filter(tag__type='actor', document__corpus__id=corpus_id)
+	
+	# print nodes
+	nodes = {}
+	for dt in actors:
+		
+		if dt.tag.id in nodes:
+			nodes[ dt.tag.id]['group'] = nodes[ dt.tag.id]['group'] + 1
+			continue
+
+		nodes[ dt.tag.id] = {
+			'group': 1,
+			'name':dt.tag.name,
+			'id':dt.tag.id
+		}
+
+	# load relations and distances
+	edges = []
+	from django.db import connection
+
+	cursor = connection.cursor()
+	cursor.execute("""
+		    SELECT 
+		    t1.id as alpha_actor,  
+		    t2.id as omega_actor,
+		    AVG( y.cosine_similarity ) as average_cosine_similarity
+		FROM `anta_distance` y
+		JOIN anta_document_tag dt1 ON y.alpha_id = dt1.document_id
+		JOIN anta_document_tag dt2 ON y.omega_id = dt2.document_id  
+		JOIN anta_tag t1 ON dt1.tag_id = t1.id
+		JOIN anta_tag t2 ON dt2.tag_id = t2.id
+		JOIN anta_document d1 ON y.alpha_id = d1.id
+		JOIN anta_document d2 on y.omega_id = d2.id
+		    WHERE d1.corpus_id=%s AND d2.corpus_id=%s AND t1.type='actor' AND t2.type='actor'
+		GROUP BY alpha_actor, omega_actor
+		ORDER BY average_cosine_similarity
+	""",[ corpus_id, corpus_id])
+
+	for row in cursor.fetchall():
+		edges.append({
+			'value':row[2],
+			'source':row[1],
+			'target':row[0]
+		})
+    # Data modifying operation - commit required
+	response['edges'] = edges
+	# load distances
+
+
+	response['nodes'] = nodes
+
+	return render_to_json( response )
 
 def download_document(request, document_id):
 	

@@ -146,6 +146,7 @@ class Document( models.Model ):
 			'tags'	: [ t.json() for t in self.tags.exclude(type="actor") ],
 			'actors': [ t.json() for t in self.tags.filter(type="actor") ],
 			'concepts': [ c.json() for c in self.concepts.all() ],
+			'relations_count': Relation.objects.filter(source__id=self.id).count(),
 			'corpus': self.corpus.json()
 		}
 
