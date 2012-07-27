@@ -157,7 +157,7 @@ path.doc {
 }
 
 .text {
-
+	min-width:470px;
 	float:left;
 }
 

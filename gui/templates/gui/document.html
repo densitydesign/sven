@@ -84,6 +84,15 @@
     var contentWidth = $("#content").width();
     $(".text").width(contentWidth/2);
     $(".text").height(600);
+    $(window).resize(function() {
+    contentWidth = $("#content").width();
+  	$(".text").width(contentWidth/2);
+	});
+	$('#source_document').resize(function() {
+    contentWidth = $("#source_document").width();
+  	$(".text").width(contentWidth);
+	});
+	$('.relations .btn').click(function(){$("#source_document").attr("width", "50%")})
     var kDefaultURL = 'http://127.0.0.1:8000/anta/api/documents/download/' + {{ id_document }};
 </script>
 
