@@ -320,8 +320,8 @@ def streamgraph( request, corpus_id ):
 			JOIN anta_tag t ON t.id = dt.tag_id 
 			
 		WHERE d.corpus_id = %s AND t.type='actor'
-		GROUP BY t.id, concept HAVING distro > %s ORDER BY `distro` DESC
-		""", [corpus_id, 1]
+		GROUP BY t.id, concept  ORDER BY `distro` DESC
+		""", [corpus_id]
 	)
 
 	response['actors'] = {}
