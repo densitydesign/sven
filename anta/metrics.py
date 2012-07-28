@@ -17,7 +17,7 @@ from sven.anta.log import log
 from sven.anta.distiller import distill
 from sven.anta.utils import *
 from sven.core.utils import dictfetchall
-from django.db.models import Count
+from django.db.models import Count, Avg, Max, Min
 from django.db import connection, transaction
 from pattern.vector import Document as pvDocument, Corpus as pvCorpus
 
@@ -86,7 +86,40 @@ def tfidf( corpus, language, parser, column="stemmed" ):
 	# cycle thouhg segments
 	
 	print corpus.name, number_of_documents
+
+
+def export( corpus, language, parser, column="stemmed" ):
+	print """
+	===========================================
+	---- EXPORT SEGMENTS FOR REFINE SAMPLE ----
+	===========================================
+	"""
+	try:
+		c = Corpus.objects.get( name=corpus )
+	except Exception, e:
+		print "Exception: %s" % e
+		return error( message="corpus '%s' was not found!" % corpus, parser=parser )
 	
+	ss = Segment.objects.raw("""
+		SELECT 
+			`anta_segment`.`id`, `anta_segment`.`content`, `anta_segment`.`language`, 
+			`anta_segment`.`stemmed`, `anta_segment`.`status`, 
+			MAX(`anta_document_segment`.`tfidf`) AS `max_tfidf`,
+			MAX(`anta_document_segment`.`tf`) AS `max_tf`, 
+			COUNT(`anta_document_segment`.`document_id`) AS `distro` 
+		FROM `anta_segment`
+			JOIN `anta_document_segment` ON (`anta_segment`.`id` = `anta_document_segment`.`segment_id`) 
+			JOIN `anta_document` ON (`anta_document_segment`.`document_id` = `anta_document`.`id`) 
+		WHERE `anta_document`.`corpus_id` = %s AND content NOT REGEXP '^[[:alpha:]][[:punct:]]$'
+		GROUP BY `anta_segment`.`id`
+		""",[c.id]
+	) 
+	
+	print ss.query	
+
+	for s in ss:
+		print s.id, s.stemmed, s.distro, s.max_tfidf, s.max_tf
+		break
 
 def similarity( corpus, language, parser, column="stemmed" ):
 	print """
@@ -153,7 +186,7 @@ def similarity( corpus, language, parser, column="stemmed" ):
 	return
 	
 def main( argv):
-	usage = "usage: %prog -c corpus_name -l language -f function [tfidf|similarity [-o column]]"
+	usage = "usage: %prog -c corpus_name -l language -f function [tfidf|similarity|export [-o column]]"
 	parser = OptionParser( usage=usage )
 	parser.add_option("-c", "--corpus", dest="corpus",
 		help="anta corpus_name to be metricsied. Computate tfidf")
@@ -180,11 +213,15 @@ def main( argv):
 	
 	if options.func == "tfidf":	
 		tfidf(options.corpus, options.language, parser, options.tfidfcolumn )
-		return
-	if options.func == "similarity":
+	
+	elif options.func == "similarity":
 		similarity(options.corpus, options.language, parser, options.tfidfcolumn )
-		return
-	error( message="sorry, the desired function was not found!", parser=parser )
+
+	elif options.func == "export":
+		export( options.corpus, options.language, parser, options.tfidfcolumn)
+		
+	else:
+		error( message="sorry, the desired function was not found!", parser=parser )
 	
 	
 if __name__ == '__main__':
