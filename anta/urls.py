@@ -48,7 +48,7 @@ urlpatterns = patterns('',
 	url(r'^api/documents/download/(\d+)/$', 'sven.anta.api.download_document', name='anta_api_download_document'),
 	url(r'^api/status/corpus/(\d+)/$', 'sven.anta.api.pending_analysis_corpus', name='anta_api_pending_analysis_corpus' ),
 	url(r'^api/segments/export/corpus/(\d+)/$', 'sven.anta.api.segments_export', name='anta_api_segments_export' ),
-
+	url(r'^api/streamgraph/corpus/(\d+)/$', 'sven.anta.api.streamgraph', name='anta_api_streamgraph' ),
 	# url(r'^api/get-corpora/$', 'sven.anta.api.get_corpora', name='anta_api_get_corpora' ),    
 	# url(r'^api/get-corpus/(\w+)/$', 'sven.anta.api.get_corpus', name='anta_api_get_corpus' ),    
 	

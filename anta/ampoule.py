@@ -176,14 +176,14 @@ def basic( options, parser ):
 # once finished
 #    recalculate tf/idf foreach tf
 #
-def decant( options, parser ):
+def decant( corpus, parser=None ):
 	# path = settings.MEDIA_ROOT + options.corpus
 	# print NL_STOPWORDS
 	
 	# get corpus
 	# get or store corpus
 	try:
-		corpus = Corpus.objects.get( name=options.corpus )
+		corpus = Corpus.objects.get( name=corpus )
 	except:
 		
 		return error( message="corpus was not found!", parser=parser )
@@ -193,6 +193,7 @@ def decant( options, parser ):
 	# create or resume analysis
 	try: 
 		analysis = Analysis.objects.get(corpus=corpus, type="PT")
+
 		print "[info] analysis:", analysis.id, "found, current document:",analysis.document
 		
 		if analysis.status == "ERR":
@@ -207,12 +208,16 @@ def decant( options, parser ):
 		analysis.save()	
 		print "[info] analysis created:", analysis.id, "at",analysis.start_date
 
+	print "[info] analysis status:",  analysis.id, "at", analysis.status
+
 	if analysis.document is None:
-		documents = Document.objects.filter(corpus=corpus.id)
+		documents = Document.objects.filter(corpus__id=corpus.id)
 		print "[info] analysis documentis None, then start from first available document"
 	else:
-		documents = Document.objects.filter(corpus=corpus.id, id__gt=analysis.document.id)
-	
+		documents = Document.objects.filter(corpus__id=corpus.id, id__gt=analysis.document.id)
+		if documents.count() == 0:
+			documents = Document.objects.filter(corpus__id=corpus.id)
+
 	# pending status for current analysis
 	analysis.status = "PN"
 	analysis.save()
@@ -350,7 +355,7 @@ def main( argv):
 		help="an anta corpus_name")
 	
 	parser.add_option(
-		"-f", "--function", dest="function",
+		"-f", "--function", dest="function", default="decant", 
 		help="function to be performed. Default to 'ampoule', to computate tf")
 	
 	parser.add_option(
@@ -364,7 +369,7 @@ def main( argv):
 		error( message="Use -c to specify the corpus", parser=parser )
 	
 	if options.function is "decant":
-		return decant(options, parser )
+		return decant(options.corpus, parser )
 	elif options.function == "duplicates":
 		return duplicates(options, parser )
 	elif options.function == "freebase":

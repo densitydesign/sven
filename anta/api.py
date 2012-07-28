@@ -260,24 +260,39 @@ def document(request, document_id):
 #    ==================
 #	 
 def start_metrics( request, corpus_id):
+	from utils import pushdocs
+	from ampoule import decant
 	response = _json( request, enable_method=False )
 	
-	# standard analysis includes: metrics
-	a = _store_analysis( corpus=c, type="ST" )
-
+	
 	c =  _get_corpus( corpus_id )
 	
 	if c is None:
 		# do sync
-
-		
 		return throw_error( response, "Corpus %s does not exist...," % corpus_id, code=API_EXCEPTION_DOESNOTEXIST )	
 	
+	# standard analysis includes: metrics
+	a = _store_analysis( corpus=c, type="ST" )
+
+	# pushdocs
+	try:
+		a = pushdocs( corpus=c, analysis=a, path=settings.MEDIA_ROOT+c.name)
+	except Exception,e:
+		a.status = "ERR"
+		a.save()
+		return throw_error( response, "Exception: %s " % e, code=API_EXCEPTION_DOESNOTEXIST )	
 	
-	# get status
-	if a.status == 'CRE':
-		# start sync, open 
-		pass
+	if a.status == "OK":
+		# launch tf stuffs and wait
+		#try:
+		decant( c.name )
+		#subprocess.check_call("python ampoule.py -c %s > /tmp/log.txt" + c.name, shell=False)
+		#except Exception, e:
+		#	return throw_error( response, "Exception: %s " % e, code=API_EXCEPTION_DOESNOTEXIST )	
+	
+	# launch tfidf stuff
+
+
 
 	# do sync
 	response['analysis'] = a.json()
@@ -285,6 +300,48 @@ def start_metrics( request, corpus_id):
 
 def start_alchemy(request, corpus):
 	pass
+
+def streamgraph( request, corpus_id ):
+	response = _json( request, enable_method=False )
+	c = _get_corpus( corpus_id )
+	if c is None:
+		return throw_error( response, "Corpus %s does not exist...," % corpus_id, code=API_EXCEPTION_DOESNOTEXIST )	
+	from django.db import connection
+
+	cursor = connection.cursor()
+	cursor.execute("""
+		SELECT 
+	    	t.name,  s.stemmed as concept, MAX(ds.tfidf), AVG(tfidf),
+			count( DISTINCT s.id ) as distro 
+		FROM `anta_document_segment` ds
+			JOIN anta_segment s ON s.id = ds.segment_id
+			JOIN anta_document d ON d.id = ds.document_id
+			JOIN anta_document_tag dt ON dt.document_id = ds.document_id 
+			JOIN anta_tag t ON t.id = dt.tag_id 
+			
+		WHERE d.corpus_id = %s AND t.type='actor'
+		GROUP BY t.id, concept HAVING distro > %s ORDER BY `distro` DESC
+		""", [corpus_id, 1]
+	)
+
+	response['actors'] = {}
+	i = 0
+	for row in cursor.fetchall():
+		if row[0] not in response['actors']:
+			response['actors'][ row[0] ] = []
+
+		response['actors'][ row[0] ].append({
+			'concept':row[1],
+			'max':row[2],
+			'avg':row[3],
+			'f':row[4]
+		})
+		i += 1
+
+	response['meta']['total'] = i;
+
+	return render_to_json( response )
+
 
 def relations_graph(request, corpus_id):
 	response = _json( request, enable_method=False )
@@ -467,6 +524,8 @@ def _store_analysis( corpus, type=""):
 		if analysis.status == "ERR":
 			# if error analysis failed: then close current analysis and start a brand new analysis
 			analysis.status = "RIP" # rest in peace
+			if not analysis.end_date:
+				analysis.end_date = datetime.now()
 			analysis.save()
 			analysis = Analysis( corpus=corpus, type=type, start_date=datetime.now(), status="CRE" )
 			analysis.save() # create a brand new
@@ -483,7 +542,9 @@ def _store_analysis( corpus, type=""):
 
 	except Analysis.DoesNotExist:
 		analysis = Analysis( corpus=corpus, type=type, start_date=datetime.now(), status="CRE" )
-		analysis.save()	
+		analysis.save()
+	except:
+		analysis = Analysis.objects.filter(corpus=corpus, type=type)[0]
 	return analysis
 
 def _get_corpus( corpus_id ):
