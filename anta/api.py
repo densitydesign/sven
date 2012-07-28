@@ -365,7 +365,17 @@ def download_document(request, document_id):
 	response['Content-Disposition']='attachment;filename="document_%s"'%d.id
 	response['Content-length'] = os.stat( filename ).st_size
 	return response
-    
+
+def pending_analysis_corpus( request, corpus_id ):
+	response = _json( request )
+		
+	try:	
+		response['objects'] = [ a.json() for a in Analysis.objects.filter( corpus__id = corpus_id, end_date = None ).order_by( "-id" )[  response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+	except Eception, e:
+		return throw_error( response, error="Exception thrown: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )	
+	
+	return  render_to_json( response )
+
 #
 #    ======================
 #    ---- OTHER STUFFS ----
