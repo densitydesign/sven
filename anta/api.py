@@ -344,14 +344,31 @@ def streamgraph( request, corpus_id ):
 
 
 def relations_graph(request, corpus_id):
-	response = _json( request, enable_method=False )
+	response = _json( request )
 	
 	c =  _get_corpus( corpus_id )
 	if c is None:
 		return throw_error( response, "Corpus %s does not exist...," % corpus_id, code=API_EXCEPTION_DOESNOTEXIST )	
 	
-	actors = Document_Tag.objects.filter(tag__type='actor', document__corpus__id=corpus_id)
+
+	# understand filters, if any
+	filters = ["d1.corpus_id=%s", "d2.corpus_id=%s"]
 	
+	if "filters" in response['meta']:
+		ids = [ str(d.id) for d in Document.objects.filter(corpus__id=corpus_id,**response['meta']['filters'])]
+		if len(ids) > 0:
+			filters.append( "d1.id IN ( %s )" % ",".join(ids) )
+			filters.append( "d2.id IN ( %s )"  % ",".join(ids) )
+		
+			response['filtered'] = ids
+
+	filters.append("t1.type='actor'")
+	filters.append( "t2.type='actor'")
+	
+	if ids:
+		actors = Document_Tag.objects.filter(tag__type='actor', document__corpus__id=corpus_id, document__id__in=ids)
+	else:
+		actors = Document_Tag.objects.filter(tag__type='actor', document__corpus__id=corpus_id)
 	# print nodes
 	nodes = {}
 	for dt in actors:
@@ -370,6 +387,9 @@ def relations_graph(request, corpus_id):
 	edges = []
 	from django.db import connection
 
+	#  "document__ref_date__gt": 20111011, 
+    #  "document__ref_date__lt": 20121011
+	
 	cursor = connection.cursor()
 	cursor.execute("""
 		    SELECT 
@@ -383,7 +403,8 @@ def relations_graph(request, corpus_id):
 		JOIN anta_tag t2 ON dt2.tag_id = t2.id
 		JOIN anta_document d1 ON y.alpha_id = d1.id
 		JOIN anta_document d2 on y.omega_id = d2.id
-		    WHERE d1.corpus_id=%s AND d2.corpus_id=%s AND t1.type='actor' AND t2.type='actor'
+		    WHERE 
+		    """ + " AND ".join( filters ) + """
 		GROUP BY alpha_actor, omega_actor
 		ORDER BY average_cosine_similarity
 	""",[ corpus_id, corpus_id])
