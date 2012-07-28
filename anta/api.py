@@ -302,16 +302,24 @@ def start_alchemy(request, corpus):
 	pass
 
 def streamgraph( request, corpus_id ):
-	response = _json( request, enable_method=False )
+	response = _json( request )
 	c = _get_corpus( corpus_id )
 	if c is None:
 		return throw_error( response, "Corpus %s does not exist...," % corpus_id, code=API_EXCEPTION_DOESNOTEXIST )	
 	from django.db import connection
 
-	cursor = connection.cursor()
-	cursor.execute("""
+	filters = ""
+	if "filters" in response['meta']:
+		ids = [ str(d.id) for d in Document.objects.filter(corpus__id=corpus_id,**response['meta']['filters'])]
+		if len(ids) > 0:
+			filters = " AND d.id IN ( %s )" % ",".join(ids)
+		else:
+			response['meta']['total'] = 0;
+			response['actors'] = {}
+			return render_to_json( response )
+	query = """
 		SELECT 
-	    	t.name,  s.stemmed as concept, MAX(ds.tfidf), AVG(tfidf),
+	    	t.name,  s.stemmed as concept, MAX(ds.tfidf), AVG(tf),
 			count( DISTINCT s.id ) as distro 
 		FROM `anta_document_segment` ds
 			JOIN anta_segment s ON s.id = ds.segment_id
@@ -319,9 +327,12 @@ def streamgraph( request, corpus_id ):
 			JOIN anta_document_tag dt ON dt.document_id = ds.document_id 
 			JOIN anta_tag t ON t.id = dt.tag_id 
 			
-		WHERE d.corpus_id = %s AND t.type='actor'
+		WHERE d.corpus_id = %s """ + filters + """ AND t.type='actor'
 		GROUP BY t.id, concept  ORDER BY `distro` DESC
-		""", [corpus_id]
+		"""
+	response['query'] = query
+	cursor = connection.cursor()
+	cursor.execute( query, [corpus_id]
 	)
 
 	response['actors'] = {}
@@ -332,8 +343,8 @@ def streamgraph( request, corpus_id ):
 
 		response['actors'][ row[0] ].append({
 			'concept':row[1],
-			'max':row[2],
-			'avg':row[3],
+			'tfidf':row[2],
+			'tf':row[3],
 			'f':row[4]
 		})
 		i += 1
@@ -359,8 +370,12 @@ def relations_graph(request, corpus_id):
 		if len(ids) > 0:
 			filters.append( "d1.id IN ( %s )" % ",".join(ids) )
 			filters.append( "d2.id IN ( %s )"  % ",".join(ids) )
-		
-			response['filtered'] = ids
+		else:
+			response['meta']['total'] = 0;
+			response['nodes'] = {}
+			response['edges'] = {}
+			return render_to_json( response )
+		response['filtered'] = ids
 
 	filters.append("t1.type='actor'")
 	filters.append( "t2.type='actor'")
