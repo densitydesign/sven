@@ -64,6 +64,10 @@
 		</div>
 		<div class="relations">
 			<span class="btn">Add relation</span>
+			<div class="ui-widget">
+	<input id="search" />
+
+</div>
 			<div class="rel_doc"></div>
 		</div>
 		<div class="clear"></div>
@@ -92,7 +96,7 @@
     contentWidth = $("#source_document").width();
   	$(".text").width(contentWidth);
 	});
-	$('.relations .btn').click(function(){$("#source_document").attr("width", "50%")})
+	
     var kDefaultURL = 'http://127.0.0.1:8000/anta/api/documents/download/' + {{ id_document }};
 </script>
 
