@@ -129,8 +129,8 @@ path.doc {
 	background-color: #FFC;	
 }
 
-#source_document{
-	width:60%;
+#source_document, #target_document{
+	width:34%;
 	float: left;
 	}
 	
@@ -139,6 +139,7 @@ path.doc {
 	float: left;
 	}
 	
+
 .doc_info {
 	width:50%;
 	float:left;
@@ -167,7 +168,35 @@ path.doc {
 	float:left;
 }
 
+.container {
+	height:500px;
+	overflow:auto;
+	background:#F3F3F4;
+	text-align: center;
+	}
+
+.pageUp::before {
+  content: url(images/toolbarButton-pageUp.png);
+}
+
+.pageDown::before {
+  content: url(images/toolbarButton-pageDown.png);
+}
+
+.zoomOut::before {
+  content: url(images/toolbarButton-zoomOut.png);
+}
+.zoomIn::before {
+  content: url(images/toolbarButton-zoomIn.png);
+}
+.controls {
+	padding: 4px;
+	background: #999;	
+	
+}
+
 .relations {
+	width:28%;
 	float:left;
 	padding: 0 10px;
 }
@@ -380,11 +409,33 @@ h3 {
   	user-select: none;
 }
 
-.btn:hover {
+.btnC {
+	font-weight:bold;
+	font-size:11px;
+	white-space: nowrap;
+	padding:5px 7px;	
+	background: -webkit-linear-gradient(top,#f0ebe8 0, #e7e3e0 100%);	
+	background: -moz-linear-gradient(top,#f0ebe8 0, #e7e3e0 100%);
+	background: -o-linear-gradient(top,#f0ebe8 0,#e7e3e0 100%);
+	background: -ms-linear-gradient(top,#f0ebe8 0,#e7e3e0 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f0ebe8',endColorstr='#e7e3e0',GradientType=0);
+	background: linear-gradient(top,#f0ebe8 0,#e7e3e0 100%);
+	cursor:pointer;
+	border: 1px solid rgb(200, 200, 200);
+	border-radius: 2px 2px 2px 2px;
+	outline:medium none;
+	display:inline-block;
+	-moz-user-select: none;
+  	-khtml-user-select: none;
+  	-webkit-user-select: none;
+  	user-select: none;
+}
+
+.btn:hover, .btnC:hover {
 	border: 1px solid rgb(160, 160, 160);
 }
 
-.btn:active {
+.btn:active, .btnC:active {
 	border: 1px solid rgb(160, 160, 160);
 	box-shadow: 0 1px 3px rgba(0,0,0,0.2) inset;
 }
