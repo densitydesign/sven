@@ -146,6 +146,7 @@ class Document( models.Model ):
 			'tags'	: [ t.json() for t in self.tags.exclude(type="actor") ],
 			'actors': [ t.json() for t in self.tags.filter(type="actor") ],
 			'concepts': [ c.json() for c in self.concepts.all() ],
+			'relations_count': Relation.objects.filter(source__id=self.id).count(),
 			'corpus': self.corpus.json()
 		}
 
@@ -211,8 +212,9 @@ class Analysis(models.Model ):
 	start_date = models.DateTimeField( blank=True, null=True )
 	end_date = models.DateTimeField( blank=True, null=True )
 	type = models.CharField( max_length=2, choices=ANALYSIS_CHOICES ) # type of routine, like PT for Pattern routine.
-	status = models.CharField( max_length=3, choices= ANALYSIS_STATUS_CHOICES )
-	
+	completion = models.FloatField( default=0, null=True )
+	status = models.CharField( max_length=3, choices= ANALYSIS_STATUS_CHOICES )	
+
 	def json(self, min=-1, max=1):
 		return {
 			'id'	: self.id,
@@ -221,6 +223,7 @@ class Analysis(models.Model ):
 			'document'	: self.document.json() if self.document else None,
 			'start_date'	: self.start_date.isoformat(),
 			'end_date'	: self.end_date.isoformat() if self.end_date else None,
+			'completion': self.completion,
 			'status'	: self.status
 		}
 

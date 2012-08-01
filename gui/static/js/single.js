@@ -59,13 +59,16 @@ query.getDocument(id_document, function(response){
 
     		var relations = response.results;
     		if (relations){
-    		
+    			
+    			d3.select(".rel_doc").append("div")
+					.attr("class","clear")
+					
     			for (i in relations) {
 
     				query.getDocument(relations[i].target, function(response){
 							relations[i]['relation target'] = response.results[0].title;
 							var relation = d3.select(".rel_doc")
-								.append("div")
+								.insert("div", ":first-child")
 								.attr("class", "relation");
 
 							relation.append("div")
@@ -78,8 +81,7 @@ query.getDocument(id_document, function(response){
 								
 							});
 					
-    				d3.select(".rel_doc").append("div")
-					.attr("class","clear")
+    				
 					
     				}
     		
@@ -112,33 +114,28 @@ query.getDocument(id_document, function(response){
 	},args);
 
 
-//$('.relations .btn').click(function(){
-	
+	var relationArgs = {}
+	var targetTitle;
+	$( "#radio" ).buttonset();
 	$( "#search" ).autocomplete({
 			source: function( request, response ) {
-				$.ajax({
-					url: "http://ws.geonames.org/searchJSON",
-					dataType: "jsonp",
-					data: {
-						featureClass: "P",
-						style: "full",
-						maxRows: 12,
-						name_startsWith: request.term
-					},
-					success: function( data ) {
-						response( $.map( data.geonames, function( item ) {
+				
+				query.getDocuments(function(data){
+					response( $.map( data.results, function( item ) {
 							return {
-								label: item.name + (item.adminName1 ? ", " + item.adminName1 : "") + ", " + item.countryName,
-								value: item.name
+								label: item.title,
+								value: item.title,
+								id: item.id
 							}
 						}));
-					}
-				});
+					}, {filters:'{"title__istartswith":"' + request.term + '"}'});
 			},
-			minLength: 2,
+			minLength: 3,
 			select: function( event, ui ) {
+				relationArgs.target = ui.item.id;
+				targetTitle = ui.item.label;
 				log( ui.item ?
-					"Selected: " + ui.item.label :
+					"Selected id: " + ui.item.id :
 					"Nothing selected, input was " + this.value);
 			},
 			open: function() {
@@ -148,6 +145,30 @@ query.getDocument(id_document, function(response){
 				$( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
 			}
 		});
+	
+		$(".relations .btn").click(function(){
+			relationArgs.source = id_document;
+			relationArgs.polarity = $("#radio :radio:checked").val();
+			relationArgs.description = $("#description").val();
+			console.log(relationArgs);
+			query.addRelation(function(response){
+				
+				$(".addResult").text(response.status);
+				var status = response.status;
+				if (status == 'ok'){
+					var relation = d3.select(".rel_doc")
+								.insert("div", ":first-child")
+								.attr("class", "relation");
 
-//		});
-		
+							relation.append("div")
+								.attr("class","relation_target")
+								.text(targetTitle);
+							
+							relation.append("div")
+								.attr("class","relation_type")
+								.text(relationArgs.polarity);
+					
+					}
+				
+				},relationArgs)
+			});

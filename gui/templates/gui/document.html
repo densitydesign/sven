@@ -40,12 +40,6 @@
 {% block content %}
 
 
-<div id="actions">
-	
-	<!--<span class="btn">Upload a new document</span>-->
-	
-</div>
-
 <div id="source_document">
 	<div class="doc_info">
 		<div class="date"></div>
@@ -62,21 +56,36 @@
 		
 		
 		</div>
-		<div class="relations">
-			<span class="btn">Add relation</span>
-			<div class="ui-widget">
-	<input id="search" />
-
-</div>
-			<div class="rel_doc"></div>
-		</div>
 		<div class="clear"></div>
 	</div>
 	<div class="clear"></div>
 </div>
 
+<div class="relations">
+	<p>select a document:</p>
+	<div class="ui-widget">
+		<input id="search" />
+	</div>
+	<p>type of relation:</p>
+	<div id="radio">
+		<input type="radio" id="PPO" name="radio" value="PPO" /><label for="PPO">very positive</label>
+		<input type="radio" id="POS" name="radio" value="POS" /><label for="POS">positive</label>
+		<input type="radio" id="NEU" name="radio" value="NEU" checked="checked"/><label for="NEU">neuter</label>
+		<input type="radio" id="NEG" name="radio" value="NEG" /><label for="NEG">negative</label>
+		<input type="radio" id="NNE" name="radio" value="NNE" /><label for="NNE">very negative</label>
+	</div>
+	<p>description:</p>
+	<textarea id="description"></textarea>
+	<div class="btn">
+		Add relation
+	</div>
+	<div class="addResult"></div>
+	<div class="rel_doc"></div>
+	<div class="clear"></div>
+	
+</div>
 
-
+<div class="clear"></div>
 
 {% endblock %}
 
@@ -85,16 +94,13 @@
 <script>
     var args = {};
     var id_document = {{ id_document }};
-    var contentWidth = $("#content").width();
-    $(".text").width(contentWidth/2);
-    $(".text").height(600);
+    $("#source_document .text").width($("#source_document").width());
+    $("#source_document .text").height(600);
     $(window).resize(function() {
-    contentWidth = $("#content").width();
-  	$(".text").width(contentWidth/2);
+		$("#source_document .text").width($("#source_document").width());
 	});
 	$('#source_document').resize(function() {
-    contentWidth = $("#source_document").width();
-  	$(".text").width(contentWidth);
+		$("#source_document .text").width($("#source_document").width());
 	});
 	
     var kDefaultURL = 'http://127.0.0.1:8000/anta/api/documents/download/' + {{ id_document }};

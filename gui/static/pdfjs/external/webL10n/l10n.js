@@ -191,7 +191,8 @@
   function getL10nData(key) {
     var data = gL10nData[key];
     if (!data)
-      console.warn('[l10n] #' + key + ' missing for [' + gLanguage + ']');
+    //don't warn please!
+      //console.warn('[l10n] #' + key + ' missing for [' + gLanguage + ']');
     return data;
   }
 

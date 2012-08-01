@@ -129,12 +129,18 @@ path.doc {
 	background-color: #FFC;	
 }
 
+#source_document{
+	width:60%;
+	float: left;
+	}
+	
+
 #source_document .tags {
-	width:50%;
-	float: right;
+	float: left;
 	}
 	
 .doc_info {
+	width:50%;
 	float:left;
 }
 

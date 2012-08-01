@@ -11,6 +11,7 @@ import os, json, datetime
 from sven.anta.utils import *
 from sven.anta.forms import *
 from django.contrib.auth.models import User
+from django.db.models import Count
 
 #
 #    ========================
@@ -135,7 +136,6 @@ def corpora(request):
 		response['meta']['total'] = Corpus.objects.filter(**response['meta']['filters']).count()
 		response['results'] = [c.json() for c in Corpus.objects.filter(**response['meta']['filters'])[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
 	else:
-		
 		response['meta']['total'] = Corpus.objects.count()		
 		response['results'] = [c.json() for c in Corpus.objects.all()[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
 	
@@ -147,14 +147,26 @@ def create_corpus( request, response ):
 	response['owner'] = request.user.json()
 	
 	form = ApiCorpusForm( request.REQUEST, initial={'owner':request.user.id} )
-	if form.is_valid():
+	if form.is_valid():		
+		corpus_path = settings.MEDIA_ROOT + os.path.basename( form.cleaned_data['name'] )
+		response['corpus_path'] = corpus_path
+
 		try:
-		
+			# create corpus
+			
+			# create folder if does not exists
+			if not os.path.exists( corpus_path ):
+				os.makedirs( corpus_path )
+			
 			c = Corpus( name=form.cleaned_data['name'] )
 			c.save()
-		except:
-			return throw_error( response, "Corpus %s exists yet...," % form.cleaned_data['name'], code=API_EXCEPTION_DUPLICATED )
-		
+			
+			
+		except Exception, e:
+			return throw_error( response, error="Exception: %s" % e, code="fault" )
+
+
+			
 		response['created'] = c.json()
 		return render_to_json( response )
 	else:
@@ -248,24 +260,39 @@ def document(request, document_id):
 #    ==================
 #	 
 def start_metrics( request, corpus_id):
+	from utils import pushdocs
+	from ampoule import decant
 	response = _json( request, enable_method=False )
 	
-	# standard analysis includes: metrics
-	a = _store_analysis( corpus=c, type="ST" )
-
+	
 	c =  _get_corpus( corpus_id )
 	
 	if c is None:
 		# do sync
-
-		
 		return throw_error( response, "Corpus %s does not exist...," % corpus_id, code=API_EXCEPTION_DOESNOTEXIST )	
 	
+	# standard analysis includes: metrics
+	a = _store_analysis( corpus=c, type="ST" )
+
+	# pushdocs
+	try:
+		a = pushdocs( corpus=c, analysis=a, path=settings.MEDIA_ROOT+c.name)
+	except Exception,e:
+		a.status = "ERR"
+		a.save()
+		return throw_error( response, "Exception: %s " % e, code=API_EXCEPTION_DOESNOTEXIST )	
 	
-	# get status
-	if a.status == 'CRE':
-		# start sync, open 
-		pass
+	if a.status == "OK":
+		# launch tf stuffs and wait
+		#try:
+		decant( c.name )
+		#subprocess.check_call("python ampoule.py -c %s > /tmp/log.txt" + c.name, shell=False)
+		#except Exception, e:
+		#	return throw_error( response, "Exception: %s " % e, code=API_EXCEPTION_DOESNOTEXIST )	
+	
+	# launch tfidf stuff
+
+
 
 	# do sync
 	response['analysis'] = a.json()
@@ -274,6 +301,143 @@ def start_metrics( request, corpus_id):
 def start_alchemy(request, corpus):
 	pass
 
+def streamgraph( request, corpus_id ):
+	response = _json( request )
+	c = _get_corpus( corpus_id )
+	if c is None:
+		return throw_error( response, "Corpus %s does not exist...," % corpus_id, code=API_EXCEPTION_DOESNOTEXIST )	
+	from django.db import connection
+
+	filters = ""
+	if "filters" in response['meta']:
+		ids = [ str(d.id) for d in Document.objects.filter(corpus__id=corpus_id,**response['meta']['filters'])]
+		if len(ids) > 0:
+			filters = " AND d.id IN ( %s )" % ",".join(ids)
+		else:
+			response['meta']['total'] = 0;
+			response['actors'] = {}
+			return render_to_json( response )
+	query = """
+		SELECT 
+	    	t.name,  s.stemmed as concept, MAX(ds.tfidf), AVG(tf),
+			count( DISTINCT s.id ) as distro 
+		FROM `anta_document_segment` ds
+			JOIN anta_segment s ON s.id = ds.segment_id
+			JOIN anta_document d ON d.id = ds.document_id
+			JOIN anta_document_tag dt ON dt.document_id = ds.document_id 
+			JOIN anta_tag t ON t.id = dt.tag_id 
+			
+		WHERE d.corpus_id = %s """ + filters + """ AND t.type='actor'
+		GROUP BY t.id, concept  ORDER BY `distro` DESC
+		"""
+	response['query'] = query
+	cursor = connection.cursor()
+	cursor.execute( query, [corpus_id]
+	)
+
+	response['actors'] = {}
+	i = 0
+	for row in cursor.fetchall():
+		if row[0] not in response['actors']:
+			response['actors'][ row[0] ] = []
+
+		response['actors'][ row[0] ].append({
+			'concept':row[1],
+			'tfidf':row[2],
+			'tf':row[3],
+			'f':row[4]
+		})
+		i += 1
+
+	response['meta']['total'] = i;
+
+	return render_to_json( response )
+
+
+def relations_graph(request, corpus_id):
+	response = _json( request )
+	
+	c =  _get_corpus( corpus_id )
+	if c is None:
+		return throw_error( response, "Corpus %s does not exist...," % corpus_id, code=API_EXCEPTION_DOESNOTEXIST )	
+	
+
+	# understand filters, if any
+	filters = ["d1.corpus_id=%s", "d2.corpus_id=%s"]
+	
+	if "filters" in response['meta']:
+		ids = [ str(d.id) for d in Document.objects.filter(corpus__id=corpus_id,**response['meta']['filters'])]
+		if len(ids) > 0:
+			filters.append( "d1.id IN ( %s )" % ",".join(ids) )
+			filters.append( "d2.id IN ( %s )"  % ",".join(ids) )
+		else:
+			response['meta']['total'] = 0;
+			response['nodes'] = {}
+			response['edges'] = {}
+			return render_to_json( response )
+		response['filtered'] = ids
+
+	filters.append("t1.type='actor'")
+	filters.append( "t2.type='actor'")
+	
+	if ids:
+		actors = Document_Tag.objects.filter(tag__type='actor', document__corpus__id=corpus_id, document__id__in=ids)
+	else:
+		actors = Document_Tag.objects.filter(tag__type='actor', document__corpus__id=corpus_id)
+	# print nodes
+	nodes = {}
+	for dt in actors:
+		
+		if dt.tag.id in nodes:
+			nodes[ dt.tag.id]['group'] = nodes[ dt.tag.id]['group'] + 1
+			continue
+
+		nodes[ dt.tag.id] = {
+			'group': 1,
+			'name':dt.tag.name,
+			'id':dt.tag.id
+		}
+
+	# load relations and distances
+	edges = []
+	from django.db import connection
+
+	#  "document__ref_date__gt": 20111011, 
+    #  "document__ref_date__lt": 20121011
+	
+	cursor = connection.cursor()
+	cursor.execute("""
+		    SELECT 
+		    t1.id as alpha_actor,  
+		    t2.id as omega_actor,
+		    AVG( y.cosine_similarity ) as average_cosine_similarity
+		FROM `anta_distance` y
+		JOIN anta_document_tag dt1 ON y.alpha_id = dt1.document_id
+		JOIN anta_document_tag dt2 ON y.omega_id = dt2.document_id  
+		JOIN anta_tag t1 ON dt1.tag_id = t1.id
+		JOIN anta_tag t2 ON dt2.tag_id = t2.id
+		JOIN anta_document d1 ON y.alpha_id = d1.id
+		JOIN anta_document d2 on y.omega_id = d2.id
+		    WHERE 
+		    """ + " AND ".join( filters ) + """
+		GROUP BY alpha_actor, omega_actor
+		ORDER BY average_cosine_similarity
+	""",[ corpus_id, corpus_id])
+
+	for row in cursor.fetchall():
+		edges.append({
+			'value':row[2],
+			'source':row[1],
+			'target':row[0]
+		})
+    # Data modifying operation - commit required
+	response['edges'] = edges
+	# load distances
+
+
+	response['nodes'] = nodes
+
+	return render_to_json( response )
 
 def download_document(request, document_id):
 	
@@ -294,7 +458,51 @@ def download_document(request, document_id):
 	response['Content-Disposition']='attachment;filename="document_%s"'%d.id
 	response['Content-length'] = os.stat( filename ).st_size
 	return response
-    
+
+def pending_analysis_corpus( request, corpus_id ):
+	response = _json( request )
+		
+	try:	
+		response['objects'] = [ a.json() for a in Analysis.objects.filter( corpus__id = corpus_id, end_date = None ).order_by( "-id" )[  response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+	except Eception, e:
+		return throw_error( response, error="Exception thrown: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )	
+	
+	return  render_to_json( response )
+
+
+def segments_export( request, corpus_id ):
+	c =  _get_corpus( corpus_id )
+	if c is None:
+		return throw_error( _json( request, enable_method=False ), error="corpus id %s does not exist..." % corpus_id, code=API_EXCEPTION_DOESNOTEXIST )
+	import unicodecsv
+	ss = Segment.objects.raw("""
+		SELECT 
+			`anta_segment`.`id`, `anta_segment`.`content`, `anta_segment`.`language`, 
+			`anta_segment`.`stemmed`, `anta_segment`.`status`, 
+			MAX(`anta_document_segment`.`tfidf`) AS `max_tfidf`,
+			MAX(`anta_document_segment`.`tf`) AS `max_tf`, 
+			COUNT(`anta_document_segment`.`document_id`) AS `distro` 
+		FROM `anta_segment`
+			JOIN `anta_document_segment` ON (`anta_segment`.`id` = `anta_document_segment`.`segment_id`) 
+			JOIN `anta_document` ON (`anta_document_segment`.`document_id` = `anta_document`.`id`) 
+		WHERE `anta_document`.`corpus_id` = %s AND content NOT REGEXP '^[[:alpha:]][[:punct:]]$'
+		GROUP BY `anta_segment`.`id`
+		""",[corpus_id]
+	) 
+	
+	response = HttpResponse(mimetype='text/csv; charset=utf-8')
+	response['Content-Description'] = "File Transfer";
+	response['Content-Disposition'] = "attachment; filename=%s.csv" % c.name 
+	writer = unicodecsv.writer(response, encoding='utf-8')
+	
+	# headers	
+	writer.writerow(['segment_id', 'content', 'concept', 'distribution', 'max_tf', 'max_tfidf'])
+
+	for s in ss:
+		writer.writerow([  s.id, s.content, s.stemmed, s.distro,  s.max_tf, s.max_tfidf])
+	
+	return response
+
 #
 #    ======================
 #    ---- OTHER STUFFS ----
@@ -352,6 +560,8 @@ def _store_analysis( corpus, type=""):
 		if analysis.status == "ERR":
 			# if error analysis failed: then close current analysis and start a brand new analysis
 			analysis.status = "RIP" # rest in peace
+			if not analysis.end_date:
+				analysis.end_date = datetime.now()
 			analysis.save()
 			analysis = Analysis( corpus=corpus, type=type, start_date=datetime.now(), status="CRE" )
 			analysis.save() # create a brand new
@@ -368,7 +578,9 @@ def _store_analysis( corpus, type=""):
 
 	except Analysis.DoesNotExist:
 		analysis = Analysis( corpus=corpus, type=type, start_date=datetime.now(), status="CRE" )
-		analysis.save()	
+		analysis.save()
+	except:
+		analysis = Analysis.objects.filter(corpus=corpus, type=type)[0]
 	return analysis
 
 def _get_corpus( corpus_id ):

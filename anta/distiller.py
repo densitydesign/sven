@@ -8,7 +8,7 @@ if path not in sys.path:
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'sven.settings'
 
-from pattern.vector import Corpus, Document, stopwords, count
+from pattern.vector import Corpus as pCorpus, Document as pDocument, stopwords, count
 from pattern.search import search as p_search
 import pattern.nl #     import parse as nlparse, split as nlsplit, Sentence as nlSentence, Text as nlText
 import pattern.en  #   import parse as enparse, Sentence as enSentence, Text as enText
@@ -28,7 +28,7 @@ def endistill( filename, regexp="NP", stopwords=["the","this","a", "he", "me"] )
 	
 	text = pattern.en.Text( pattern.en.parse( content, lemmata=True ) )
 	document =  [ p_search('NP', s) for s in text ]
-	return evaporate( document, stopwords=dict.fromkeys( stopwords, True ), keywords=Document( content, exclude=stopwords ).keywords(top=20) )
+	return evaporate( document, stopwords=dict.fromkeys( stopwords, True ), keywords=pDocument( content, exclude=stopwords ).keywords(top=20) )
 
 
 # given a lemmatized document
@@ -117,7 +117,7 @@ def nldistill( filename, regexp="NP", stopwords=["the","this","a", "he", "me"] )
 	return evaporate( 
 		document, 
 		stopwords=dict.fromkeys( stopwords, True ), 
-		keywords=Document( content, exclude=stopwords ).keywords(top=20) 
+		keywords=pDocument( content, exclude=stopwords ).keywords(top=20) 
 	)
 	
 
@@ -137,7 +137,7 @@ def distill( filename, language="en", regexp="NP", stopwords=["the","this","a", 
 	
 	
 	# some keywords
-	results['keywords'] = Document( content, exclude=stopwords ).keywords(top=20)
+	results['keywords'] = pDocument( content, exclude=stopwords ).keywords(top=20)
 	segments = []
 	phrases = {}
 	
