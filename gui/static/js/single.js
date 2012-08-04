@@ -60,30 +60,46 @@ query.getDocument(id_document, function(response){
     		var relations = response.results;
     		if (relations){
     			
+    			var relation = d3.select(".rel_doc").selectAll('div.relation')
+    				.data(relations)
+    				.enter()
+    				.append('div')
+    				.attr("class", "relation")
+    				
+    				relation.append("div")
+ 						.attr("class","relation_target")
+ 						.text(function(d){ var testo = this;
+    						query.getDocument(d.target, function(response){
+    								d.relation_target = response.results[0].title
+    								d3.select(testo).text(d.relation_target);
+    							})
+    						});
+						
+
+    		 		relation.append("div")
+ 						.attr("class","relation_type")
+ 						.text(function(d){return d.polarity});
+ 							
+ 					relation.append("div")
+ 						.attr("class","btn")
+						.text('delete')
+						.on('click', function(d){$("#dialog-confirm").dialog('open'); 
+							$("#dialog-confirm").dialog("option", "buttons", { 
+									"Continue": function() { 
+										$(this).dialog("close"); 
+										console.log('la relazione: '+d.id +' sparirà');
+										deleteRelation(d.id);
+									},
+									Cancel: function() {
+										$( this ).dialog( "close" );
+									} 
+								})
+							});
+							
+							
     			d3.select(".rel_doc").append("div")
 					.attr("class","clear")
-					
-    			for (i in relations) {
-
-    				query.getDocument(relations[i].target, function(response){
-							relations[i]['relation target'] = response.results[0].title;
-							var relation = d3.select(".rel_doc")
-								.insert("div", ":first-child")
-								.attr("class", "relation");
-
-							relation.append("div")
-								.attr("class","relation_target")
-								.text(relations[i]['relation target']);
-							
-							relation.append("div")
-								.attr("class","relation_type")
-								.text(relations[i]['polarity']);
-								
-							});
-					
-    				
-					
-    				}
+			
 				pdfViewer(pdfURL_source, 'source', 'container');
 			}
     		
@@ -222,29 +238,102 @@ query.getDocument(id_document, function(response){
 			}
 		});
 	
-		$(".relations .btn").click(function(){
+		$(".relations #addRelation").click(function(){
 			relationArgs.source = id_document;
 			relationArgs.polarity = $("#radio :radio:checked").val();
 			relationArgs.description = $("#description").val();
-			console.log(relationArgs);
 			query.addRelation(function(response){
 				
 				$(".addResult").text(response.status);
 				var status = response.status;
 				if (status == 'ok'){
-					var relation = d3.select(".rel_doc")
-								.insert("div", ":first-child")
-								.attr("class", "relation");
-
-							relation.append("div")
-								.attr("class","relation_target")
-								.text(targetTitle);
-							
-							relation.append("div")
-								.attr("class","relation_type")
-								.text(relationArgs.polarity);
+// 					var relation = d3.select(".rel_doc")
+// 								.insert("div", ":first-child")
+// 								.attr("class", "relation");
+// 
+// 							relation.append("div")
+// 								.attr("class","relation_target")
+// 								.text(targetTitle);
+// 							
+// 							relation.append("div")
+// 								.attr("class","relation_type")
+// 								.text(relationArgs.polarity);
+					drawRelation();
 					
 					}
 				
 				},relationArgs)
 			});
+	
+	$( "#dialog-confirm" ).dialog({
+			resizable: false,
+			height:175,
+			autoOpen:false,
+			modal: true
+			
+		});
+
+function deleteRelation(id){
+
+	query.deleteRelation(id, function(response){
+		if (response.status == 'ok'){
+		
+			drawRelation();
+			
+			}
+		});
+	}
+	
+function drawRelation(){
+	
+			query.getRelations(function(response){
+
+    		var relations = response.results;
+    		d3.select(".rel_doc").selectAll('div.relation').remove();
+    		if (relations){
+    			
+    			var relation = d3.select(".rel_doc").selectAll('div.relation')
+    				.data(relations)
+    				.enter()
+    				.append('div')
+    				.attr("class", "relation")
+    				
+    				relation.append("div")
+ 						.attr("class","relation_target")
+ 						.text(function(d){ var testo = this;
+    						query.getDocument(d.target, function(response){
+    								d.relation_target = response.results[0].title
+    								d3.select(testo).text(d.relation_target);
+    							})
+    						});
+						
+
+    		 		relation.append("div")
+ 						.attr("class","relation_type")
+ 						.text(function(d){return d.polarity});
+ 							
+ 					relation.append("div")
+ 						.attr("class","btn")
+						.text('delete')
+						.on('click', function(d){$("#dialog-confirm").dialog('open'); 
+							$("#dialog-confirm").dialog("option", "buttons", { 
+									"Continue": function() { 
+										$(this).dialog("close"); 
+										console.log('la relazione: '+d.id +' sparirà');
+										deleteRelation(d.id);
+									},
+									Cancel: function() {
+										$( this ).dialog( "close" );
+									} 
+								})
+							});
+							
+							
+    			d3.select(".rel_doc").append("div")
+					.attr("class","clear")
+			
+			}
+    		
+    		},{filters:'{"source":' + id_document + '}'});
+	
+	}

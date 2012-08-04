@@ -49,7 +49,7 @@
 	<p>description:</p>
 	<textarea id="description"></textarea>
 	<br>
-	<div class="btn">
+	<div class="btn" id="addRelation">
 		Add relation
 	</div>
 	<div class="addResult"></div>
@@ -84,6 +84,9 @@
 </div>
 
 <div class="clear"></div>
+<div id="dialog-confirm" title="Delete relation?">
+	<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 7px 0;"></span>These relation will be permanently deleted and cannot be recovered. Are you sure?</p>
+</div>
 
 {% endblock %}
 
