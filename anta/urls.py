@@ -11,6 +11,8 @@ urlpatterns = patterns('',
 	url(r'^login/$', 'sven.anta.views.login_view', name='anta_login'),
 	url(r'^logout/$', 'sven.anta.views.logout_view', name='anta_logout'),
 	
+	url(r'^upload/$', 'sven.anta.views.upload', name='anta_upload'),
+	
 	# Examples:
 	# url(r'^$', 'svenz.views.home', name='home'),
 	# url(r'^svenz/', include('svenz.foo.urls')),

@@ -13,7 +13,106 @@ from django.conf import settings
 from optparse import OptionParser
 from sven.anta.models import *
 
-def sync( options, parser ):
+def store_document( filename, corpus ):
+	print
+	print "[sync] corpus:", corpus.id, corpus.name
+	print "[sync] filename:", filename
+	
+
+	basename = os.path.splitext(filename)[0]
+	parts = os.path.basename(filename).split("_",3)
+		
+	# exclude .{ext}.txt from being taken
+	if re.search( "\.[^\.]{3,4}\.[^\.]{3}$", basename ) is not None:
+		print "[sync] skipping dual extension filenames.!", parts
+		raise Exception("filename contains a double extension")
+
+
+	# guess mimetype
+	mime_type	=  mimetypes.guess_type( filename )[0]
+	
+	# guess date		
+	date = re.search( r'(\d{8})', basename )
+	
+	if date is None:
+		date = datetime.now()
+	else:
+		try:
+			date	= datetime.strptime( date.group(), "%Y%m%d" ) 
+		except:
+			print "[sync] date format %s is not valid, substituted with datetime.now" % date.group()
+			date	= datetime.now()
+	
+	# automatically include .txt files
+	print "[sync] detecting mime type:", mime_type
+	print "[sync] detecting date:", date.isoformat()
+		
+	
+	# if options.autoformat
+	# split by underscore (actor(s)[minus spaced], lang[EN|NL|FR], data[YYYYMMDD], title )
+	# string sample: ACTOR1-ACTOR2_EN_20120131_A long and misty title about something
+	#
+	if len( parts ) == 4:
+		print "[sync] file name seems to be valid:", parts
+		
+		actors		= parts[0].split("-")
+		language	= parts[1]
+		title		= parts[3].replace("_"," ")
+	else:
+		print "[WARNING] autoformat option is True but the file name does not handle enough information. Default applied"
+		actors =[]
+		language = 'EN'
+		title = os.path.splitext(filename)[0]
+		
+	print "[sync] saving file:", filename, mime_type
+	print "[sync] file title:", title		
+	print "[sync] file lang:", language
+	print "[sync] file date:", date
+	print "[info] actors found:",actors
+	
+	# save documents
+	try:
+		d = Document.objects.get( url=os.path.basename(filename), corpus=corpus )
+		print "[sync] file already stored"
+
+	except:
+		# file do not exist, ty to uppload it
+		d = Document( url=os.path.basename(filename), mime_type=mime_type, ref_date=date, corpus=corpus, status='IN', language=language, title=title )
+		d.save()
+		print "[sync] file added:", d.id
+	
+	# store actors as tags and attach with document_tags
+	for a in actors:
+		
+		# create tag / retrieve aldready created one
+		try:
+			t = Tag.objects.get( name=a, type="actor" )
+		except:
+			t = Tag( name=a, type="actor" )
+			t.save()
+		
+		try:
+			dt = Document_Tag( document=d, tag=t )
+			dt.save()
+			
+		except:
+			print "[warning] document tag relationship exists."
+			# continue
+		#	"""
+		#	SELECT d.language,d.title, t.name, t.type 
+		#	FROM `anta_document_tag` dt  JOIN anta_document d ON dt.document_id = d.id 
+		#	JOIN anta_tag t ON dt.tag_id = t.id 
+		#	WHERE t.id = 13
+		#	"""
+		
+	# register modification
+	d.save()
+		
+	# parse documents
+	return d
+	pass
+
+def cmdsync( options, parser ):
 	# dir to sync
 	path = settings.MEDIA_ROOT + options.corpus
 	
@@ -38,106 +137,8 @@ def sync( options, parser ):
 	docs = os.listdir(path)
 	
 	for doc in docs:
-		filename = os.path.splitext(doc)[0]
-		parts = filename.split("_",3)
-		
-		print
-		print "[sync] filename:", filename
-		
-		
-		# exclude .{ext}.txt from being taken
-		if re.search( "\.[^\.]{3,4}\.[^\.]{3}$", doc ) is not None:
-			print "[sync] skipping dual extension filenames.!", parts
-			continue
+		store_document( doc, corpus)
 
-		# guess mimetype
-		mime_type	=  mimetypes.guess_type( path + "/" + doc )[0]
-		
-		# guess date		
-		date = re.search( r'(\d{8})', filename )
-		
-		if date is None:
-			date = datetime.now()
-		else:
-			try:
-				date	= datetime.strptime( date.group(), "%Y%m%d" ) 
-			except:
-				print "[sync] date format %s is not valid, substituted with datetime.now" % date.group()
-				date	= datetime.now()
-		
-		# automatically include .txt files
-		print "[sync] detecting mime type:", mime_type
-		print "[sync] detecting date:", date.isoformat()
-			
-		
-		# if options.autoformat
-		# split by underscore (actor(s)[minus spaced], lang[EN|NL|FR], data[YYYYMMDD], title )
-		# string sample: ACTOR1-ACTOR2_EN_20120131_A long and misty title about something
-		#
-		if options.noautoformat:
-			actors =[]
-			language = 'EN'
-			date = datetime.now()
-			title = os.path.splitext(doc)[0]
-
-		elif len( parts ) == 4:
-			print "[sync] file name seems to be valid:", parts
-			
-			actors		= parts[0].split("-")
-			language	= parts[1]
-			title		= parts[3].replace("_"," ")
-		else:
-			print "[WARNING] autoformat option is True but the file name does not handle enough information. Default applied"
-			actors =[]
-			language = 'EN'
-			date = datetime.now()
-			title = os.path.splitext(doc)[0]
-			
-		print "[sync] saving file:", doc, mime_type
-		print "[sync] file title:", title		
-		print "[sync] file lang:", language
-		print "[sync] file date:", date
-		print "[info] actors found:",actors
-		
-		# save documents
-		try:
-			d = Document.objects.get( url=doc, corpus=corpus )
-			print "[sync] file already stored"
-
-		except:
-			# file do not exist, ty to uppload it
-			d = Document( url=doc, mime_type=mime_type, ref_date=date, corpus=corpus, status='IN', language=language, title=title )
-			d.save()
-			print "[sync] file added:", d.id
-		
-		# store actors as tags and attach with document_tags
-		for a in actors:
-			
-			# create tag / retrieve aldready created one
-			try:
-				t = Tag.objects.get( name=a, type="actor" )
-			except:
-				t = Tag( name=a, type="actor" )
-				t.save()
-			
-			try:
-				dt = Document_Tag( document=d, tag=t )
-				dt.save()
-				
-			except:
-				print "[warning] document tag relationship exists."
-				# continue
-			#	"""
-			#	SELECT d.language,d.title, t.name, t.type 
-			#	FROM `anta_document_tag` dt  JOIN anta_document d ON dt.document_id = d.id 
-			#	JOIN anta_tag t ON dt.tag_id = t.id 
-			#	WHERE t.id = 13
-			#	"""
-			
-		# register modification
-		d.save()
-			
-		# parse documents
 		
 		
 			
@@ -173,7 +174,7 @@ def main( argv):
 	else:
 		options.noautoformat = True
 		
-	sync(options, parser )
+	cmdsync(options, parser )
 
 
 

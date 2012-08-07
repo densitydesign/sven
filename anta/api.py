@@ -3,6 +3,8 @@ from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from sven.anta.models import *
+from sven.anta.sync import store_document
+
 from django.conf import settings
 from django.contrib.auth import login, logout
 from django.core import serializers
@@ -27,6 +29,9 @@ API_AVAILABLE_METHODS = [ 'PUT', 'DELETE', 'POST', 'GET' ]
 API_EXCEPTION_DOESNOTEXIST	=	'DoesNotExist'
 API_EXCEPTION_DUPLICATED	=	'Duplicated'
 API_EXCEPTION_FORMERRORS	=	'FormErrors'
+API_EXCEPTION_INCOMPLETE	=	'Incomplete'
+API_EXCEPTION_EMPTY			=	'Empty'
+
 
 #
 #    ==================================
@@ -198,26 +203,30 @@ def corpus( request, id ):
 #    ==================
 #    ---- DOCUMENTS----
 #    ==================
-#	
-
+# 
+# csfr exempt should be used only in debug mode when your're lazy.	
+# from django.views.decorators.csrf import csrf_exempt
+# @csrf_exempt
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def documents(request):
 	response = _json( request )
 
 	# create documents
+	if not request.REQUEST.has_key( 'corpus' ):
+		return throw_error( response, error="corpus param is empty", code=API_EXCEPTION_INCOMPLETE)
+	
+	try:
+		corpus = Corpus.objects.get(id=request.REQUEST.get('corpus'))
+	except Exception, e:
+		return throw_error( response, error="Exception: %s " % e, code=API_EXCEPTION_DOESNOTEXIST )
+	
+	response['corpus'] = corpus.json()
+
+	# to create a document, 
 	if response['meta']['method'] == 'POST':
-		return create_document( request, response )
-	
-	
-	if request.REQUEST.has_key( 'corpus' ):
-		try:
-			response['corpus'] = Corpus.objects.get(name=corpus).json()
-		except:
-			return throw_error( response, "aje corpus does not exist...")
-		response['meta']['total'] = Document.objects.count()		
-		response['results'] = [d.json() for d in Document.objects.filter( corpus__name=corpus )]
-		return render_to_json( response )
-	
+		return create_document( request, response, corpus=corpus )
+
+
 	if len(response['meta']['filters']) > 0:
 		#mod for python 2.6 bug
 		newFilters = {}
@@ -225,19 +234,61 @@ def documents(request):
 		for oldFilter in oldFilters:
 			newFilters[str(oldFilter)] = str(oldFilters[oldFilter])
 		# with filters: models static var
-		response['meta']['total'] = Document.objects.filter(**newFilters).count()
-		response['results'] = [d.json() for d in Document.objects.filter(**newFilters)[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+		response['meta']['total'] = Document.objects.filter(corpus__id=corpus.id).filter(**newFilters).count()
+		response['results'] = [d.json() for d in Document.objects.filter(corpus__id=corpus.id).filter(**newFilters)[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
 	else:
 		
-		response['meta']['total'] = Document.objects.count()		
-		response['results'] = [d.json() for d in Document.objects.all()[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+		response['meta']['total'] = Document.objects.filter(corpus__id=corpus.id).count()		
+		response['results'] = [d.json() for d in Document.objects.filter(corpus__id=corpus.id)[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
 	
 	
 	return render_to_json( response )
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
-def create_document( request, response ):
-	return throw_error( response, "unsupported method")
+def create_document( request, response, corpus ):
+
+
+
+	path = settings.MEDIA_ROOT + corpus.name + "/"
+	
+	# uncomment to debug
+	response['path'] = path
+	
+	if not os.path.exists( path ):
+		return throw_error(response, code=API_EXCEPTION_DOESNOTEXIST, error="path %s does not exits!" % path )
+
+	response['uploads'] = []
+
+	# request files. cfr upload.html template with blueimp file upload
+	if not request.FILES.has_key('files[]'):
+		return throw_error( response, error="request.FILES['files[]'] was not found", code=API_EXCEPTION_INCOMPLETE)
+	for f in request.FILES.getlist('files[]'):
+		# store locally and save happily
+		if f.size == 0:
+			return throw_error(response, error="uploaded file is empty", code=API_EXCEPTION_EMPTY)
+		
+		# filename
+		filename = path + f.name 
+
+		# get permission to store the document. If it exists, will force override!
+		try:
+			destination = open( filename , 'wb+')
+		except Exception, e:
+			return throw_error( response, error="Exception: %s " % e, code=API_EXCEPTION_EMPTY)
+		
+		# save file
+		for chunk in f.chunks():
+			destination.write(chunk)
+			destination.close()
+
+		# save document
+		try:
+			d = store_document( filename=filename, corpus=corpus )
+		except Exception, e:
+			return throw_error( response, error="Exception: %s " % e, code=API_EXCEPTION_EMPTY)
+		response['uploads'].append( d.json() )
+
+	return render_to_json( response )
 	
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
@@ -374,8 +425,9 @@ def relations_graph(request, corpus_id):
 
 	# understand filters, if any
 	filters = ["d1.corpus_id=%s", "d2.corpus_id=%s"]
-	
-	if "filters" in response['meta']:
+	ids = []
+
+	if len( response['meta']['filters'] ):
 		ids = [ str(d.id) for d in Document.objects.filter(corpus__id=corpus_id,**response['meta']['filters'])]
 		if len(ids) > 0:
 			filters.append( "d1.id IN ( %s )" % ",".join(ids) )
@@ -390,7 +442,7 @@ def relations_graph(request, corpus_id):
 	filters.append("t1.type='actor'")
 	filters.append( "t2.type='actor'")
 	
-	if ids:
+	if len(ids):
 		actors = Document_Tag.objects.filter(tag__type='actor', document__corpus__id=corpus_id, document__id__in=ids)
 	else:
 		actors = Document_Tag.objects.filter(tag__type='actor', document__corpus__id=corpus_id)
