@@ -389,8 +389,9 @@ def relations_graph(request, corpus_id):
 
 	# understand filters, if any
 	filters = ["d1.corpus_id=%s", "d2.corpus_id=%s"]
+	ids = []
 	
-	if "filters" in response['meta']:
+	if len( response['meta']['filters'] ):
 		ids = [ str(d.id) for d in Document.objects.filter(corpus__id=corpus_id,**response['meta']['filters'])]
 		if len(ids) > 0:
 			filters.append( "d1.id IN ( %s )" % ",".join(ids) )
@@ -405,7 +406,7 @@ def relations_graph(request, corpus_id):
 	filters.append("t1.type='actor'")
 	filters.append( "t2.type='actor'")
 	
-	if ids:
+	if len(ids):
 		actors = Document_Tag.objects.filter(tag__type='actor', document__corpus__id=corpus_id, document__id__in=ids)
 	else:
 		actors = Document_Tag.objects.filter(tag__type='actor', document__corpus__id=corpus_id)
