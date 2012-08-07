@@ -10,8 +10,8 @@ from sven.anta.forms import LoginForm
 from sven.anta.models import *
 
 CUSTOM_SETTINGS = {
-	'STATIC_URL':'/anta/static/',
-	'LOGIN_URL':'/sven/anta/login'
+	'STATIC_URL':'/static/',
+	'LOGIN_URL':'/anta/login'
 }
 
 @login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
