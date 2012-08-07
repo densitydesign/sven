@@ -12,29 +12,5 @@ query.getDocuments(function(response){
 		.update()
 	
 	},args);
-/*
-d3.select("#documents-list")
-	.selectAll("div")
-	.data(d3.entries(data.documents))
-		.enter().append("div")
-		.attr("class","document-div")
-		.html(function(d){ return d.value.title + " - " + d.value.ACTOR })
-*/
 
 
-/*
-$.ajax({
-	url : "/api/documents",
-	success: function(data){
-		var documents = data.documents;
-		
-		console.log(documents)
-		
-		d3.select("#documents-list")
-			.selectAll("div")
-			.data(d3.entries(documents))
-				.enter().append("div")
-				.html(function(d){ return d.value.title })
-	}
-})
-*/

@@ -2,6 +2,15 @@
 	
 	sven = {};
 	
+	sven.debug = false;
+	
+	sven.log = function(){
+		if (sven.debug) for (var b in arguments) console.log("[SVEN]",arguments[b]);
+		else for (b in arguments) throw Error(arguments[b]);
+		return sven;
+	}
+	
+	
 	sven.colors = {}
 	
 	sven.colors.diverging = function(c){

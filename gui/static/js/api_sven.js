@@ -9,8 +9,6 @@ svenjs.Sven = function(url){
 };
 
 
-
-
 /* get documents */
 svenjs.Sven.prototype.getDocuments = function(successCallback, args){
 	
@@ -154,5 +152,43 @@ svenjs.Sven.prototype.download = function(id, successCallback, args){
         dataType: 'json'
     });
     
+};
+
+/* graph */
+svenjs.Sven.prototype.graph = function(id, successCallback, args){
+		
+    //var url = this.url + "/sketch/query/" + this.database + "/" + collection + "/" + command + "/";
+    var url = this.url + "/anta/api/relations/graph/corpus/" + id + "/?filters={}";
+
+    $.ajax({
+        type: 'GET',
+        url: url,
+        data: args,
+        success: successCallback,
+        error: successCallback,
+        complete: function(){
+        	//console.log(this.url);
+    		},
+        dataType: 'json'
+    });
     
 };
+
+
+/* streamgraph */
+svenjs.Sven.prototype.streamgraph = function(id, successCallback, args){
+		
+    //var url = this.url + "/sketch/query/" + this.database + "/" + collection + "/" + command + "/";
+    var url = this.url + "/anta/api/streamgraph/corpus/" + id + "/?filters={}";
+
+    $.ajax({
+        type: 'GET',
+        url: url,
+        data: args,
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+    
+};
+

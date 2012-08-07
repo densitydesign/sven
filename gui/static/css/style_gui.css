@@ -453,3 +453,12 @@ h3 {
 	-webkit-transition:border-color 0.3s; /* Safari and Chrome */
 	-o-transition:border-color 0.3s; /* Opera */	
 }
+
+
+/* Dynamics */
+
+#graph {
+	width:100%;
+	height:600px;
+}
+
