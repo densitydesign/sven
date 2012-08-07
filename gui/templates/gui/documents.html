@@ -1,0 +1,29 @@
+{% extends "gui/base.html" %}
+
+{% block content %}
+
+
+<div id="actions">
+	
+	<span class="btn">Upload a new document</span>
+	
+</div>
+
+<div id="documents-list">
+	
+</div>
+
+
+
+
+{% endblock %}
+
+<!-- this block contains javascript inside html body -->
+{% block js_body %}
+<script>
+    var args = {};
+</script>
+
+<script src="{{ custom.STATIC_URL }}js/main.js" type="text/javascript"></script>
+
+{% endblock %}
