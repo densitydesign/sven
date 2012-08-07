@@ -43,9 +43,9 @@ def segments( options, parser ):
 			print	" segemnt id %s was not found!" % row['segment_id']
 			continue
 		
-		# buffer_stemmed = s.stemmed
-		s.stemmed_refined = row['stemmed']
-		# s.stemmed
+		buffer_stemmed = s.stemmed
+		s.stemmed = row['stemmed']
+		s.stemmed_refined = buffer_stemmed
 		s.save()
 		# break
 

@@ -27,6 +27,9 @@ API_AVAILABLE_METHODS = [ 'PUT', 'DELETE', 'POST', 'GET' ]
 API_EXCEPTION_DOESNOTEXIST	=	'DoesNotExist'
 API_EXCEPTION_DUPLICATED	=	'Duplicated'
 API_EXCEPTION_FORMERRORS	=	'FormErrors'
+API_EXCEPTION_INCOMPLETE	=	'Incomplete'
+API_EXCEPTION_EMPTY			=	'Empty'
+
 
 #
 #    ==================================
@@ -227,6 +230,18 @@ def documents(request):
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def create_document( request, response ):
+	# request files. cfr upload.html template with blueimp file upload
+	if not request.FILES.has_key('files[]'):
+		return throw_error( response, error="request.FILES['files[]'] was not found", code=API_EXCEPTION_INCOMPLETE)
+	for f in request.FILES.getlist('files[]'):
+		# store locally and save happily
+		if f.size == 0:
+			return throw_error(response, error="uploaded file is empty", code=API_EXCEPTION_EMPTY)
+		# store document
+			
+
+		# save document
+
 	return throw_error( response, "unsupported method")
 	
 
