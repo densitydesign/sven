@@ -4,4 +4,7 @@
 settings.py
 # manage.py
 sven.wsgi
-media/
+media/*
+env/*
+*.pyc
+.DS_Store

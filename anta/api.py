@@ -79,9 +79,14 @@ def relations( request ):
 		return render_to_json( response )
 	
 	if len(response['meta']['filters']) > 0:
+		#mod for python 2.6 bug
+		newFilters = {}
+		oldFilters = response['meta']['filters']
+		for oldFilter in oldFilters:
+			newFilters[str(oldFilter)] = str(oldFilters[oldFilter])
 		# with filters: models static var
-		response['meta']['total'] = Relation.objects.filter(**response['meta']['filters']).count()
-		response['results'] = [r.json() for r in Relation.objects.filter(**response['meta']['filters'])[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+		response['meta']['total'] = Relation.objects.filter(**newFilters).count()
+		response['results'] = [r.json() for r in Relation.objects.filter(**newFilters)[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
 	else:
 		response['meta']['total'] = Relation.objects.count()
 		response['results'] = [r.json() for r in Relation.objects.all()[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
@@ -217,9 +222,14 @@ def documents(request):
 		return render_to_json( response )
 	
 	if len(response['meta']['filters']) > 0:
+		#mod for python 2.6 bug
+		newFilters = {}
+		oldFilters = response['meta']['filters']
+		for oldFilter in oldFilters:
+			newFilters[str(oldFilter)] = str(oldFilters[oldFilter])
 		# with filters: models static var
-		response['meta']['total'] = Document.objects.filter(**response['meta']['filters']).count()
-		response['results'] = [d.json() for d in Document.objects.filter(**response['meta']['filters'])[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+		response['meta']['total'] = Document.objects.filter(**newFilters).count()
+		response['results'] = [d.json() for d in Document.objects.filter(**newFilters)[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
 	else:
 		
 		response['meta']['total'] = Document.objects.count()		

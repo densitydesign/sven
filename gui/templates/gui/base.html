@@ -1,0 +1,83 @@
+<!doctype html>
+<html dir="ltr">
+<head>
+
+  <meta charset="utf-8">
+  <title>gui</title>
+
+  <meta name="description" content="gui user interface">
+  <meta name="author" content="SitePoint">
+
+  <!-- stylesheets here -->
+  <!--
+  <link rel="stylesheet" href="css/styles.css?v=1.0">
+  
+  <link rel="stylesheet" href="/static/sketch_ui/css/styles.css">
+  -->
+  <!-- stylesheets end -->
+  
+  <!--[if lt IE 9]>
+  <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  
+  
+  <!-- jQuery -->
+  <script src="{{custom.STATIC_URL}}js/jquery/jquery-1.7.2.min.js"></script>
+  <script src="{{custom.STATIC_URL}}js/jquery/jquery-ui.min.js"></script>
+  <script src="{{custom.STATIC_URL}}js/jquery/jquery.ui.widget.js" type="text/javascript" ></script>
+
+  <!-- jQuery/ScrollTo -->
+  <script src="{{custom.STATIC_URL}}js/jquery/jquery.scrollTo.js" type="text/javascript" ></script>
+  
+  <!-- jQuery/FileUpload -->
+  <script src="{{custom.STATIC_URL}}js/jquery/jquery.iframe-transport.js" type="text/javascript" ></script>
+  <script src="{{custom.STATIC_URL}}js/jquery/jquery.fileupload.js" type="text/javascript" ></script>
+  
+  <!-- d3 -->
+  <script src="{{ custom.STATIC_URL }}js/d3/d3.v2.min.js"></script>
+	
+  <!-- Sven -->
+  <script src="{{custom.STATIC_URL}}js/api_sven.js"></script>
+  <script src="{{ custom.STATIC_URL }}js/sven/sven.js"></script>
+  <!-- Sven Utils -->
+  <script src="{{ custom.STATIC_URL }}js/sven/sven.utils.js"></script>
+  <!-- Sven Time -->
+  <script src="{{ custom.STATIC_URL }}js/sven/sven.time.js"></script>
+  <!-- Sven Viz -->
+  <script src="{{ custom.STATIC_URL }}js/sven/sven.viz.js"></script>
+  <link rel="stylesheet" href="{{ custom.STATIC_URL }}css/style_gui.css" type="text/css"/>
+  <link rel="stylesheet" href="{{ custom.STATIC_URL }}css/smoothness/jquery-ui-1.8.22.custom.css" type="text/css"/>
+
+	
+  {% block css_1 %}
+  {% endblock %}
+  
+    {% block js_head %}
+  {% endblock %}
+
+</head>
+
+<body>
+
+  
+  
+  	<div id="wrapper">
+	<div id="header">
+		<span class="title">Sven</span>
+		<div id="nav">
+			<span><a href="/gui/documents">Documents</a></span>
+			<span><a href="/gui/timeline">Timeline</a></span>
+		</div>
+	</div>
+	<div id="content">
+	{% block content %}
+  {% endblock %}
+	</div>
+
+  
+  {% block js_body %}
+  {% endblock %}
+	</div>
+
+</body>
+</html>
