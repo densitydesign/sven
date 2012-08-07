@@ -1,3 +1,7 @@
+import tempfile
+import shutil
+import json
+
 from datetime import datetime
 from django.db.models import Q
 from django.http import HttpResponse, HttpRequest, HttpResponseRedirect
@@ -15,7 +19,7 @@ CUSTOM_SETTINGS = {
 	'LOGIN_URL':'/anta/login'
 }
 
-#@login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
+@login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
 def documents(request, id_document=None):
 	data = {}
 	data['custom'] = CUSTOM_SETTINGS
@@ -27,8 +31,9 @@ def documents(request, id_document=None):
 	else:
 		c = RequestContext(request, data)
 		return render_to_response("gui/documents.html", c)
+
 	
-#@login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
+@login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
 def timeline(request):
 	data = {}
 	data['custom'] = CUSTOM_SETTINGS
