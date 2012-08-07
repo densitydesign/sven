@@ -9,10 +9,13 @@ from django.contrib.auth import login, logout, authenticate
 from sven.anta.forms import LoginForm
 from sven.anta.models import *
 
+
 CUSTOM_SETTINGS = {
-	'STATIC_URL':'/static/',
-	'LOGIN_URL':'/anta/login'
+	'STATIC_URL':'/anta/static/',
+	'LOGIN_URL':'/sven/anta/login'
 }
+
+LOGIN_REQUESTED_URL = CUSTOM_SETTINGS['LOGIN_URL']
 
 @login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
 def index(request):
@@ -20,9 +23,15 @@ def index(request):
 	data['documents'] = Document.objects.all()[:20]
 	return render_to_response('anta/index.html', RequestContext(request, data))
 
-
-
+#
+# upload files. test.
+#
+@login_required( login_url=LOGIN_REQUESTED_URL )
+def upload(request):
+	data = _data( request )
 	
+	return render_to_response('anta/upload.html', RequestContext(request, data))
+
 #
 # force logout, then login
 #
