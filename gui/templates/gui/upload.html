@@ -1,0 +1,209 @@
+<!--<div id="actions">
+	<input type="file" id="fileupload" name="files[]" multiple>
+    
+	<script>
+		$(function(){
+			$("#fileupload").fileupload({
+				url:"{% url anta_api_documents %}?corpus=1",
+				dataType: 'json',
+				done: function(e, data){
+					console.log(e, data.result);
+				},
+				fail: function( e, data ){
+					console.log("failed!", data.error);
+				},
+				progressall: function(e, data){
+					var progress = parseInt(data.loaded / data.total * 100, 10);
+					console.log("progress:",progress)
+				}
+
+			})
+
+		});
+	</script>
+	
+		
+</div>-->
+
+  
+  <div class="modal hide fade" id="uploads">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal">×</button>
+      <h3>Upload new documents</h3>
+    </div>
+    <div class="modal-body">
+      
+	<span class="btn btn-success fileinput-button">
+		<span>Choose files...</span>
+		<input id="fileupload" type="file" name="files[]" multiple>
+	</span>
+	
+  	<div class="modal-message"></div>
+	
+  	<div class="modal-gallery">
+  		
+  	</div>
+	
+	
+	<span class="modal-upload btn btn-primary">
+		<span>Upload</span>
+	</span>
+	  
+    </div>
+    <div class="modal-footer">
+      <a href="#" class="btn" data-dismiss="modal">Close</a>
+    </div>
+  </div>
+  
+ 
+ 
+ <script>
+	
+	
+	$(function(){
+		
+		function submitAll(){
+		
+			d3.select(".modal-gallery")
+				.selectAll("div.file-info")
+				.each(function(d){
+					console.log(d)
+					d.sven_target = this;
+					d.submit();
+				})
+		} 
+		
+		
+		
+		$("#fileupload").fileupload({
+			dataType: 'json',
+			done: function(e, data){				
+				
+				d3.select(".modal-upload")
+					.on("click", function(){})
+				
+				
+				d3.select(data.sven_target)
+					.select(".progress")
+					.style("display","none")
+					
+				d3.select(data.sven_target)
+					.append("span")
+					.attr("class","label label-success")
+					.style("display","table")
+					.style("margin-top","5px")
+					.text("Uploaded")
+				
+				
+				
+			},
+			
+			add: function(e, data){
+				
+				
+				
+				data.url = "{% url anta_api_documents %}?corpus=1";
+				
+				d3.select(".modal-gallery")
+					.append("div")
+					.data([data])
+					.attr("class","file-info")
+					.text(function(d){
+						console.log(d)
+						return d.files[0].name;
+					})
+					.append("div")
+					.attr("class","progress progress-striped active")
+						.append("div")
+						.attr("class","bar")
+				
+		      	d3.select(".fileinput-button")
+		      		.style("display","none")
+				
+		      	d3.select(".modal-message")
+		      		.style("display","inline")
+					.html("<strong>The following files are ready to be uploaded:</strong>")
+				
+				
+		      	d3.select(".modal-upload")
+		      		.style("display","inline")
+					.on("click",function(){
+						submitAll()
+					})
+				
+			},
+			fail: function( e, data ){
+				
+				d3.select(".modal-upload")
+					.on("click", function(){})
+				
+				
+				d3.select(data.sven_target)
+					.select(".progress")
+					.style("display","none")
+					
+				d3.select(data.sven_target)
+					.append("span")
+					.attr("class","label label-important")
+					.style("display","table")
+					.style("margin-top","5px")
+					.text("NOT uploaded")
+				
+			},
+			progress: function(e,data){
+				d3.select(data.sven_target)
+					.select(".progress")
+					.style("display","inline")
+				
+				d3.select(data.sven_target)
+					.select(".bar")
+					.style("width", function(d){
+						var progress = parseInt(data.loaded / data.total * 100, 10);
+						return progress/100*300 +"px";
+				})
+				
+			}/*
+			progressall: function(e, data){
+				console.log("dsadasd")
+				d3.select(".progress")
+					.style("display","inline")		
+				
+				d3.select(".bar")
+					.style("width", function(d){
+						var progress = parseInt(data.loaded / data.total * 100, 10);
+						return progress/100*300 +"px";
+				})
+			}*/
+		})
+	});
+ 	
+	
+	 $('#upload-button').click(function(){
+	 	
+      	d3.select(".fileinput-button")
+      		.style("display","inline")
+		
+		 d3.select(".progress")
+			.style("margin-top","5px")
+		 	.style("display","none")
+		
+		d3.select(".modal-message")
+			.style("display","none")
+			
+   		 d3.select(".modal-upload")
+   		 	.style("display","none")
+		
+   		 
+		 d3.select(".modal-gallery")
+   		 	.selectAll(".file-info")
+			.remove()
+		
+		 
+		$('#uploads').modal()
+ 	
+	 })
+	
+ </script>
+
+
+
