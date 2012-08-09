@@ -1,0 +1,28 @@
+{% extends "gui/base.html" %}
+
+{% block content %}
+
+
+
+
+<div id="graph">
+</div>
+
+
+
+
+{% endblock %}
+
+<!-- this block contains javascript inside html body -->
+{% block js_body %}
+<script>
+    var args = {};
+//	var id_corpus = {{ id_corpus }};
+</script>
+
+<script src="{{ custom.STATIC_URL }}js/sigma/sigma.min.js" type="text/javascript"></script>
+<script src="{{ custom.STATIC_URL }}js/sigma/sigma.forceatlas2.js" type="text/javascript"></script>
+
+<script src="{{ custom.STATIC_URL }}js/dynamics.js" type="text/javascript"></script>
+
+{% endblock %}

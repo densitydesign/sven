@@ -1,7 +1,6 @@
 {% extends "gui/base.html" %}
 
 {% block css_1 %}
-	<link rel="stylesheet" href="{{ custom.STATIC_URL }}css/jquery.fileupload-ui.css" type="text/css"/>
 {% endblock %}
 
 {% block js_head %}
@@ -16,22 +15,22 @@
 
 {% block content %}
 
+ <h2>Login</h2>
+ <p>Please provide with the information for your account.</p>
  
 
+ {% if loginerror %}
+	<div class="alert alert-error">Sorry, something went wrong. Please, be sure the information provided are correct and try again.</div>
+ {% endif %}
+ 
+ <form action="{% url gui_login %}" method="POST">
+	{% csrf_token %}
+    <input type="text" name="username" class="input" placeholder="User">
+    <input type="password" name="password" class="input" placeholder="Password">
+	<br/>
+	<button type="submit" class="btn" value="login">Login</button>
+ </form>
 
-<div id="documents-list">
-	
-	<div class="page-header">
-		<h3>Documents</h3>
-		<p>Here you have the list of all the available documents. Use the Upload button to add new documents from your computer.</p>
-		<div class="right">
-			<button type="submit" class="btn btn-primary" id="upload-button">Upload new documents</button>
-		</div>
-		<div class="clear"></div>
-	</div>
-</div>
-
-{% include "gui/upload.html" %}
 
 {% endblock %}
 
@@ -40,7 +39,5 @@
 <script>
     var args = {};
 </script>
-
-<script src="{{ custom.STATIC_URL }}js/documents.js" type="text/javascript"></script>
 
 {% endblock %}
