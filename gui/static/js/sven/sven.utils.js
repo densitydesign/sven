@@ -11,6 +11,8 @@
 			sortOn,
 			sortType = 1,
 			keys,
+			highlight,
+			handlers = {},
 			render = {},
 			event = d3.dispatch(
 				"click"
@@ -24,7 +26,7 @@
 			
 			var table = d3.select(target)
 				.append("table")
-				.attr("class","datatable table")
+				.attr("class","datatable table table-striped")
 			
 			var tr = table
 				.append("thead")
@@ -52,8 +54,13 @@
 				.data(function(d){ return keys().map(function(k){ return { key: k, value: d[k], id:d["id"] }; }) })
 				.enter().append("td")
 					.filter(function(d){ return keys().indexOf(d.key) != -1 ? true : false; })
-					.text(function(d){if (typeof(d.value) == 'object'){var actorsList = '';for (var i in d.value){actorsList = actorsList + d.value[i].name + ' '}; return actorsList;}else{return d.value};})
-					.on("click",function(d){ event.click(window.location = "http://127.0.0.1:8000/gui/documents/" + d.id); });
+					.html(function(d){
+						return handlers[d.key] ? handlers[d.key](d) : d.value;
+					})
+					.attr("class",function(d){
+						 return highlight().indexOf(d.key) != -1 ? "highlight" : null;
+					 })
+					.on("click",function(d){ event.click(d.id); });
 			
 			
 			function stringCompare(a, b) {
@@ -95,6 +102,19 @@
 			return datatable;
 		}
 		
+		datatable.highlight = function(x) {
+			if (!arguments.length) return highlight;
+			highlight = x;
+			return datatable;
+		}
+		
+		datatable.handle = function(key, handler) {
+			if (!arguments.length) return;
+			if (!arguments.length == 1) return handlers[key];
+			handlers[key] = handler;
+			return datatable;
+		}
+				
 		datatable.sortOn = function(x) {
 			if (!arguments.length) return sortOn;
 			sortOn = x;

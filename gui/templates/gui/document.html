@@ -1,11 +1,17 @@
 {% extends "gui/base.html" %}
 
 {% block js_head %}
-<script type="text/javascript" src="{{custom.STATIC_URL}}js/pdf.js"></script>
+	<script type="text/javascript" src="{{custom.STATIC_URL}}js/pdf.js"></script>
+	<script type="text/javascript" src="{{custom.STATIC_URL}}js/bootstrap/bootstrap-button.js"></script>
+	<script type="text/javascript" src="{{custom.STATIC_URL}}js/bootstrap/bootstrap-typeahead.js"></script>
+	<script type="text/javascript" src="{{custom.STATIC_URL}}js/bootstrap/bootstrap-tab.js"></script>
 {% endblock %}
 
 
 {% block content %}
+	<div class="page-header">
+		<p>Here you have the list of all the available documents. Use the Upload button to add new documents from your computer.</p>
+	</div>
 
 
 <div id="source_document">
@@ -14,18 +20,41 @@
 		<div class="title"><h3></h3></div>
 		<div class="actor"></div>
 	</div>
-	<div class="tags"></div>
 	<div class="clear"></div>
+	<h3>Entities</h3>
+	<div class="tags"></div>
+	
 	<div class="doc_preview">
 		<div class="controls">
-			<div id="prev" class="pageUp btnC" ></div>
-			<div id="next" class="pageDown btnC"></div>
-			<div id="out" class="zoomOut btnC"></div>
-			<div id="in" class="zoomIn btnC"></div>
+			
+			<div class="btn-group">
+			<span class="btn btn-small btn-inverse">
+				<i class="pageUp"></i>
+			</span>
+			
+			<span class="btn btn-small btn-inverse">
+				<i class="pageDown"></i>
+			</span>
+			
+			<span class="btn btn-small btn-inverse">
+				<i class="zoomOut"></i>
+			</span>
+			
+			<span class="btn btn-small btn-inverse">
+				<i class="zoomIn"></i>
+			</span>
+			
+			</div>
+			
+		<!--	<div id="prev" class="pageUp btn-pdf" ></div>
+			<div id="next" class="pageDown btn-pdf"></div>
+			<div id="out" class="zoomOut btn-pdf"></div>
+			<div id="in" class="zoomIn btn-pdf"></div>
+		-->
      	</div>
 		<div class="text">
 		
-			<div class="container"></div>
+			<div class="pdf-container"></div>
 		
 		</div>
 		<div class="clear"></div>
@@ -33,49 +62,98 @@
 	<div class="clear"></div>
 </div>
 
+
 <div class="relations">
-	<p>select a document:</p>
-	<div class="ui-widget">
-		<input id="search" />
+	<h3>Relations</h3>
+	
+	<ul class="nav nav-tabs" id="select-relations">
+	  <li  class="active"><a href="#all-relations" data-toggle="tab">Show all</a></li>
+	  <li><a href="#new-relation" data-toggle="tab">Create a new</a></li>
+	 
+	</ul>
+	
+	<div class="tab-content">
+	  <div class="tab-pane active" id="all-relations">
+	  	
+		<div class="rel_doc"></div>
+		
+	  </div>
+	  
+	  <div class="tab-pane" id="new-relation">
+	  	
+		<label>Select a document</label>
+		<input id="search-document" type="text" data-provide="typeahead">
+		
+		<label>Type of relation</label>
+		<div id="radio" class="btn-group" data-toggle="buttons-radio">
+			  <button class="btn  btn-small" value="PPO">Very Positive</button>
+			  <button class="btn  btn-small" value="POS">Positive</button>
+			  <button class="btn btn-small" value="NEU">Neutral</button>
+			  <button class="btn  btn-small" value="NEG">Negative</button>
+			  <button class="btn  btn-small" value="NNE">Very Negative</button>
+		</div>
+
+		<label>Description</label>
+		<textarea maxlength="50" id="description"></textarea>
+		<div class="clear"></div>
+
+		<div class="btn btn-info" id="addRelation">
+			Add relation
+		</div>
+
+		<div class="clear"></div>
+		<div class="addResult alert"></div>
+		<div class="clear"></div>
+		
+	  </div>
+	  
 	</div>
-	<p>type of relation:</p>
-	<div id="radio">
-		<input type="radio" id="PPO" name="radio" value="PPO" /><label for="PPO">very positive</label>
-		<input type="radio" id="POS" name="radio" value="POS" /><label for="POS">positive</label>
-		<input type="radio" id="NEU" name="radio" value="NEU" checked="checked"/><label for="NEU">neuter</label>
-		<input type="radio" id="NEG" name="radio" value="NEG" /><label for="NEG">negative</label>
-		<input type="radio" id="NNE" name="radio" value="NNE" /><label for="NNE">very negative</label>
-	</div>
-	<p>description:</p>
-	<textarea id="description"></textarea>
-	<br>
-	<div class="btn" id="addRelation">
-		Add relation
-	</div>
-	<div class="addResult"></div>
-	<div class="rel_doc"></div>
-	<div class="clear"></div>
+	
+	
+	
+	
+	
+	
+	
 	
 </div>
 
 <div id="target_document">
+	
 	<div class="doc_info">
 		<div class="date"></div>
 		<div class="title"><h3></h3></div>
 		<div class="actor"></div>
 	</div>
-	<div class="tags"></div>
 	<div class="clear"></div>
+	<h3>Entities</h3>
+	<div class="tags"></div>
+	
 	<div class="doc_preview">
 		<div class="controls">
-			<div id="prev" class="pageUp btnC" ></div>
-			<div id="next" class="pageDown btnC"></div>
-			<div id="out" class="zoomOut btnC"></div>
-			<div id="in" class="zoomIn btnC"></div>
+			<div class="btn-group">
+			<span class="btn btn-small btn-inverse">
+				<i class="pageUp"></i>
+			</span>
+			
+			<span class="btn btn-small btn-inverse">
+				<i class="pageDown"></i>
+			</span>
+			
+			<span class="btn btn-small btn-inverse">
+				<i class="zoomOut"></i>
+			</span>
+			
+			<span class="btn btn-small btn-inverse">
+				<i class="zoomIn"></i>
+			</span>
+			
+			</div>
+			
      	</div>
 		<div class="text">
 		
-			<div class="container"></div>
+			<div class="pdf-container"></div>
 		
 		</div>
 		<div class="clear"></div>

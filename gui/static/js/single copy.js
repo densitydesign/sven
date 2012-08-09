@@ -28,25 +28,18 @@ query.getDocument(id_document, function(response){
     	
 		
 	/* Tags */
-	var tag = d3.select("#source_document")
-		.select(".tags")
+	var tag = d3.select(".tags")
 		.selectAll("span.badge")
 		.data(tags)
 		.enter().append("span")
 			.attr("class", "tag badge badge-info")
 			.text(function(d){return d.name;})
-	
-	pdfViewer(pdfURL_source, 'source', 'pdf-container');
 });
 
-$('#select-relations a:first').tab('show');
-$('a[data-toggle="tab"]').on('show', function (e) {
-	
-	d3.select(".addResult")
-	.style("display","none")
-})
 
-/* Relations */
+
+		
+ /* 
  query.getRelations(function(response){
 
     		var relations = response.results;
@@ -56,7 +49,7 @@ $('a[data-toggle="tab"]').on('show', function (e) {
     				.data(relations)
     				.enter()
     				.append('div')
-    				.attr("class", "relation well")
+    				.attr("class", "relation")
     				
     				relation.append("div")
  						.attr("class","relation_target")
@@ -73,7 +66,7 @@ $('a[data-toggle="tab"]').on('show', function (e) {
  						.text(function(d){return d.polarity});
  							
  					relation.append("div")
- 						.attr("class","btn btn-small btn-danger")
+ 						.attr("class","btn")
 						.text('delete')
 						.on('click', function(d){$("#dialog-confirm").dialog('open'); 
 							$("#dialog-confirm").dialog("option", "buttons", { 
@@ -86,41 +79,33 @@ $('a[data-toggle="tab"]').on('show', function (e) {
 										$( this ).dialog( "close" );
 									} 
 								})
-							})
+							});
 							
 							
     			d3.select(".rel_doc").append("div")
 					.attr("class","clear")
 			
-				//pdfViewer(pdfURL_source, 'source', 'pdf-container');
+				pdfViewer(pdfURL_source, 'source', 'container');
 			}
     		
-},{filters:'{"source":' + id_document + '}'});
-    	
-		/* 
-		}
+    		},{filters:'{"source":' + id_document + '}'});
+    	}
 		
 	},args);
 
 
-	*/
-
-
 	
 //add target document
-
 function addTargetDocument(id_document){
 query.getDocument(id_document, function(response){
-	console.log(response)
+	
 	var targetDocument = d3.select("#target_document");
     var data = response; 
     var status = data.status
-    
-	if (status == 'ko'){
+    if (status == 'ko'){
     	target_document.text(data.error + ", error: " + data.errorCode);
-    	return;
-	}
-    
+    	}
+    else {
     	var text = response.text;
     	var date = response.results[0].date.split('T')[0];
     	var title = response.results[0].title;
@@ -135,56 +120,82 @@ query.getDocument(id_document, function(response){
     	targetDocument.select(".title h3").text(title);
     	targetDocument.select(".date").text(date);
     	
-		/* Tags */
-		var tag = targetDocument
-			.select(".tags")
-			.selectAll("span.badge")
-			.data(tags)
-			.enter().append("span")
-				.attr("class", "tag badge badge-info")
-				.text(function(d){return d.name;})
+		var tag = targetDocument.select(".tags").selectAll("div.tag")
+				.data(tags)
+				.enter().append("div")
+					.attr("class", "tag")
 		
-    	
-		pdfViewer(pdfUrl_target, 'target', 'pdf-container');
+			tag.append("div")
+				.attr("class","arrow")
+		
+			var tag_cont = tag.append("div")
+				.attr("class","tag_cont")
+		
+			tag_cont.append("div")
+				.attr("class","tag_text")
+				.text(function(d){ return d.name; })
+		
+			tag_cont.append("div")
+				.attr("class","tag_number")
+				.text("0")
+		
+			tag_cont.append("div")
+				.attr("class","clear")
+		
+			tag.append("div")
+				.attr("class","clear")
+				
+			targetDocument.select(".tags").append("div")
+				.attr("class","clear")
+			
+			//details.append("div")
+			//	.attr("class","clear")
+				
+//     	query.getRelations(function(response){
+// 
+//     		var relations = response.results;
+//     		if (relations){
+//     			
+//     			targetDocument.select(".rel_doc").append("div")
+// 					.attr("class","clear")
+// 					
+//     			for (i in relations) {
+// 
+//     				query.getDocument(relations[i].target, function(response){
+// 							relations[i]['relation target'] = response.results[0].title;
+// 							var relation = targetDocument.select(".rel_doc")
+// 								.insert("div", ":first-child")
+// 								.attr("class", "relation");
+// 
+// 							relation.append("div")
+// 								.attr("class","relation_target")
+// 								.text(relations[i]['relation target']);
+// 							
+// 							relation.append("div")
+// 								.attr("class","relation_type")
+// 								.text(relations[i]['polarity']);
+// 								
+// 							});
+// 					
+//     				
+// 					
+//     				}
+// 				pdfViewer(pdfURL_target, 'target', 'container');
+// 			}
+//     		
+//     		},{filters:'{"source":' + id_document + '}'});
+    	}
+		pdfViewer(pdfUrl_target, 'target', 'container');
 		$("#target_document .text").width($("#target_document").width());
    		$("#target_document .text").height(600);
-	
 	},args);
-};
-	
 	
 
+/*
+//Add relations
 	var relationArgs = {}
 	var targetTitle;
-	
-	var labels,mapped;
-	
-	$('#search-document').typeahead({
-		source: function(q,process){
-			query.getDocuments(function(data){
-				labels = []
-				mapped = {}
-				data.results.forEach(function(item,i){
-					mapped[item.title] = item.id
-					labels.push(item.title)
-				})
-				process(labels);
-			});
-		},
-		updater : function(item) {
-
-			relationArgs.target = mapped[item];
-			targetTitle = item;
-			pdfUrl_target = '../../../anta/api/documents/download/' + mapped[item]; // BAD!!!!!!
-			addTargetDocument(mapped[item]);
-			return item;
-		}
-		
-		
-	})
-	
-	
-	/*
+	$( "#radio" ).buttonset();
 	$( "#search" ).autocomplete({
 			source: function( request, response ) {
 				
@@ -213,41 +224,34 @@ query.getDocument(id_document, function(response){
 				$( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
 			}
 		});
-		*/
+	
 		$(".relations #addRelation").click(function(){
 			relationArgs.source = id_document;
-			relationArgs.polarity = d3.select("#radio").select(".active").attr("value");
-			console.log(relationArgs.polarity)
+			relationArgs.polarity = $("#radio :radio:checked").val();
 			relationArgs.description = $("#description").val();
-			
 			query.addRelation(function(response){
 				
+				$(".addResult").text(response.status);
 				var status = response.status;
-				if (status != 'ok'){
+				if (status == 'ok'){
+// 					var relation = d3.select(".rel_doc")
+// 								.insert("div", ":first-child")
+// 								.attr("class", "relation");
+// 
+// 							relation.append("div")
+// 								.attr("class","relation_target")
+// 								.text(targetTitle);
+// 							
+// 							relation.append("div")
+// 								.attr("class","relation_type")
+// 								.text(relationArgs.polarity);
+					drawRelation();
 					
-					d3.select(".addResult")
-						.style("display","block")
-						.attr("class","addResult alert alert-error")
-						.html(function(d){
-							var errorString = d3.values(response.error).join("<br/>")
-							return "<strong>Oh. Something went wrong:</strong><p>"+errorString+"</p>"
-						})
-					
-					return;
-				}
-				console.log("andata bene cazzo")
-				d3.select(".addResult")
-					.style("display","block")
-					.attr("class","addResult alert alert-success")
-					.html(function(d){
-						return "<strong>Great! </strong><p>The relation has been successfully created.</p>"
-					})
+					}
 				
-				drawRelation();
-					
 				},relationArgs)
 			});
-			
+	
 	$( "#dialog-confirm" ).dialog({
 			resizable: false,
 			height:175,
@@ -279,7 +283,7 @@ function drawRelation(){
     				.data(relations)
     				.enter()
     				.append('div')
-    				.attr("class", "relation well")
+    				.attr("class", "relation")
     				
     				relation.append("div")
  						.attr("class","relation_target")
@@ -296,7 +300,7 @@ function drawRelation(){
  						.text(function(d){return d.polarity});
  							
  					relation.append("div")
- 						.attr("class","btn btn-danger btn-small")
+ 						.attr("class","btn")
 						.text('delete')
 						.on('click', function(d){$("#dialog-confirm").dialog('open'); 
 							$("#dialog-confirm").dialog("option", "buttons", { 
@@ -319,4 +323,4 @@ function drawRelation(){
     		
     		},{filters:'{"source":' + id_document + '}'});
 	
-	}
+	}*/

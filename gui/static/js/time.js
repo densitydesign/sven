@@ -1,4 +1,4 @@
-var query = new svenjs.Sven("http://127.0.0.1:8000");  
+var query = new svenjs.Sven("");  
 
 query.getDocuments(function(response){
 
