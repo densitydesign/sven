@@ -7,7 +7,7 @@ from datetime import datetime
 from sven.anta.models import Relation, Corpus
 
 class LoginForm( forms.Form ):
-	username = forms.CharField( max_length=12, widget=forms.TextInput )
+	username = forms.CharField( max_length=32, widget=forms.TextInput )
 	password = forms.CharField( max_length=64, label='Password', widget=forms.PasswordInput(render_value=False ) )
 	
 #
