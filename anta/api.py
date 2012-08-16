@@ -302,13 +302,17 @@ def document(request, document_id):
 	if d is None:
 		return throw_error( response, "document %s does not exist..." % document_id, code=API_EXCEPTION_DOESNOTEXIST)
 	
+	
 	# if method is POST, update the document
 	if response['meta']['method'] == 'POST':
-		form = DocumentForm( request.REQUEST, instance=d)
+		form = UpdateDocumentForm( request.REQUEST )
 		if form.is_valid():
 			# save
-			form.save()
-			pass
+			d.title = form.cleaned_data['title'] if len(form.cleaned_data['title'])>0 else d.title
+			d.ref_date = form.cleaned_data['ref_date'] if form.cleaned_data['ref_date'] is not None else d.ref_date
+			d.language = form.cleaned_data['language'] if len(form.cleaned_data['language'])>0 else d.language
+			d.save()
+
 		else:
 			return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS)
 

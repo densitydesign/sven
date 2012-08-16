@@ -123,7 +123,7 @@ class Document( models.Model ):
 	url = models.FileField( upload_to="corpus")
 	mime_type = models.CharField( max_length = 100)
 	upload_date = models.DateTimeField(  default=datetime.now(), blank=None, null=None )
-	ref_date =  models.DateTimeField(  default=datetime.now(), blank=None, null=None )
+	ref_date =  models.DateTimeField(  default=datetime.now(), blank=True, null=True )
 	corpus = models.ForeignKey( Corpus )
 	tags = models.ManyToManyField( Tag, through='Document_Tag' )
 	concepts = models.ManyToManyField( Concept, through='Document_Concept' )
@@ -141,7 +141,7 @@ class Document( models.Model ):
 			'id'	: self.id,
 			'title'	: self.title,
 			'language'	: self.language,
-			'date'	: self.ref_date.isoformat(),
+			'date'	: self.ref_date.isoformat() if self.ref_date else '',
 			'mime_type':self.mime_type,
 			'tags'	: [ t.json() for t in self.tags.exclude(type="actor") ],
 			'actors': [ t.json() for t in self.tags.filter(type="actor") ],

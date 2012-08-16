@@ -4,7 +4,7 @@ from django.forms import ModelForm
 
 from django.contrib.admin import widgets 
 from datetime import datetime
-from sven.anta.models import Relation, Corpus, Document
+from sven.anta.models import *
 
 class LoginForm( forms.Form ):
 	username = forms.CharField( max_length=32, widget=forms.TextInput )
@@ -14,11 +14,11 @@ class LoginForm( forms.Form ):
 #    ====================
 #    ---- MODEL FORM ----
 #    ====================
-class DocumentForm( forms.ModelForm ):
-	class Meta:
-		model = Document
-		fields = ('title', 'ref_date', 'language')
-
+class UpdateDocumentForm( forms.Form ):
+	title = forms.CharField( required=False )
+	ref_date = forms.DateTimeField( required=False )
+	language = forms.CharField( max_length=2, required=False )
+	
 #
 #    ===================
 #    ---- API FORMS ----
