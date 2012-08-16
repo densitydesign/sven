@@ -91,6 +91,10 @@ class Tag( models.Model ):
 	name  = models.CharField( max_length=64 )
 	lemma = models.SlugField( max_length=64 )
 	type  = models.CharField( max_length=32 )
+	
+	class Meta:
+		unique_together = ("name", "type") 
+
 	def __unicode__(self):
 		return self.name
 	
@@ -99,6 +103,7 @@ class Tag( models.Model ):
 			'id'	: self.id,
 			'name'	: self.name
 		}	
+
 
 class Relatum( models.Model ):
 	# freebase notable segments are entity attached

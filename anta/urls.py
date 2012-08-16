@@ -45,6 +45,10 @@ urlpatterns = patterns('',
 	
 	
 	# specials, maybe @torefine
+	url(r'^api/attach-free-tag/document/(\d+)/$', 'sven.anta.api.attach_free_tag', name='anta_api_attach_free_tag' ),
+	url(r'^api/attach-tag/document/(\d+)/tag/(\d+)/$', 'sven.anta.api.attach_tag', name='anta_api_attach_tag' ),
+	url(r'^api/detach-tag/document/(\d+)/tag/(\d+)/$', 'sven.anta.api.detach_tag', name='anta_api_detach_tag' ),
+	
 	url(r'^api/start-metrics/(\d+)/$', 'sven.anta.api.start_metrics', name='anta_api_start_metrics' ),
 	url(r'^api/relations/graph/corpus/(\d+)/$', 'sven.anta.api.relations_graph', name='anta_api_relations_graph' ),
 	url(r'^api/documents/download/(\d+)/$', 'sven.anta.api.download_document', name='anta_api_download_document'),

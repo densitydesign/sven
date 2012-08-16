@@ -19,6 +19,12 @@ class UpdateDocumentForm( forms.Form ):
 	ref_date = forms.DateTimeField( required=False )
 	language = forms.CharField( max_length=2, required=False )
 	
+
+class TagForm( forms.ModelForm ):
+	class Meta:
+		model = Tag
+		fields = ('type','name')
+
 #
 #    ===================
 #    ---- API FORMS ----

@@ -339,6 +339,74 @@ def document(request, document_id):
 #    ---- SPECIALS ----
 #    ==================
 #	 
+def attach_tag_by_name( request, document_id ):
+	"""
+	This function requires name and type given as args
+	"""
+	response = _json( request, enable_method=False )
+	
+	try:
+		d = Document.objects.get(pk=document_id)
+	except Exception, e:
+		return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	
+	# add new tag form
+	form = TagForm( request.REQUEST )
+	if form.is_valid():
+		t = form.save()
+	elif "__all__" in form.errors:
+		try:
+			t = Tag.objects.get(name=request.REQUEST.get('name',None),type=request.REQUEST.get('type', None) )
+		except Exception, e:
+			return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DUPLICATED )
+	else:
+		return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS )
+
+	# save relationship
+	try:
+		dt = Document_Tag( document=d, tag=t )
+		dt.save()
+	except:
+		return throw_error( response, error="Relationship document tag already existing", code=API_EXCEPTION_DUPLICATED )
+
+	# auto load relations
+	response['results'] = [ d.json() ]
+	return render_to_json( response )
+
+def attach_tag( request, document_id, tag_id ):
+	response = _json( request, enable_method=False )
+	try:
+		d = Document.objects.get(pk=document_id)
+	except Exception, e:
+		return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	try:
+		dt = Document_Tag( document=d, tag=Tag.objects.get(pk=tag_id))
+		dt.save()
+	except Exception, e:
+		return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	# load document
+	response['results'] = [ d.json() ]
+	return render_to_json( response )
+
+def detach_tag( request, document_id, tag_id ):
+	response = _json( request, enable_method=False )
+	try:
+		d = Document.objects.get(pk=document_id)
+	except Exception, e:
+		return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	try:
+		Document_Tag.objects.get( document=d, tag__id=tag_id).delete()
+	except Exception, e:
+		return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	# load document
+	response['results'] = [ d.json() ]
+	return render_to_json( response )
+
 def start_metrics( request, corpus_id):
 	from utils import pushdocs
 	from ampoule import decant
