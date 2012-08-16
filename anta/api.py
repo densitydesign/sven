@@ -300,17 +300,32 @@ def document(request, document_id):
 
 	d = _get_document( document_id )
 	if d is None:
-		return throw_error( response, "dcument does not exist...")
+		return throw_error( response, "document %s does not exist..." % document_id, code=API_EXCEPTION_DOESNOTEXIST)
 	
-	text = textify( d, settings.MEDIA_ROOT )
-	
-	if text is None:
-		return throw_error( response, "unable to provide txt version of the document")
+	# if method is POST, update the document
+	if response['meta']['method'] == 'POST':
+		form = DocumentForm( request.REQUEST, instance=d)
+		if form.is_valid():
+			# save
+			form.save()
+			pass
+		else:
+			return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS)
+
+
+	# load text only if it's required
+	if 'with-text' in response['meta']:
+
+		text = textify( d, settings.MEDIA_ROOT )
+		
+		if text is None:
+			return throw_error( response, "unable to provide txt version of the document")
+		
+		response['text']	= open(text, 'r').read()
 	
 	# f = open( text, "r")
 		
 	response['results'] = [ d.json() ]
-	response['text']	= open(text, 'r').read()
 	
 	return render_to_json( response )
 

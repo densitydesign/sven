@@ -4,14 +4,20 @@ from django.forms import ModelForm
 
 from django.contrib.admin import widgets 
 from datetime import datetime
-from sven.anta.models import Relation, Corpus
+from sven.anta.models import Relation, Corpus, Document
 
 class LoginForm( forms.Form ):
 	username = forms.CharField( max_length=32, widget=forms.TextInput )
 	password = forms.CharField( max_length=64, label='Password', widget=forms.PasswordInput(render_value=False ) )
 	
 #
-
+#    ====================
+#    ---- MODEL FORM ----
+#    ====================
+class DocumentForm( forms.ModelForm ):
+	class Meta:
+		model = Document
+		fields = ('title', 'ref_date', 'language')
 
 #
 #    ===================
