@@ -21,13 +21,13 @@ def store_document( filename, corpus ):
 
 	basename = os.path.splitext(filename)[0]
 	parts = os.path.basename(filename).split("_",3)
-		
+	print "[sync] basename:", basename
+	
 	# exclude .{ext}.txt from being taken
-	if re.search( "\.[^\.]{3,4}\.[^\.]{3}$", basename ) is not None:
+	if re.search( "\.[^\.]{3,4}\.[^\.]{3}$", filename ) is not None:
 		print "[sync] skipping dual extension filenames.!", parts
 		raise Exception("filename contains a double extension")
-
-
+	
 	# guess mimetype
 	mime_type	=  mimetypes.guess_type( filename )[0]
 	
@@ -137,7 +137,11 @@ def cmdsync( options, parser ):
 	docs = os.listdir(path)
 	
 	for doc in docs:
-		store_document( doc, corpus)
+		try:
+			store_document( doc, corpus)
+		except Exception, e:
+			print e
+			continue
 
 		
 		
