@@ -339,7 +339,7 @@ def document(request, document_id):
 #    ---- SPECIALS ----
 #    ==================
 #	 
-def attach_tag_by_name( request, document_id ):
+def attach_free_tag( request, document_id ):
 	"""
 	This function requires name and type given as args
 	"""
