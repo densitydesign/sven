@@ -407,6 +407,24 @@ def detach_tag( request, document_id, tag_id ):
 	response['results'] = [ d.json() ]
 	return render_to_json( response )
 
+def tfidf( request, corpus_id ):
+	from distiller import start_routine, stop_routine
+	response = _json( request, enable_method=False )
+	
+	try:
+		c = Corpus.objects.get(pk=corpus_id)
+	except Exception, e:
+		throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	routine = start_routine( type='tfidf', corpus=c )
+	if routine is None:
+		throw_error( response, error="A very strange error", code=API_EXCEPTION_EMPTY)
+
+	response['routine'] = routine.json()
+	return render_to_json( response )
+
+
+
 def start_metrics( request, corpus_id):
 	from utils import pushdocs
 	from ampoule import decant

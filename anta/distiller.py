@@ -5,6 +5,7 @@
 #
 #    Distiller script contains language-specific Pattern function
 #    for NP extraction.
+#    Routine start/stop functions are also stored here.
 # 
 from pattern.vector import Corpus, Document, stopwords, count
 from pattern.search import search as p_search
@@ -12,7 +13,65 @@ import pattern.nl #     import parse as nlparse, split as nlsplit, Sentence as n
 import pattern.en  #   import parse as enparse, Sentence as enSentence, Text as enText
 
 import codecs
+from datetime import datetime
 from optparse import OptionParser
+
+#
+#    =======================
+#    ---- ROUTINE UTILS ----
+#    =======================
+#
+def start_routine( type, corpus=None ):
+	"""
+	If a routine does not exist, it will create it.
+	If a routine exists and:
+		1. is OK routine will be set to RIP; a new one will be created.
+	Return the current routine, created or not.
+	"""
+	from sven.anta.models import Routine
+	r = Routine.objects.filter( type=type, corpus=corpus ).order_by( "-pk")[0]
+	
+	if r is None:
+		r = Routine( type=type, corpus=corpus )
+		r.save()
+		return r
+
+	# completed.
+	if r.status == "OK":
+		r.status = "RIP"
+		r.end_date = datetime.now()
+		r.save()
+		nr = Routine( type=type, corpus=corpus )
+		nr.save()
+		return nr
+	elif r.status == "RIP":
+		nr = Routine( type=type, corpus=corpus )
+		nr.save()
+		return nr
+	else:
+		return r
+	
+	
+
+def restart_routine( routine ):
+	routine.status	= "CLO"
+	routine.end_date= datetime.now()
+	routine.save()
+	r = start_routine( type=routine.type, corpus=routine.corpus )
+	return r
+
+def sink_routine( routine, error):
+	routine.status	= "CLO"
+	routine.last_entry	= error
+	routine.end_date		= datetime.now()
+	routine.save()
+	return r
+
+def stop_routine( routine ):
+	r.status	= "OK"
+	r.end_date	= datetime.now()
+	r.save()
+	return r
 
 
 def evaporate( document, stopwords, keywords ):

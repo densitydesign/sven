@@ -29,6 +29,10 @@ GRAPH_STATUS_CHOICES = (
     (u'ERR', u'error'),
 )
 
+ROUTINE_CHOICES = (
+	(u'TFIDF', u'tfidf computation'),
+)
+
 ANALYSIS_CHOICES = (
 	(u'PT', u'PATTERN'),
     (u'AL', u'ALCHEMY'),
@@ -36,10 +40,12 @@ ANALYSIS_CHOICES = (
     (u'WI', u'WIKIPEDIA'),
 )
 
-ANALYSIS_STATUS_CHOICES = (
+STATUS_CHOICES = (
 	(u'OK', u'completed'),
 	(u'CRE',u'creation'),
+	(u'BOO',u'boo!'),
     (u'PD', u'pending'),
+    (u'CLO', u'closed after error'), 
     (u'ERR', u'error'),
 )
 
@@ -218,7 +224,7 @@ class Analysis(models.Model ):
 	end_date = models.DateTimeField( blank=True, null=True )
 	type = models.CharField( max_length=2, choices=ANALYSIS_CHOICES ) # type of routine, like PT for Pattern routine.
 	completion = models.FloatField( default=0, null=True )
-	status = models.CharField( max_length=3, choices= ANALYSIS_STATUS_CHOICES )	
+	status = models.CharField( max_length=3, choices= STATUS_CHOICES )	
 
 	def json(self, min=-1, max=1):
 		return {
@@ -232,6 +238,33 @@ class Analysis(models.Model ):
 			'status'	: self.status
 		}
 
+class Routine(models.Model):
+	"""
+	Verbose logging is inside log file: ~/sven/logs/%s.log % corpus.name
+	last_entry will only show the very last LOG message (Wanring, fatal, info etc... )
+	"""
+	corpus	= models.ForeignKey( Corpus, null=True, blank=True )
+	type	= models.CharField( max_length=8, choices=ROUTINE_CHOICES )
+	status	= models.CharField( max_length=3, default="BOO", choices=STATUS_CHOICES )
+	start_date	= models.DateTimeField( default=datetime.now(), blank=True, null=True )
+	last_entry_date	= models.DateTimeField( default=datetime.now(), blank=True, null=True )
+	end_date	= models.DateTimeField( blank=True, null=True )
+	completion	= models.FloatField( default=0, null=True )
+	last_entry	= models.TextField()
+	analysis = models.ManyToManyField( Analysis )
+
+	def json(self):
+		return {
+			'id'	: self.id,
+			'type'	: self.type,
+			'corpus'	: self.corpus.json() if self.corpus else None,
+			'start_date'	: self.start_date.isoformat(),
+			'end_date'	: self.end_date.isoformat() if self.end_date else None,
+			'last_entry': self.last_entry,
+			'status'	: self.status,
+			'completion': self.completion,
+			#'analysis'	: [a.json() for a in self.analysis.all() ] if self.analysis else []
+		}
 
 #
 #    ==================================
