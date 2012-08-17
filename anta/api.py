@@ -26,6 +26,7 @@ API_DEFAULT_OFFSET = 0
 API_DEFAULT_LIMIT = 50
 API_AVAILABLE_METHODS = [ 'PUT', 'DELETE', 'POST', 'GET' ]
 
+API_EXCEPTION				=	'GenericException'
 API_EXCEPTION_DOESNOTEXIST	=	'DoesNotExist'
 API_EXCEPTION_DUPLICATED	=	'Duplicated'
 API_EXCEPTION_FORMERRORS	=	'FormErrors'
@@ -408,19 +409,33 @@ def detach_tag( request, document_id, tag_id ):
 	return render_to_json( response )
 
 def tfidf( request, corpus_id ):
+	"""
+	START the classic tfidf extraction. 
+	Open related sub-process with routine id.
+	Return the routine created.
+	"""
 	from distiller import start_routine, stop_routine
+	import subprocess, sys
+
 	response = _json( request, enable_method=False )
 	
 	try:
 		c = Corpus.objects.get(pk=corpus_id)
 	except Exception, e:
-		throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
 
 	routine = start_routine( type='tfidf', corpus=c )
 	if routine is None:
 		throw_error( response, error="A very strange error", code=API_EXCEPTION_EMPTY)
 
+	# call a sub process, and pass the related routine id
+	scriptpath = os.path.dirname(__file__) + "/metrics.py"
 	response['routine'] = routine.json()
+	
+	try:
+		subprocess.Popen([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'standard' ], stdout=None, stderr=None)
+	except Exception, e:
+		return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
 	return render_to_json( response )
 
 
@@ -625,6 +640,18 @@ def download_document(request, document_id):
 	response['Content-Disposition']='attachment;filename="document_%s"'%d.id
 	response['Content-length'] = os.stat( filename ).st_size
 	return response
+
+
+def pending_routine_corpus( request, corpus_id ):
+	response = _json( request )
+		
+	try:	
+		response['objects'] = [ a.json() for a in Routine.objects.filter( corpus__id = corpus_id ).order_by( "-id" )[  response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+	except Eception, e:
+		return throw_error( response, error="Exception thrown: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )	
+	
+	return  render_to_json( response )
+
 
 def pending_analysis_corpus( request, corpus_id ):
 	response = _json( request )

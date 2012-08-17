@@ -14,7 +14,7 @@ from optparse import OptionParser
 from sven.anta.models import *
 from sven.anta.sync import error
 from sven.anta.log import log
-from sven.anta.distiller import distill
+from sven.anta.distiller import distill, close_routine, log_routine, decant
 from sven.anta.utils import *
 from sven.core.utils import dictfetchall
 from django.db.models import Count, Avg, Max, Min
@@ -36,8 +36,36 @@ select all with group by stem
 SELECT s.content as sample_content, GROUP_CONCAT(s.content) as concat_content, s.stemmed as lemmas, ds.tfidf, MAX( ds.tf ) as max_tf, COUNT( DISTINCT d.id ) as distribution, d.language as doc_lang FROM `anta_document_segment` ds JOIN anta_segment s ON s.id = ds.segment_id JOIN anta_document d on d.id = document_id WHERE d.language='EN' GROUP BY stemmed ORDER BY `ds`.`tfidf` DESC, max_tf DESC
 """
 
+def standard( corpus, routine ):
+	
+	number_of_documents = Document.objects.filter(corpus=corpus ).count()
 
-def tfidf( corpus, language, parser, column="stemmed" ):
+	if number_of_documents == 0:
+		return close_routine( routine, error="No document found", status="ERR")
+
+	# 1. distiller.decant (tf computation )
+	try:
+		decant( corpus=corpus, routine=routine, settings=settings, ref_completion=0.6 )
+	except Exception, e:
+		return close_routine( routine, error="Exception: %s" % e, status="ERR")
+
+	# 2. get all languages in corpus
+	number_of_languages = Document.objects.values('language').distinct().count()
+
+	# 3. for each language, perform a tfidf
+	for i in Document.objects.values('language').distinct():
+		language = i['language']
+		try:
+			tfidf( corpus=corpus, routine=routine, language=language, settings=settings, ref_completion=0.4/number_of_languages  )
+		except Exception, e:
+			return close_routine( routine, error="Exception: %s" % e, status="ERR")
+
+	routine.completion = 1.0
+	routine.save()
+	close_routine( routine, error="", status="OK", )
+
+
+def tfidf( corpus, routine, language, settings, ref_completion=1.0, column="stemmed" ):
 	print """
 	===========================
 	---- TFIDF COMPUTATION ----
@@ -46,18 +74,12 @@ def tfidf( corpus, language, parser, column="stemmed" ):
 	print "column:",column
 	
 	
-	try:
-		# get corpus
-		corpus = Corpus.objects.get( name=corpus )
-	except:
-		return error( message="corpus was not found!", parser=parser )
-	
 	print "corpus:",corpus.id, corpus.name
 	
 	number_of_documents = Document.objects.filter(corpus=corpus ).count()
 	print "document in corpus:",number_of_documents
 	
-	
+
 	cursor = connection.cursor()
 	
 	cursor.execute("SELECT COUNT( DISTINCT ds.document_id ) as distribution, s." + column + " FROM `anta_document_segment` ds JOIN anta_segment s ON ds.segment_id = s.id JOIN anta_document d ON d.id = ds.document_id WHERE d.corpus_id = %s GROUP BY s."+column+" ORDER BY distribution DESC, "+ column +" ASC", [ corpus.id])
@@ -188,6 +210,10 @@ def similarity( corpus, language, parser, column="stemmed" ):
 def main( argv):
 	usage = "usage: %prog -c corpus_name -l language -f function [tfidf|similarity|export [-o column]]"
 	parser = OptionParser( usage=usage )
+	
+	parser.add_option("-r", "--routine", dest="routine",
+		help="anta routine id")
+
 	parser.add_option("-c", "--corpus", dest="corpus",
 		help="anta corpus_name to be metricsied. Computate tfidf")
 		
@@ -202,16 +228,52 @@ def main( argv):
 	
 	( options, argv ) = parser.parse_args()
 	
+	if options.routine is None:
+		error( message="Use -r to specify the routine", parser=parser )
+	try:	
+		routine = Routine.objects.get( pk=options.routine)
+	except Exception, e:
+		error( message="Routine %S -c to specify the corpus" % options.routine, parser=parser )
+	
+	# change routine status to CRE.. script is alive!
+	routine.status="CRE"
+	routine.last_entry="routine started!"
+	routine.save()
+
+	error_message = None
 	if options.corpus is None:
-		error( message="Use -c to specify the corpus", parser=parser )
+		error_message = "Use -c to specify the corpus"
+
+	elif options.func is None:
+		error_message = "Use -f to specify the desired function."
+
 	
-	if options.language is None:
-		error( message="Use -l to specify the language", parser=parser )
+	# load corpus
+	try:
+		corpus = Corpus.objects.get( pk=options.corpus )
+	except Exception, e:
+		error_message = "Exception: %s" % e
+
 	
-	if options.func is None:
-		error( message="Use -f to specify the desired function.", parser=parser )
+	# otuput error message
+
+	if error_message is not None:
+		close_routine( routine, error=error_message, status="ERR")
+		error( message=error_message, parser=parser )
 	
-	if options.func == "tfidf":	
+	# check function
+	if options.func == "standard":
+		return standard( routine=routine, corpus=corpus ) # tf + tfidf
+	
+
+	close_routine( routine, error="", status="OK")
+
+
+	return
+	if options.func == "standard":
+		# tf + tfidf
+		standard( routine )
+	elif options.func == "tfidf":	
 		tfidf(options.corpus, options.language, parser, options.tfidfcolumn )
 	
 	elif options.func == "similarity":
@@ -219,9 +281,6 @@ def main( argv):
 
 	elif options.func == "export":
 		export( options.corpus, options.language, parser, options.tfidfcolumn)
-		
-	else:
-		error( message="sorry, the desired function was not found!", parser=parser )
 	
 	
 if __name__ == '__main__':

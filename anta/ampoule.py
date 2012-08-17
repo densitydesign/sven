@@ -18,7 +18,7 @@ from optparse import OptionParser
 from sven.anta.models import *
 from sven.anta.sync import error, sync
 from sven.anta.log import log
-from sven.anta.distiller import distill
+from sven.anta.distiller import distill, log_routine
 from sven.anta.utils import *
 from pattern.metrics import levenshtein, similarity, DICE
 from sven.anta.freebase import search as fsearch
@@ -176,20 +176,20 @@ def basic( options, parser ):
 # once finished
 #    recalculate tf/idf foreach tf
 #
-def decant( corpus, parser=None ):
+def decant( corpus, routine, ref_completion=1.0 ):
 	# path = settings.MEDIA_ROOT + options.corpus
 	# print NL_STOPWORDS
 	
-	# get corpus
-	# get or store corpus
-	try:
-		corpus = Corpus.objects.get( name=corpus )
-	except:
-		
-		return error( message="corpus was not found!", parser=parser )
 	# get document corpus
 	print "[info] starting pattern analysis on corpus:",corpus.id, corpus.name
 	
+	log_routine( routine, entry="[info] starting pattern analysis on corpus: %s %s" % corpus.id % corpus.name )
+	
+	raise Exception("stop here")
+
+	log_routine(routine, entry="after exception raised")
+	return
+
 	# create or resume analysis
 	try: 
 		analysis = Analysis.objects.get(corpus=corpus, type="PT")

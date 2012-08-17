@@ -263,7 +263,7 @@ class Routine(models.Model):
 			'last_entry': self.last_entry,
 			'status'	: self.status,
 			'completion': self.completion,
-			#'analysis'	: [a.json() for a in self.analysis.all() ] if self.analysis else []
+			'analysis'	: [a.json() for a in self.analysis.all() ] if self.analysis else []
 		}
 
 #
