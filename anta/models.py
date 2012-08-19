@@ -143,9 +143,16 @@ class Document( models.Model ):
 		return self.title
 
 	# get tfidf most important segments grouped by concept
-	def segments( self ):
-		return 	[]
-	
+	def segments( self, limit=10 ):
+
+		return 	[ s.json() for s in Segment.objects.raw( 
+			"""
+			SELECT s.id, s.stemmed, s.content, ds.tfidf, count( distinct ds.document_id ) as distribution FROM anta_segment s 
+				JOIN anta_document_segment ds ON s.id = ds.segment_id
+			GROUP BY s.stemmed
+			ORDER BY ds.tfidf DESC LIMIT %s
+			""",[limit]
+		)]
 
 	def json(self):
 		return {
@@ -158,7 +165,9 @@ class Document( models.Model ):
 			'actors': [ t.json() for t in self.tags.filter(type="actor") ],
 			'concepts': [ c.json() for c in self.concepts.all() ],
 			'relations_count': Relation.objects.filter(source__id=self.id).count(),
-			'corpus': self.corpus.json()
+			'relations_as_target_count': Relation.objects.filter(target=self).count(),
+			'corpus': self.corpus.json(),
+			'segments': self.segments()
 		}
 
 class Document_Tag( models.Model):
@@ -334,6 +343,15 @@ class Segment( models.Model):
 	class Meta:
 		unique_together = ("content", "language", "type") 
 		# a content which has the same pos tag and the same creation mode
+
+	def json(self):
+		return {
+			'id'	: self.id,
+			'stemmed': self.stemmed,
+			'content': self.content,
+			'tfidf'	 : self.tfidf if self.tfidf else 0.0,
+			'distribution': self.distribution if self.distribution else 0
+		}
 
 class Segment_Semantic_Relation( models.Model ):
 	segment = models.ForeignKey( Segment )
