@@ -8,12 +8,11 @@ from django.contrib.auth import login, logout, authenticate
 
 from sven.anta.forms import LoginForm
 from sven.anta.models import *
-
+from django.conf import settings
 
 CUSTOM_SETTINGS = {
-	'STATIC_URL':'http://localhost/static/',
+	'STATIC_URL': settings.ANTA_STATIC_URL if settings.ANTA_STATIC_URL else '/anta/static/',
 	'LOGIN_URL':'/sven/anta/login',
-	'ANTA_STATIC_URL':settings.ANTA_STATIC_URL
 }
 LOGIN_REQUESTED_URL = CUSTOM_SETTINGS['LOGIN_URL']
 
