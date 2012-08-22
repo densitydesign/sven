@@ -11,10 +11,10 @@ from sven.anta.models import *
 
 
 CUSTOM_SETTINGS = {
-	'STATIC_URL':'/static/',
-	'LOGIN_URL':'/sven/anta/login'
+	'STATIC_URL':'http://localhost/static/',
+	'LOGIN_URL':'/sven/anta/login',
+	'ANTA_STATIC_URL':settings.ANTA_STATIC_URL
 }
-
 LOGIN_REQUESTED_URL = CUSTOM_SETTINGS['LOGIN_URL']
 
 @login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
