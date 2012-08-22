@@ -170,11 +170,14 @@ def create_corpus( request, response ):
 				os.makedirs( corpus_path )
 			
 			c = Corpus( name=form.cleaned_data['name'] )
-			c.save()
 			
+			c.save()
+			o = Owners( corpus=c, user=request.user )
+			o.save()
 			
 		except Exception, e:
 			return throw_error( response, error="Exception: %s" % e, code="fault" )
+
 
 
 			

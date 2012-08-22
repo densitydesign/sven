@@ -69,7 +69,7 @@ def _data( request ):
 	data = { 'custom': CUSTOM_SETTINGS }
 	if request.user.is_authenticated:
 		#load corpora associated
-		data['corpora'] = Corpus.objects.all()
+		data['corpora'] = Corpus.objects.filter(owners__user=request.user).all()
 		
 	return data
 	
