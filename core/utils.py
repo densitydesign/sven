@@ -1,14 +1,11 @@
-def is_number( s ):
-	s = s.replace("%","")
-	try:
-		s = int( s )
-	except:
-		try:
-			s = float( s )	
-		except:
-			return False
-	
-	return True
+def is_number(s):
+    s = s.replace("%", "")
+    try:
+        s = float(s)  # float() works iwth both integer-like and float-like strings.
+    except ValueError:
+        return False
+    return True
+
 
 def dictfetchall(cursor):
     "Returns all rows from a cursor as a dict"
