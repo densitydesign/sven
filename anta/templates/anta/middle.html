@@ -4,8 +4,13 @@
 	
 	{% block custom_header %}
 	<header>
+		<div id="top-line"></div>
+		<div id="logo">
+			<img src="{{ custom.STATIC_URL }}/img/anta-logo.png"/>
+		</div>
 		<div id="header-inner">
 			<i>Anta</i>{{ custom.ANTA_STATIC_URL }}
+			
 			<div id="header-messages" class="header-messages retina-icon" style="display:none"></div>
 			
 			{% if user.is_authenticated %}
@@ -80,6 +85,12 @@
 	</div>
 {% endblock %}
 
+{% block custom_api_urls %}
+	anta.urls = {
+		upload: "{% url anta_api_documents %}"
 
+	}
+
+{% endblock %}
 
 

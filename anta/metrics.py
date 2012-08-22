@@ -82,6 +82,7 @@ def tfidf( corpus, routine, language, settings, ref_completion=1.0, column="stem
 
 	cursor = connection.cursor()
 	
+	# group by stem!
 	cursor.execute("SELECT COUNT( DISTINCT ds.document_id ) as distribution, s." + column + " FROM `anta_document_segment` ds JOIN anta_segment s ON ds.segment_id = s.id JOIN anta_document d ON d.id = ds.document_id WHERE d.corpus_id = %s GROUP BY s."+column+" ORDER BY distribution DESC, "+ column +" ASC", [ corpus.id])
     
 	for row in dictfetchall(cursor):

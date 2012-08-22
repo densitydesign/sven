@@ -4,6 +4,7 @@ Hello, Anta World!
 
 {% block custom_page %}
 	<h1>{% trans "Documents" %}</h1>	
+	<input type="file" id="fileupload" name="files[]" multiple>
 	<ul id="item-list-documents" class="item-list">
 	{% for d in documents %}
 		<li class="document item"> 
@@ -20,4 +21,15 @@ Hello, Anta World!
 		</li>
 	{% endfor %}
 	</ul>
+{% endblock %}
+
+{% block custom_plugins %}
+	<!-- upload -->
+	<script src="{{ custom.STATIC_URL }}js/jquery.ui.widget.js"></script>
+	<script src="{{ custom.STATIC_URL }}js/jquery.iframe-transport.js"></script>
+	<script src="{{ custom.STATIC_URL }}js/jquery.fileupload.js"></script>
+{% endblock %}
+
+{% block custom_javascript_init %}
+	anta.initialisables.push("anta.upload.init");
 {% endblock %}

@@ -1,4 +1,13 @@
-var anta = anta || {};
+var anta = anta || { initialisables:[] };
+
+
+anta.init = function(){
+	anta.toast("welcome guy!")
+	anta.log("[anta.init]","ehi dude");
+	for( var f in anta.initialisables ){
+		eval( anta.initialisables[f] )( );	
+	}
+}
 
 anta.templates ={}
 anta.elements = {}
@@ -6,6 +15,41 @@ anta.events = {
 	'ul_list_changed':'ul_list_changed',
 	'ul_list_element_added':'ul_list_element_added'
 
+}
+
+
+anta.upload = { is_dragging:false }
+/*
+    plugin blueimp
+*/
+anta.upload.init = function(){
+	anta.log("[anta.upload.init]");
+	$("#fileupload").fileupload({
+		url: anta.urls.upload,
+		dataType: 'json',
+		done: function(e, data){
+			anta.log(e, data.result);
+		},
+		fail: function( e, data ){
+			anta.log("failed!", data.error);
+		},
+		progressall: function(e, data){
+			var progress = parseInt(data.loaded / data.total * 100, 10);
+			anta.log("progress:",progress)
+		},
+		dragover: function(e,data){
+
+			if( anta.upload.is_dragging ) return;
+
+			anta.upload.is_dragging = true;
+			
+			anta.log("[anta.upload.dragover] started...");
+		},
+		drop: function( e, data){
+			anta.upload.is_dragging = false;
+			anta.log("[anta.upload.always] something happened...");
+		}
+	})
 }
 
 /*
@@ -59,7 +103,6 @@ anta.magic.invalidate = function(){
 }
 
 
-
 //
 //    ============================
 //    ---- TEMPLATES ELEMENTS ----
@@ -93,11 +136,11 @@ anta.templates.ul_list_of = function( type, instances, meta ){ // type='document
 	
 	if ( typeof( anta.elements[ type ] ) == "undefined" ){ anta.elements[ type ] = [] }
 
-	var l = $("#list-of-" + type ) 
-	l = l.length? l : $("<ul/>",{'class':"list-of", id: "list-of-" + type }
+	var l = $("#list-of-" + type );
+	l = l.length? l : $("<ul/>",{'class':"list-of", id: "list-of-" + type });
 
 	for (i in instances){
-		if ( anta.elements[ type ].length && indexOf(anta.elements[ type ]) !+ -1 ){
+		if ( anta.elements[ type ].length && indexOf(anta.elements[ type ]) != -1 ){
 			// substitute DIRECT children
 			l.children( "#" + type + "_" + instances[i] ).replaceWith( anta.templates[ type ]( instances[i] ) );
 		} else {
@@ -114,7 +157,7 @@ anta.templates.ul_list_of = function( type, instances, meta ){ // type='document
 // urls like 
 anta.api = function( options ){
 	
-	this.settings = $.extends({
+	this.settings = $.extend({
 		url:null,
 		method:'GET',
 		data:{},
@@ -172,11 +215,85 @@ anta.api = function( options ){
 	// try ajax call
 	try{
 		$.ajax( this.settings );
-	catch(e) {
-		anta.api.handlers.fault( e )
+	} catch( e) {
+		anta.api.handlers.fault( e );
 	}
 }
 
+/*
+    ===================
+    ---- UTILITIES ----
+    ===================
+
+	Some functions: toast, log and objects size and values mapping
+*/
+anta.sizeOf = function(obj) {
+    var size = 0;
+    var key;
+    for (key in obj) { if (obj.hasOwnProperty(key)) size++;}
+    return size;
+};
+
+anta.valuesOf = function(obj){
+	var C,d=0,Z=[];for(C in obj){if(!obj.hasOwnProperty(C)){continue;}Z[d++]=obj[C];}return Z;
+}
+
+anta.log = function(){
+	// use this function instead of console.log
+	try{
+		console.log.apply(console, arguments);
+	} catch(e){
+		alert("logging function not enabled!");
+	}
+}
+
+anta.toast = function( message, title, options ){
+	
+	if( !options || !title ){
+		options={};
+	} 
+	if( typeof title == "object" ){
+		options = title;
+		title = undefined;
+	}
+	
+	if( options.cleanup != undefined )
+		$().toastmessage('cleanToast');
+		
+	var settings = $.extend({
+		text: "<div>" + (!title?'<h1>'+ message +'</h1>':"<h1>"+ title +"</h1><p>"+ message +"</p>") +"</div>",
+		type: 'notice',
+		position:'middle-center',
+		inEffectDuration: 200,
+		outEffectDuration: 200,
+		stayTime:3000
+	}, options);
+	$().toastmessage('showToast', settings );
+}
+
+/*
+	Replace matches of /0/ recursively with given binds.
+    e.g anta.refactor("/anta/api/documents/0/corpus/0/",[2,3])
+	returns "/anta/api/documents/2/corpus/3/"
+*/
+anta.refactor = function( url, binds ){
+	if( typeof binds == "number" ){
+		binds = [ binds ];
+	}
+	for (i in binds){
+		url = url.replace("/0/", "/" + binds[i] + "/");
+	}
+	return url;
+}
+
+
+/*
+    ====================
+    ---- CSFR token ----
+    ====================
+
+	CSFR token workaround (cfr. Django)
+*/
 $(document).ajaxSend(function(event, xhr, settings) {
     function getCookie(name) {
         var cookieValue = null;
