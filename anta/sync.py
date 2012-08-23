@@ -62,7 +62,7 @@ def store_document( filename, corpus ):
 		print "[WARNING] autoformat option is True but the file name does not handle enough information. Default applied"
 		actors =[]
 		language = 'EN'
-		title = os.path.splitext(filename)[0]
+		title = os.path.basename(filename) #os.path.splitext(filename)[0]
 		
 	print "[sync] saving file:", filename, mime_type
 	print "[sync] file title:", title		
