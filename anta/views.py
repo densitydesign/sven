@@ -19,7 +19,7 @@ LOGIN_REQUESTED_URL = CUSTOM_SETTINGS['LOGIN_URL']
 @login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
 def index(request):
 	data = _data( request )
-	data['documents'] = Document.objects.all()[:20]
+	data['sessiondata'] = request.COOKIES
 	return render_to_response('anta/index.html', RequestContext(request, data))
 
 #
@@ -66,10 +66,41 @@ def logout_view(request):
 			
 
 def _data( request ):
-	data = { 'custom': CUSTOM_SETTINGS }
-	if request.user.is_authenticated:
+	data = { 'custom': CUSTOM_SETTINGS, 'preferences':{} }
+
+
+	if request.user.is_authenticated():
 		#load corpora associated
 		data['corpora'] = Corpus.objects.filter(owners__user=request.user).all()
 		
+		# request.session["corpus_id"] = 3
+		switch_corpus = request.REQUEST.get('switch-corpus',None)
+		data['preferences']['info'] = switch_corpus
+		
+		if request.session.get("corpus_id", 0) is 0:
+			# load corpus
+			data['preferences']['info'] = "session corpus created"
+			try:
+				corpus = Corpus.objects.filter( owners__user = request.user ).order_by("-id")[0]
+				request.session["corpus_id"] = corpus.id
+				request.session["corpus_name"] = corpus.name
+			except Exception, e:
+				data['preferences']['info'] = "Exception: %s" % e
+				request.session["corpus_id"] = 0
+				request.session["corpus_name"] = ""
+				
+		elif switch_corpus is not None:
+			data['preferences']['info'] = "session corpus switched"
+			try:
+				corpus = Corpus.objects.get( id=switch_corpus )
+				request.session["corpus_id"] = corpus.id
+				request.session["corpus_name"] = corpus.name
+			except Exception, e:
+				data['preferences']['info'] = "Exception: %s" % e
+				request.session["corpus_id"] = 0
+				request.session["corpus_name"] = ""
+
+		data['preferences']['corpus_id'] = request.session["corpus_id"]
+		data['preferences']['corpus_name'] = request.session.get("corpus_name", "")
 	return data
 	

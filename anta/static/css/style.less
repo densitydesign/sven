@@ -19,7 +19,7 @@
 @light-color	:	lighten( #484E5C, 62% );
 @border-color	:	darken(@dark-color, 20%); 
 @black			:	#383838;
-
+@selection-color:	#45acdb;
 
 //
 //    ================
@@ -130,12 +130,12 @@ h1,h2,h3{
 }
 
 h1{
-	font-size:1.7em;
+	font-size:1.5em;
 	line-height:normal;
 }
 
 h2{
-	font-size:1.4em;	
+	font-size:1.3em;	
 }
 
 ul, ol {
@@ -216,17 +216,56 @@ section{
 #page {
 	border:1px solid darken(@light-color, 7%);
 	background: white;
-	padding: @grid-padding;	
-	.border-radius(3px);
+	// padding: @grid-padding;	
+	.border-radius(4px);
 	
 	.box-shadow( 1px 1px 1px rgba(0,0,0,.15) );
 	.pseudo-section{
 		padding: @grid-padding 0;	
 	}
+	h1{
+		background: @light-color;
+		padding: @grid-padding;
+	}
 }
 .page{
 	#page();
 	margin-bottom: @grid-padding;	
+}
+
+.uploader{
+	padding: @grid-padding;
+	background: lighten( @light-color, 3%);	
+	border-bottom: 1px solid darken(@light-color, 7%);
+
+}
+
+#preloader{
+	background: fade(@black, 90%);
+	position:absolute;
+	top:0px;
+	left:0px;
+	.opacity(0);
+	.transition( opacity, .2s );
+	pointer-events: none;
+	&.fadein{
+		background-color: fade(@black, 90%);
+		.opacity(100);
+		pointer-events: auto;
+	}
+	#percentage{
+		margin: auto;
+		width: 300px;
+		height: 40px;
+		margin-top: -20px;
+		top: 50%;
+		position: absolute;
+		color: white;
+		font-size: 5em;
+		left: 50%;
+		margin-left: -150px;
+		text-align: center;
+	}
 }
 
 footer{
@@ -298,6 +337,7 @@ label{
 //    =============================
 //
 
+
 .item-list{
 	//.box-shadow( 0 1px 3px rgba(0,0,0,.15) );
 	//border: 1px solid @bad-base-dark-color;
@@ -314,6 +354,9 @@ label{
 	.transition(background-color, .3s );
 	&:hover{
 		background-color: lighten( @light-color, 2%);
+		.actions{
+			visibility: visible;
+		}
 	}
 	
 	&.omega{
@@ -321,32 +364,46 @@ label{
 	}
 	.checkbox{
 		width:32px;
-		
-		text-align:center;
 	}
 	
-	.icon{
-		width: 32px;	
-		height:32px;
-		display:inline-block;
-		
-	}
 	
 	a{
 		&:hover{
 			text-decoration:underline;	
 		}	
 	}
-	
+	.check{
+		width:16px;
+		text-aling:center;
+		margin-right: @grid-padding/2;
+	}
+	&.selected{
+		background-color:fade(@selection-color,20%);	
+	}
 	.actions{
-		margin:@grid-padding / 2;
-		padding:@grid-padding / 2;
-		border-left:	1px solid darken(@light-color, 7%);
+		margin-left: @grid-padding / 2;
+		visibility:hidden;
+		background-color: fade(@black, 5%);
+		.border-radius( 3px );
+		border: 1px solid fade(@black, 9%);
+		height: 24px;
+
+		div{
+			width:24px;
+			height:24px;
+			cursor:pointer;
+			display:inline-block;
+			&:hover{
+				background-color: fade(@selection-color, 15%);
+			}
+		}
+
 		.remove{
-			background: url("../../img/icons/32-Cross-dark.png") center center;	
+			background: url("../../img/icons/page_white_delete.png") no-repeat center center;	
+			border-left:1px solid fade(@black, 12%);
 		}
 		.edit{
-			background: url("../../img/icons/32-Pencil-Edit.png") center center;
+			background: url("../../img/icons/pencil.png") no-repeat center center;
 		}
 	}
 	.meta{
@@ -372,7 +429,27 @@ label{
 }
 	
 	
-.user{
+.tag{
+	display: inline-block;
+	background-color: @black;
+	.border-radius( 3px );
+	color: white;
+	font-size: .8em;
+	line-height: 2em;
+	padding: 0 7px;
+	margin: 3px;
+	&:hover{
+		background-color: @selection-color;
+	}
+	&.add{
+		width:12px;
+		overflow:hidden;
+		.border-radius( 12px );
+		background: fade(@black,10%) url('../img/icons/tag_blue_add.png') no-repeat center center;
+		&:hover{
+			background-color: fade(@black,20%);
+		}
+	}
 	
 }
 	
@@ -470,18 +547,25 @@ label{
 
 #todays-specials{
 	.column(3);
-	position:fixed;
+	//position:fixed;
+	display:none;
+	top: 200px;
 	border:1px solid @dark-color;
-	background: @light-color;
-	margin:0;	
+	background: whitesmoke;
 	.border-radius(3px);
 	
-	.box-shadow( 1px 1px 1px rgba(0,0,0,.15) );
+	.box-shadow( 1px 1px 4px rgba(0,0,0,.15) );
 	.transition(bottom,.2s, ease-in-out);
-	bottom: -200px;	
+	// bottom: -200px;	
 	height:200px;
 	h1{
 		margin-top:0;	
+	}
+	h2{
+		margin: 0;
+		padding: @grid-padding;
+		background: @light-color;
+		border-bottom: 1px solid darken(@light-color, 7%);
 	}
 }
 
@@ -547,7 +631,7 @@ label{
 	position: relative;
 	margin: 0 0 12px 0;
 	.border-radius(3px);
-	background: fade(@black, 90%);
+	background: @black;
 	border: 1px solid darken( @original-color, 7%);
 	.box-shadow( 0px 0px 8px  fade( @original-color, 45%));
 	color: @light-color;

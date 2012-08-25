@@ -45,16 +45,26 @@
 					<img src="{{ user.email|gravatar }}" alt="{{ user.username }}"/>
 				</div>
 				<div class="user-specs floating">
-					{{ user.first_name }} {{ user.last_name }}
+					{% if user.first_name or user.first_name %}
+						{{ user.first_name }} {{ user.last_name }}
+					{% else %}
+						{{ user.username }}
+					{% endif %}
 				</div>
 				<div class="clear"></div>
 			</div>
 			
-			<div id="corpora" class="pseudo-section">
+			<ul id="corpora" class="pseudo-section">
 				{% for c in corpora %}
-					{{c.name}}
+					
+					
+					{% if preferences.corpus_id == c.id %}
+						<li class="selected"><b>{{ c.name }}</b></li>
+					{% else %}
+						<li><a href="{% url anta_index %}?switch-corpus={{c.id}}">{{ c.name }}</a></li>
+					{% endif %}
 				{% endfor %}
-			</div>
+			</ul>
 			
 			{% block custom_sidebar_content %}{% endblock %}
 			
@@ -66,18 +76,23 @@
 		
 		<section >
 			{% block custom_section %}
-				<!-- white bordered page -->
-				<div id="page">
-				{% block custom_page %}
-					
+
+			{% endblock %}
+			<!-- white bordered page -->
+			<div id="page">
+			{% block custom_page %}
+				
+		
+			{% endblock %}
+			</div>
 			
-				{% endblock %}
-				</div>
-			{% endblock %}	
 		</section>
 		<div class="clear"/>
 			
 		
+		{% block magics  %}
+
+		{% endblock %}
 		
 		<!-- footer>
 			hello
@@ -86,11 +101,13 @@
 {% endblock %}
 
 {% block custom_api_urls %}
+	anta.vars.corpus_id = {{ preferences.corpus_id }};
+
 	anta.urls = {
-		upload: "{% url anta_api_documents %}"
-
-	}
-
+		upload: "{% url anta_api_documents %}?corpus=" + anta.vars.corpus_id,
+		get_documents: "{% url anta_api_documents %}?corpus=" + anta.vars.corpus_id
+	};
+	
 {% endblock %}
 
 
