@@ -383,28 +383,7 @@ label{
 	.actions{
 		margin-left: @grid-padding / 2;
 		visibility:hidden;
-		background-color: fade(@black, 5%);
-		.border-radius( 3px );
-		border: 1px solid fade(@black, 9%);
-		height: 24px;
-
-		div{
-			width:24px;
-			height:24px;
-			cursor:pointer;
-			display:inline-block;
-			&:hover{
-				background-color: fade(@selection-color, 15%);
-			}
-		}
-
-		.remove{
-			background: url("../../img/icons/page_white_delete.png") no-repeat center center;	
-			border-left:1px solid fade(@black, 12%);
-		}
-		.edit{
-			background: url("../../img/icons/pencil.png") no-repeat center center;
-		}
+	
 	}
 	.meta{
 		width:32px;
@@ -427,8 +406,44 @@ label{
 		}	
 	}
 }
+
+.actions{
+	background-color: fade(@black, 5%);
+	.border-radius( 3px );
+	border: 1px solid fade(@black, 9%);
+	height: 24px;
+
+	div{
+		width:24px;
+		height:24px;
+		cursor:pointer;
+		display:inline-block;
+		&:hover{
+			background-color: fade(@selection-color, 15%);
+		}
+	}
+
+	.remove{
+		background: url("../../img/icons/page_white_delete.png") no-repeat center center;	
+		border-left:1px solid fade(@black, 12%);
+	}
+	.edit{
+		background: url("../../img/icons/pencil.png") no-repeat center center;
+	}
+	.download{
+		background: url("../../img/icons/page_white_put.png") no-repeat center center;
+	}
+	.view-text{
+		background: url("../../img/icons/page_white_text.png") no-repeat center center;
+	}
+	.bordered{
+		border-left:1px solid fade(@black, 12%);
+	}
+}
 	
-	
+.tags{
+	padding: 0 @grid-padding @grid-padding @grid-padding;
+}	
 .tag{
 	display: inline-block;
 	background-color: @black;
@@ -453,7 +468,10 @@ label{
 	
 }
 	
-	
+.section{
+	padding: @grid-padding;
+	border-bottom:1px solid darken(@light-color, 7%);
+}
 	
 .message{
 	

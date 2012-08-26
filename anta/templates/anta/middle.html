@@ -105,7 +105,8 @@
 
 	anta.urls = {
 		upload: "{% url anta_api_documents %}?corpus=" + anta.vars.corpus_id,
-		get_documents: "{% url anta_api_documents %}?corpus=" + anta.vars.corpus_id
+		get_documents: "{% url anta_api_documents %}?corpus=" + anta.vars.corpus_id,
+		view_document: "{% url anta_document 0 %}"
 	};
 	
 {% endblock %}

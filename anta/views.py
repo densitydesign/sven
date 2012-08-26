@@ -32,6 +32,17 @@ def upload(request):
 	return render_to_response('anta/upload.html', RequestContext(request, data))
 
 #
+# upload files. test.
+#
+@login_required( login_url=LOGIN_REQUESTED_URL )
+def document(request, document_id ):
+	data = _data( request )
+	data['document'] = Document.objects.get( id=document_id ) 
+	return render_to_response('anta/document.html', RequestContext(request, data))
+
+
+
+#
 # force logout, then login
 #
 def login_view(request):

@@ -21,6 +21,10 @@ urlpatterns = patterns('',
 	# url(r'^$', anta.api.index, name="anta_api_index"),
 	# url(r'^/set-relation/corpus/(.?)/', anta.api.set_relation, name="anta_api_set_relation"),
     
+    url(r'^document/(\d+)/$', 'sven.anta.views.document', name='anta_document'),
+	
+
+
 	# api
 	url(r'^api/$', 'sven.anta.api.index', name='anta_api_index'),    
 	
