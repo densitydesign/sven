@@ -143,15 +143,15 @@ class Document( models.Model ):
 		return self.title
 
 	# get tfidf most important segments grouped by concept
-	def segments( self, limit=10 ):
+	def segments( self, limit=25 ):
 
-		return 	[ s.json() for s in Segment.objects.raw( 
+		return 	[ s for s in Segment.objects.raw( 
 			"""
-			SELECT s.id, s.stemmed, s.content, ds.tfidf, count( distinct ds.document_id ) as distribution FROM anta_segment s 
+			SELECT s.id, s.stemmed, GROUP_CONCAT( s.content ), ds.tfidf, count( distinct ds.document_id ) as distribution, count( distinct s.id ) as aliases FROM anta_segment s 
 				JOIN anta_document_segment ds ON s.id = ds.segment_id
 			WHERE ds.document_id = %s
 			GROUP BY s.stemmed
-			ORDER BY ds.tfidf DESC LIMIT %s
+			ORDER BY ds.tfidf DESC, distribution DESC, aliases DESC, s.stemmed DESC LIMIT %s
 			""",[self.id, limit]
 		)]
 
@@ -168,7 +168,7 @@ class Document( models.Model ):
 			'relations_count': Relation.objects.filter(source__id=self.id).count(),
 			'relations_as_target_count': Relation.objects.filter(target=self).count(),
 			'corpus': self.corpus.json(),
-			'segments': self.segments()
+			'segments': [ s.json() for s in self.segments() ]
 		}
 
 class Document_Tag( models.Model):
@@ -351,7 +351,8 @@ class Segment( models.Model):
 			'stemmed': self.stemmed,
 			'content': self.content,
 			'tfidf'	 : self.tfidf if self.tfidf else 0.0,
-			'distribution': self.distribution if self.distribution else 0
+			'distribution': self.distribution if self.distribution else 0,
+			'aliases': self.aliases if self.aliases else None
 		}
 
 class Segment_Semantic_Relation( models.Model ):

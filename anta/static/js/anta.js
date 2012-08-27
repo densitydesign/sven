@@ -11,6 +11,7 @@ anta.init = function(){
 	anta.log("[anta.init]","ehi dude");
 	anta.resize();
 	
+	$("[title]").tooltip(); // init tooltip
 
 	for( var f in anta.initialisables ){
 		eval( anta.initialisables[f] )( );	
@@ -81,10 +82,12 @@ anta.selection.select = function( event, data ){
 }
 
 anta.selection.unselect = function( event, data ){
+	anta.log("[anta.selection.unselect]", data.type, data.id);
 	anta.selection.remove( data.type, data.id );
-	if( anta.elements[ data.type+"_selected" ].length == 0 )
-		$(window).trigger( anta.events.selectionEmpty,{ type:data.type, collection: anta.elements[ data.type+"_selected" ]})
-	else $(window).trigger( anta.events.selectionChanged,{ type:data.type, collection: anta.elements[ data.type+"_selected" ]});
+	if( anta.elements[ data.type+"_selected" ].length == 0 ){
+		anta.log("[anta.selection.unselect]", anta.events.selectionEmpty);
+		$(window).trigger( anta.events.selectionEmpty,{ type:data.type, collection: anta.elements[ data.type+"_selected" ]});	
+	}
 
 }
 
@@ -139,8 +142,6 @@ anta.handlers.api.get.documents = function( result ){
 
 }
 
-
-
 anta.handlers.api.delete = function( what, id ){
 	if (typeof( id ) == "number"){
 		$( "#" + what + "_" + id).remove();
@@ -160,12 +161,12 @@ anta.magic.invalidate = function(){
 
 }
 
-anta.magic.show_today_specials = function( event, data ){
+anta.magic.show_todays_specials = function( event, data ){
 	anta.log("[anta.magic.show_today_specials]", event, data );
 	$("#todays-specials").show()
 	$("#selection-total-count").text( "" + data.collection.length );
 }
-anta.magic.hide_today_specials = function( event, data ){
+anta.magic.hide_todays_specials = function( event, data ){
 	anta.log("[anta.magic.hide_today_specials]", event, data );
 	$("#todays-specials").hide()
 	$("#selection-total-count").text( "0" );
@@ -181,7 +182,10 @@ anta.templates.elements = {}
 
 anta.templates.elements.documents = function( instance ){// instance = {id:12, title:"A title"})
 	
-	var content = $("<div/>",{"class":"content"}).html( instance.title );
+	var content = $("<div/>",{"class":"content"}).html(
+		'<a href="' + anta.refactor( anta.urls.view_document, instance.id ) + '">' + instance.title + '</a>' 
+	);
+
 	for(var i in instance.tags){
 		content.append(  anta.templates.elements.tags( instance.tags[i]) )
 	}
@@ -189,7 +193,7 @@ anta.templates.elements.documents = function( instance ){// instance = {id:12, t
 
 	d = $("<li/>", {"class":"document item", id:"documents_" + instance.id, 'data-id':instance.id }).append(
 		'<div class="check floating"><input type="checkbox" data-id="' + instance.id + '" name="check_'+ instance.id +'"/></div>',
-		'<div class="actions floating right"><div class="edit" data-id="' + instance.id + '"></div><div class="remove" data-id="' + instance.id + '"></div></div>',
+		'<div class="actions floating right"><div class="edit" data-id="' + instance.id + '"></div><div class="remove" data-type="document" data-id="' + instance.id + '"></div></div>',
 		content,
 		'<div class="clear"></div>'
 	)
@@ -243,16 +247,24 @@ anta.lock.init = function(){
 	anta.lock.element = $("<div/>", { id:"preloader"}).append('<div id="percentage">0.0 %</div>');
 	$("body").append( anta.lock.element );
 	anta.lock.resize();
+	
+
 	anta.resizeables.push("anta.lock.resize");
 
 }
 anta.lock.resize = function(){
 	anta.lock.element.width( anta.width ).height( anta.height );
 }
-anta.lock.enable = function(){
+anta.lock.enable = function( options ){
+	var settings = $.extend({clean:false, timeout:-1},options);
+
 	if( anta.lock.enabled ) return;
 	anta.lock.enabled = true;
-	
+	if( settings.clean ){
+		$("#percentage").hide();
+	} else {
+		$("#percentage").show();
+	}
 	anta.lock.element.show().addClass("fadein");
 }
 anta.lock.disable = function(){

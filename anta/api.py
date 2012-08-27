@@ -306,7 +306,10 @@ def document(request, document_id):
 	if d is None:
 		return throw_error( response, "document %s does not exist..." % document_id, code=API_EXCEPTION_DOESNOTEXIST)
 	
-	
+	# delete a document
+	if response['meta']['method'] == 'DELETE':
+		return _delete_instance( request, response, instance=d )
+
 	# if method is POST, update the document
 	if response['meta']['method'] == 'POST':
 		form = UpdateDocumentForm( request.REQUEST )
@@ -336,6 +339,54 @@ def document(request, document_id):
 	response['results'] = [ d.json() ]
 	
 	return render_to_json( response )
+
+
+#
+#    ==================
+#    ---- SEGMENTS ----
+#    ==================
+#
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def segments( request ):
+	response = _json( request )
+	return render_to_json( response )
+
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def segment_stems( request, document_id=None ):
+	response = _json( request )
+
+	# split order_by stuff
+	# order_by = ["tfidf DESC","tfidf ASC","distribution ASC", "distribution DESC"]
+
+
+	# where
+	where = [] # [("stemmed LIKE %s", contains ),("document_id",2) ]
+	order_by = [ "tfidf DESC, distribution DESC, aliases DESC"]
+
+	# build query
+	query = [ """
+		SELECT s.id, s.stemmed, s.content, ds.tfidf, count( distinct ds.document_id ) as distribution, count( distinct s.id ) as aliases FROM anta_segment s 
+			JOIN anta_document_segment ds ON s.id = ds.segment_id
+		""",
+		"WHERE " + " AND ".join( where ) if len( where ) else "",
+		"GROUP BY stemmed",
+		"ORDER BY " + ", ".join( order_by ) if len( order_by ) else "",
+		""" LIMIT %s,%s """
+	]
+	response["query"] = " ".join( query )
+
+	binds = [ response['meta']['offset'], response['meta']['limit'] ]
+
+	ss = Segment.objects.raw( " ".join( query ), binds )
+
+	response['results'] = [ s.json() for s in ss ]
+	
+	return render_to_json( response )
+
+def segment_stem( request, segment_id ):
+	response = _json( request )
+	return render_to_json( response )
+
 
 
 #
@@ -748,6 +799,15 @@ def access_denied( request ):
 #    try except handling on the road
 #    Intended for api internal use only.
 #
+def _delete_instance( request, response, instance ):
+	
+	try:
+		instance.delete();
+		return render_to_json( response );
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_EMPTY )
+
+
 def _store_analysis( corpus, type=""):
 	try:
 		# check if analysis exists

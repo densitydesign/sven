@@ -6,11 +6,21 @@ anta.documents.init = function(){
 	anta.api({url:anta.urls.get_documents, handler:'documents'});
 
 	
-	$(window).on(anta.events.selectionChanged, anta.magic.show_today_specials );
+	$(window).on(anta.events.selectionChanged, anta.magic.show_todays_specials );
 
 	$(window).on(anta.events.selectionEmpty, anta.magic.hide_todays_specials );
 
-	$(".list-of").on("click",".item", function(event){ 
+	$(document).on("click",".item .remove", function(event){ 
+		var type= $(event.currentTarget).attr("data-type");
+		
+		if( confirm( i18n.translate("remove %s",[]) ) ){
+			anta.lock.enable({ clean:true });
+			anta.toast( i18n.translate( "removing %s",[] ),{stayTime:1500,cleanup:true} )
+		};
+		event.stopImmediatePropagation();
+	});
+
+	$(document).on("click",".item", function(event){ 
 		event.stopImmediatePropagation();
 		
 		var checkbox = $(event.currentTarget).find("input[type=checkbox]");

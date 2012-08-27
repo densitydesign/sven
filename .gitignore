@@ -10,3 +10,5 @@ env/*
 .DS_Store
 
 sven.db
+
+anta/static/js/tooltipsy.min.js

@@ -15,7 +15,10 @@
 		{% for s in document.segments %}
 			<li class="item">
 				<div class="col_3"><i>{{s.content}}</i></div>
-				<div class="col_3"> {{ s.stemmed }}</div>
+				<div class="col_3">{{ s.stemmed }}</div>
+				<div class="col_0_5" title="aliases into this document">{{ s.aliases }}</div>
+				<div class="col_0_5" title="global distribution">{{ s.distribution }}</div>
+				<div class="col_0_5" title="tfidf value">{{ s.tfidf }}</div>
 				<div class="clear"></div>
 			</li>
 		{% endfor %}
