@@ -147,7 +147,7 @@ class Document( models.Model ):
 
 		return 	[ s for s in Segment.objects.raw( 
 			"""
-			SELECT s.id, s.stemmed, GROUP_CONCAT( s.content ), ds.tfidf, count( distinct ds.document_id ) as distribution, count( distinct s.id ) as aliases FROM anta_segment s 
+			SELECT s.id, s.stemmed, s.content, ds.tfidf, count( distinct ds.document_id ) as distribution, count( distinct s.id ) as aliases FROM anta_segment s 
 				JOIN anta_document_segment ds ON s.id = ds.segment_id
 			WHERE ds.document_id = %s
 			GROUP BY s.stemmed
