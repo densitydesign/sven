@@ -394,6 +394,7 @@ def segment_stem( request, segment_id ):
 #    ---- SPECIALS ----
 #    ==================
 #	 
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def use_corpus( request, corpus_id=None ):
 	response = _json( request, enable_method=False )
 	
@@ -788,6 +789,11 @@ def segments_export( request, corpus_id ):
 		writer.writerow([  s.id, s.content, s.stemmed, s.distro,  s.max_tf, s.max_tfidf])
 	
 	return response
+
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def segments_import( request, corpus_id ):
+	response = _json( request )
+	return  render_to_json( response )
 
 #
 #    ======================
