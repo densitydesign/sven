@@ -394,6 +394,45 @@ def segment_stem( request, segment_id ):
 #    ---- SPECIALS ----
 #    ==================
 #	 
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def use_corpus( request, corpus_id=None ):
+	response = _json( request, enable_method=False )
+	
+	# response['objects'] = [c.json() for c in Corpus.objects.filter(owners__user=request.user) ]
+	response['corpus'] = {}
+	if request.session.get("corpus_id", 0) is 0:
+		try:
+			# last corpus created
+			corpus = Corpus.objects.filter( owners__user = request.user ).order_by("-id")[0]
+			request.session["corpus_id"] = corpus.id
+			request.session["corpus_name"] = corpus.name
+			response['info'] = "session corpus created"
+		
+		except Exception, e:
+			response['warning'] = "Exception: %s" % e
+			request.session["corpus_id"] = 0
+			request.session["corpus_name"] = ""
+
+	elif corpus_id is not None:
+		try:
+			corpus = Corpus.objects.get( id=corpus_id )
+			request.session["corpus_id"] = corpus.id
+			request.session["corpus_name"] = corpus.name
+			response['info'] = "corpus stored in user's session"
+		except Exception, e:
+			response['warning'] = "Corpus in user's session vars unchanged. Exception: %s" % e
+			#request.session["corpus_id"] = 0
+			#request.session["corpus_name"] = ""
+	else:
+		response['info'] = "session corpus already stored"
+
+
+	response['corpus']['id'] = request.session["corpus_id"]
+	response['corpus']['name'] = request.session.get("corpus_name", "")
+
+	return render_to_json( response )
+		
+
 def attach_free_tag( request, document_id ):
 	"""
 	This function requires name and type given as args
@@ -750,6 +789,11 @@ def segments_export( request, corpus_id ):
 		writer.writerow([  s.id, s.content, s.stemmed, s.distro,  s.max_tf, s.max_tfidf])
 	
 	return response
+
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def segments_import( request, corpus_id ):
+	response = _json( request )
+	return  render_to_json( response )
 
 #
 #    ======================
