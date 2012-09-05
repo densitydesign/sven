@@ -3,7 +3,7 @@
 
 
 {% block custom_page %}
-	<h1>{% trans "import refined file"%}</h1>
+	<h1>{% trans "import refined file"%} {{ preferences.corpus_id }}</h1>
 	<input type="file" id="fileupload" name="csv[]" multiple>
 {% endblock %}
 
@@ -14,7 +14,7 @@
 	<script>
 		$(function(){
 			$("#fileupload").fileupload({
-				url:"{% url anta_api_segments_import 0 %}",
+				url:"{% url anta_api_segments_import preferences.corpus_id %}",
 				dataType: 'json',
 				done: function(e, data){
 					console.log(e, data.result);
