@@ -155,8 +155,9 @@ def importcsv( routine, csvfile, column="stemmed" ):
 	========================================
 	"""
 	
-	
+	log_routine( routine, entry="importcsv started", completion=0 );
 	i = 0
+
 	for row in csvfile:
 		print row
 		
@@ -176,9 +177,13 @@ def importcsv( routine, csvfile, column="stemmed" ):
 
 		i = i+1
 		if i % 25 == 0:
+			log_routine( routine, entry="importcsv at line: %s" % i, completion=0 );
+	
 			transaction.commit()
 
 	transaction.commit()
+	return close_routine( routine )
+
 
 def similarity( corpus, language, parser, column="stemmed" ):
 	print """
