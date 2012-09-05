@@ -793,6 +793,41 @@ def segments_export( request, corpus_id ):
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def segments_import( request, corpus_id ):
 	response = _json( request )
+	path = "/tmp/"
+	
+	# uncomment to debug
+	response['path'] = path
+	
+	if not os.path.exists( path ):
+		return throw_error(response, code=API_EXCEPTION_DOESNOTEXIST, error="path %s does not exits!" % path )
+
+	response['uploads'] = []
+
+	# request files. cfr upload.html template with blueimp file upload
+	if not request.FILES.has_key('csv[]'):
+		return throw_error( response, error="request.FILES['csv[]'] was not found", code=API_EXCEPTION_INCOMPLETE)
+	
+	for f in request.FILES.getlist('csv[]'):
+		# store locally and save happily
+		if f.size == 0:
+			return throw_error(response, error="uploaded file is empty", code=API_EXCEPTION_EMPTY)
+		
+		# filename
+		filename = path + "sven.import.csv" 
+
+		# get permission to store the document. If it exists, will force override!
+		try:
+			destination = open( filename , 'wb+')
+		except Exception, e:
+			return throw_error( response, error="Exception: %s " % e, code=API_EXCEPTION_EMPTY)
+		
+		# save file
+		for chunk in f.chunks():
+			destination.write(chunk)
+			destination.close()
+
+		response['uploads'] = filename;
+	
 	return  render_to_json( response )
 
 #
