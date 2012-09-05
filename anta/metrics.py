@@ -158,24 +158,24 @@ def importcsv( routine, csvfile, column="stemmed" ):
 	
 	i = 0
 	for row in csvfile:
-		transaction.commit()
-		print i, row
-		return
+		print row
+		
 		# update stemmed_refined cell
 		try:
 			s = Segment.objects.get(id=row['segment_id'])
 			print s.id, s.content
+			buffer_stemmed = s.stemmed
+			s.stemmed = row['concept']
+			s.stemmed_refined = buffer_stemmed
+			s.save()
+
 		except:
 			print	" segemnt id %s was not found!" % row['segment_id']
-			continue
-		
-		buffer_stemmed = s.stemmed
-		s.stemmed = row['stemmed']
-		s.stemmed_refined = buffer_stemmed
-		s.save()
+			transaction.commit()
+
 
 		i = i+1
-		if i % 10 == 0:
+		if i % 25 == 0:
 			transaction.commit()
 
 	transaction.commit()
