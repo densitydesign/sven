@@ -420,9 +420,9 @@ def use_corpus( request, corpus_id=None ):
 			request.session["corpus_name"] = corpus.name
 			response['info'] = "corpus stored in user's session"
 		except Exception, e:
-			response['warning'] = "Exception: %s" % e
-			request.session["corpus_id"] = 0
-			request.session["corpus_name"] = ""
+			response['warning'] = "Corpus in user's session vars unchanged. Exception: %s" % e
+			#request.session["corpus_id"] = 0
+			#request.session["corpus_name"] = ""
 	else:
 		response['info'] = "session corpus already stored"
 
