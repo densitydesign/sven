@@ -7,7 +7,8 @@ admin.autodiscover()
 urlpatterns = patterns('',
 	url(r'^anta/', include('sven.anta.urls')),
 	url(r'^api/anta/', include('sven.core.urls')), # anta api
-    url(r'^gui/', include('sven.gui.urls')), # sven gui
+	url(r'^gui/', include('sven.gui.urls')), # sven gui
+	url(r'^$', 'sven.gui.views.documents', name='sven_documents' ), # sven gui
 	
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),

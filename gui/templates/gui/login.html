@@ -20,7 +20,7 @@
  
 
  {% if loginerror %}
-	<div class="alert alert-error">Sorry, something went wrong. Please, be sure the information provided are correct and try again.</div>
+	<div class="alert alert-error">Sorry, something went wrong. Please, be sure the information provided are correct and try again. {{loginerror}}</div>
  {% endif %}
  
  <form action="{% url gui_login %}" method="POST">

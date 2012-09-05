@@ -21,6 +21,10 @@ urlpatterns = patterns('',
 	# url(r'^$', anta.api.index, name="anta_api_index"),
 	# url(r'^/set-relation/corpus/(.?)/', anta.api.set_relation, name="anta_api_set_relation"),
     
+    url(r'^document/(\d+)/$', 'sven.anta.views.document', name='anta_document'),
+	
+
+
 	# api
 	url(r'^api/$', 'sven.anta.api.index', name='anta_api_index'),    
 	
@@ -41,15 +45,36 @@ urlpatterns = patterns('',
 	# corpus (sing.)
 	url(r'^api/corpus/$', 'sven.anta.api.corpora', name='anta_api_corpora' ),    
 	url(r'^api/corpus/(\d+)/$', 'sven.anta.api.corpus', name='anta_api_corpus' ),    
+	url(r'^api/use-corpus/$', 'sven.anta.api.use_corpus', name='anta_api_use_corpus' ),
+	url(r'^api/use-corpus/(\d+)/$', 'sven.anta.api.use_corpus', name='anta_api_use_corpus' ),
+
+	# segments
+	url(r'^api/stems/$', 'sven.anta.api.segment_stems', name='anta_api_segment_stems' ),    
+	url(r'^api/stem/(\d+)/$', 'sven.anta.api.segment_stem', name='anta_api_segment_stem' ),    
+	# url(r'^api/stems/document/(\d+)/$', 'sven.anta.api.segment', name='anta_api_segment' ),    
 	
+	url(r'^api/segments/$', 'sven.anta.api.segments', name='anta_api_segments' ),    
 	
 	
 	# specials, maybe @torefine
+	url(r'^api/attach-free-tag/document/(\d+)/$', 'sven.anta.api.attach_free_tag', name='anta_api_attach_free_tag' ),
+	url(r'^api/attach-tag/document/(\d+)/tag/(\d+)/$', 'sven.anta.api.attach_tag', name='anta_api_attach_tag' ),
+	url(r'^api/detach-tag/document/(\d+)/tag/(\d+)/$', 'sven.anta.api.detach_tag', name='anta_api_detach_tag' ),
+	
 	url(r'^api/start-metrics/(\d+)/$', 'sven.anta.api.start_metrics', name='anta_api_start_metrics' ),
+	url(r'^api/tfidf/corpus/(\d+)/$', 'sven.anta.api.tfidf', name='anta_api_tfidf' ),
+
 	url(r'^api/relations/graph/corpus/(\d+)/$', 'sven.anta.api.relations_graph', name='anta_api_relations_graph' ),
 	url(r'^api/documents/download/(\d+)/$', 'sven.anta.api.download_document', name='anta_api_download_document'),
-	url(r'^api/status/corpus/(\d+)/$', 'sven.anta.api.pending_analysis_corpus', name='anta_api_pending_analysis_corpus' ),
+	url(r'^api/status/corpus/(\d+)/$', 'sven.anta.api.pending_routine_corpus', name='anta_api_pending_routine_corpus' ),
+
+	# url(r'^api/status/corpus/(\d+)/$', 'sven.anta.api.pending_analysis_corpus', name='anta_api_pending_analysis_corpus' ),
+
+	
 	url(r'^api/segments/export/corpus/(\d+)/$', 'sven.anta.api.segments_export', name='anta_api_segments_export' ),
+	url(r'^api/segments/import/corpus/(\d+)/$', 'sven.anta.api.segments_import', name='anta_api_segments_import' ),
+	
+
 	url(r'^api/streamgraph/corpus/(\d+)/$', 'sven.anta.api.streamgraph', name='anta_api_streamgraph' ),
 	# url(r'^api/get-corpora/$', 'sven.anta.api.get_corpora', name='anta_api_get_corpora' ),    
 	# url(r'^api/get-corpus/(\w+)/$', 'sven.anta.api.get_corpus', name='anta_api_get_corpus' ),    

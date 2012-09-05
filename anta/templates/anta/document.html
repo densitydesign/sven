@@ -1,0 +1,26 @@
+{% extends "anta/middle.html" %}
+{% load i18n %}
+
+
+{% block custom_page %}
+	<h1>{% trans "Document"%} {{ document.title }}</h1>
+	<div class="section">
+		<div class="actions floating right">
+			<div class="view-text"></div><div class="download bordered"></div>
+		</div>
+		{% trans document.language %} &bull; {{ document.ref_date|date:"d M Y"}} </div>
+	<div class="section">{% for t in document.tags.all %}<div class="tag">{{ t.name }}</div>{% endfor %}</div>
+
+	<ul class="list-of">
+		{% for s in document.segments %}
+			<li class="item">
+				<div class="col_3"><i>{{s.content}}</i></div>
+				<div class="col_3">{{ s.stemmed }}</div>
+				<div class="col_0_5" title="aliases into this document">{{ s.aliases }}</div>
+				<div class="col_0_5" title="global distribution">{{ s.distribution }}</div>
+				<div class="col_0_5" title="tfidf value">{{ s.tfidf }}</div>
+				<div class="clear"></div>
+			</li>
+		{% endfor %}
+	</ul>
+{% endblock %}

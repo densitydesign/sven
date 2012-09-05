@@ -26,6 +26,7 @@ API_DEFAULT_OFFSET = 0
 API_DEFAULT_LIMIT = 50
 API_AVAILABLE_METHODS = [ 'PUT', 'DELETE', 'POST', 'GET' ]
 
+API_EXCEPTION				=	'GenericException'
 API_EXCEPTION_DOESNOTEXIST	=	'DoesNotExist'
 API_EXCEPTION_DUPLICATED	=	'Duplicated'
 API_EXCEPTION_FORMERRORS	=	'FormErrors'
@@ -169,11 +170,14 @@ def create_corpus( request, response ):
 				os.makedirs( corpus_path )
 			
 			c = Corpus( name=form.cleaned_data['name'] )
-			c.save()
 			
+			c.save()
+			o = Owners( corpus=c, user=request.user )
+			o.save()
 			
 		except Exception, e:
 			return throw_error( response, error="Exception: %s" % e, code="fault" )
+
 
 
 			
@@ -300,19 +304,89 @@ def document(request, document_id):
 
 	d = _get_document( document_id )
 	if d is None:
-		return throw_error( response, "dcument does not exist...")
+		return throw_error( response, "document %s does not exist..." % document_id, code=API_EXCEPTION_DOESNOTEXIST)
 	
-	text = textify( d, settings.MEDIA_ROOT )
-	
-	if text is None:
-		return throw_error( response, "unable to provide txt version of the document")
+	# delete a document
+	if response['meta']['method'] == 'DELETE':
+		return _delete_instance( request, response, instance=d )
+
+	# if method is POST, update the document
+	if response['meta']['method'] == 'POST':
+		form = UpdateDocumentForm( request.REQUEST )
+		if form.is_valid():
+			# save
+			d.title = form.cleaned_data['title'] if len(form.cleaned_data['title'])>0 else d.title
+			d.ref_date = form.cleaned_data['ref_date'] if form.cleaned_data['ref_date'] is not None else d.ref_date
+			d.language = form.cleaned_data['language'] if len(form.cleaned_data['language'])>0 else d.language
+			d.save()
+
+		else:
+			return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS)
+
+
+	# load text only if it's required
+	if 'with-text' in response['meta']:
+
+		text = textify( d, settings.MEDIA_ROOT )
+		
+		if text is None:
+			return throw_error( response, "unable to provide txt version of the document")
+		
+		response['text']	= open(text, 'r').read()
 	
 	# f = open( text, "r")
 		
 	response['results'] = [ d.json() ]
-	response['text']	= open(text, 'r').read()
 	
 	return render_to_json( response )
+
+
+#
+#    ==================
+#    ---- SEGMENTS ----
+#    ==================
+#
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def segments( request ):
+	response = _json( request )
+	return render_to_json( response )
+
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def segment_stems( request, document_id=None ):
+	response = _json( request )
+
+	# split order_by stuff
+	# order_by = ["tfidf DESC","tfidf ASC","distribution ASC", "distribution DESC"]
+
+
+	# where
+	where = [] # [("stemmed LIKE %s", contains ),("document_id",2) ]
+	order_by = [ "tfidf DESC, distribution DESC, aliases DESC"]
+
+	# build query
+	query = [ """
+		SELECT s.id, s.stemmed, s.content, ds.tfidf, count( distinct ds.document_id ) as distribution, count( distinct s.id ) as aliases FROM anta_segment s 
+			JOIN anta_document_segment ds ON s.id = ds.segment_id
+		""",
+		"WHERE " + " AND ".join( where ) if len( where ) else "",
+		"GROUP BY stemmed",
+		"ORDER BY " + ", ".join( order_by ) if len( order_by ) else "",
+		""" LIMIT %s,%s """
+	]
+	response["query"] = " ".join( query )
+
+	binds = [ response['meta']['offset'], response['meta']['limit'] ]
+
+	ss = Segment.objects.raw( " ".join( query ), binds )
+
+	response['results'] = [ s.json() for s in ss ]
+	
+	return render_to_json( response )
+
+def segment_stem( request, segment_id ):
+	response = _json( request )
+	return render_to_json( response )
+
 
 
 #
@@ -320,6 +394,145 @@ def document(request, document_id):
 #    ---- SPECIALS ----
 #    ==================
 #	 
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def use_corpus( request, corpus_id=None ):
+	response = _json( request, enable_method=False )
+	
+	# response['objects'] = [c.json() for c in Corpus.objects.filter(owners__user=request.user) ]
+	response['corpus'] = {}
+	if request.session.get("corpus_id", 0) is 0:
+		try:
+			# last corpus created
+			corpus = Corpus.objects.filter( owners__user = request.user ).order_by("-id")[0]
+			request.session["corpus_id"] = corpus.id
+			request.session["corpus_name"] = corpus.name
+			response['info'] = "session corpus created"
+		
+		except Exception, e:
+			response['warning'] = "Exception: %s" % e
+			request.session["corpus_id"] = 0
+			request.session["corpus_name"] = ""
+
+	elif corpus_id is not None:
+		try:
+			corpus = Corpus.objects.get( id=corpus_id )
+			request.session["corpus_id"] = corpus.id
+			request.session["corpus_name"] = corpus.name
+			response['info'] = "corpus stored in user's session"
+		except Exception, e:
+			response['warning'] = "Corpus in user's session vars unchanged. Exception: %s" % e
+			#request.session["corpus_id"] = 0
+			#request.session["corpus_name"] = ""
+	else:
+		response['info'] = "session corpus already stored"
+
+
+	response['corpus']['id'] = request.session["corpus_id"]
+	response['corpus']['name'] = request.session.get("corpus_name", "")
+
+	return render_to_json( response )
+		
+
+def attach_free_tag( request, document_id ):
+	"""
+	This function requires name and type given as args
+	"""
+	response = _json( request, enable_method=False )
+	
+	try:
+		d = Document.objects.get(pk=document_id)
+	except Exception, e:
+		return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	
+	# add new tag form
+	form = TagForm( request.REQUEST )
+	if form.is_valid():
+		t = form.save()
+	elif "__all__" in form.errors:
+		try:
+			t = Tag.objects.get(name=request.REQUEST.get('name',None),type=request.REQUEST.get('type', None) )
+		except Exception, e:
+			return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DUPLICATED )
+	else:
+		return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS )
+
+	# save relationship
+	try:
+		dt = Document_Tag( document=d, tag=t )
+		dt.save()
+	except:
+		return throw_error( response, error="Relationship document tag already existing", code=API_EXCEPTION_DUPLICATED )
+
+	# auto load relations
+	response['results'] = [ d.json() ]
+	return render_to_json( response )
+
+def attach_tag( request, document_id, tag_id ):
+	response = _json( request, enable_method=False )
+	try:
+		d = Document.objects.get(pk=document_id)
+	except Exception, e:
+		return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	try:
+		dt = Document_Tag( document=d, tag=Tag.objects.get(pk=tag_id))
+		dt.save()
+	except Exception, e:
+		return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	# load document
+	response['results'] = [ d.json() ]
+	return render_to_json( response )
+
+def detach_tag( request, document_id, tag_id ):
+	response = _json( request, enable_method=False )
+	try:
+		d = Document.objects.get(pk=document_id)
+	except Exception, e:
+		return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	try:
+		Document_Tag.objects.get( document=d, tag__id=tag_id).delete()
+	except Exception, e:
+		return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	# load document
+	response['results'] = [ d.json() ]
+	return render_to_json( response )
+
+def tfidf( request, corpus_id ):
+	"""
+	START the classic tfidf extraction. 
+	Open related sub-process with routine id.
+	Return the routine created.
+	"""
+	from distiller import start_routine, stop_routine
+	import subprocess, sys
+
+	response = _json( request, enable_method=False )
+	
+	try:
+		c = Corpus.objects.get(pk=corpus_id)
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	routine = start_routine( type='tfidf', corpus=c )
+	if routine is None:
+		throw_error( response, error="A very strange error", code=API_EXCEPTION_EMPTY)
+
+	# call a sub process, and pass the related routine id
+	scriptpath = os.path.dirname(__file__) + "/metrics.py"
+	response['routine'] = routine.json()
+	
+	try:
+		subprocess.Popen([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'standard' ], stdout=None, stderr=None)
+	except Exception, e:
+		return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
+	return render_to_json( response )
+
+
+
 def start_metrics( request, corpus_id):
 	from utils import pushdocs
 	from ampoule import decant
@@ -521,6 +734,18 @@ def download_document(request, document_id):
 	response['Content-length'] = os.stat( filename ).st_size
 	return response
 
+
+def pending_routine_corpus( request, corpus_id ):
+	response = _json( request )
+		
+	try:	
+		response['objects'] = [ a.json() for a in Routine.objects.filter( corpus__id = corpus_id ).order_by( "-id" )[  response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+	except Eception, e:
+		return throw_error( response, error="Exception thrown: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )	
+	
+	return  render_to_json( response )
+
+
 def pending_analysis_corpus( request, corpus_id ):
 	response = _json( request )
 		
@@ -564,6 +789,11 @@ def segments_export( request, corpus_id ):
 		writer.writerow([  s.id, s.content, s.stemmed, s.distro,  s.max_tf, s.max_tfidf])
 	
 	return response
+
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def segments_import( request, corpus_id ):
+	response = _json( request )
+	return  render_to_json( response )
 
 #
 #    ======================
@@ -613,6 +843,15 @@ def access_denied( request ):
 #    try except handling on the road
 #    Intended for api internal use only.
 #
+def _delete_instance( request, response, instance ):
+	
+	try:
+		instance.delete();
+		return render_to_json( response );
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_EMPTY )
+
+
 def _store_analysis( corpus, type=""):
 	try:
 		# check if analysis exists

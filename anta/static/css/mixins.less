@@ -74,3 +74,7 @@
     transition: @arguments;	
 }
 
+.opacity( @value ){
+	opacity: @value / 100;
+	filter: alpha(opacity=@value);
+}
