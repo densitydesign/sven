@@ -45,7 +45,9 @@ urlpatterns = patterns('',
 	# corpus (sing.)
 	url(r'^api/corpus/$', 'sven.anta.api.corpora', name='anta_api_corpora' ),    
 	url(r'^api/corpus/(\d+)/$', 'sven.anta.api.corpus', name='anta_api_corpus' ),    
-	
+	url(r'^api/use-corpus/$', 'sven.anta.api.use_corpus', name='anta_api_use_corpus' ),
+	url(r'^api/use-corpus/(\d+)/$', 'sven.anta.api.use_corpus', name='anta_api_use_corpus' ),
+
 	# segments
 	url(r'^api/stems/$', 'sven.anta.api.segment_stems', name='anta_api_segment_stems' ),    
 	url(r'^api/stem/(\d+)/$', 'sven.anta.api.segment_stem', name='anta_api_segment_stem' ),    
