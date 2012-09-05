@@ -169,10 +169,11 @@ def importcsv( routine, csvfile, column="stemmed" ):
 			s.stemmed_refined = buffer_stemmed
 			s.save()
 
-		except:
+		except Exception, e:
 			#print	" segemnt id %s was not found!" % row['segment_id']
+			close_routine( routine, error="Exception: %s" % e, status="ERR" )
 			transaction.commit()
-
+			return
 
 		if i % 25 == 0:
 			log_routine( routine, entry="importcsv at line: %s" % i, completion=i/float(totalrows) )
