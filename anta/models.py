@@ -31,6 +31,7 @@ GRAPH_STATUS_CHOICES = (
 
 ROUTINE_CHOICES = (
 	(u'TFIDF', u'tfidf computation'),
+	(u'IMPORT', u'import stemmed segments'),
 )
 
 ANALYSIS_CHOICES = (

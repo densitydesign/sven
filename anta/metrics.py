@@ -58,13 +58,13 @@ def standard( corpus, routine ):
 	for i in Document.objects.values('language').distinct():
 		language = i['language']
 		try:
-			tfidf( corpus=corpus, routine=routine, language=language, settings=settings, ref_completion=0.4/number_of_languages  )
+			tfidf( corpus=corpus, routine=routine, language=language, settings=settings, ref_completion=1.0/number_of_languages  )
 		except Exception, e:
 			return close_routine( routine, error="Exception: %s" % e, status="ERR")
 
 	routine.completion = 1.0
 	routine.save()
-	close_routine( routine, error="", status="OK", )
+	close_routine( routine, error="", status="OK" )
 
 
 def tfidf( corpus, routine, language, settings, ref_completion=1.0, column="stemmed" ):
@@ -181,7 +181,7 @@ def importcsv( routine, csvfile, column="stemmed" ):
 			
 			transaction.commit()
 
-	close_routine( routine )
+	close_routine( routine, status="OK" )
 	transaction.commit()
 	
 

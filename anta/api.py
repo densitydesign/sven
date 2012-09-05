@@ -517,7 +517,7 @@ def tfidf( request, corpus_id ):
 	except Exception, e:
 		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
 
-	routine = start_routine( type='tfidf', corpus=c )
+	routine = start_routine( type='TFIDF', corpus=c )
 	if routine is None:
 		throw_error( response, error="A very strange error", code=API_EXCEPTION_EMPTY)
 
@@ -838,7 +838,7 @@ def segments_import( request, corpus_id ):
 		import subprocess, sys
 
 		
-		routine = start_routine( type='tfidf', corpus=c )
+		routine = start_routine( type='IMPORT', corpus=c )
 		if routine is None:
 			throw_error( response, error="A very strange error", code=API_EXCEPTION_EMPTY)
 
