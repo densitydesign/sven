@@ -171,7 +171,7 @@ def importcsv( routine, csvfile, column="stemmed" ):
 
 		except Exception, e:
 			#print	" segemnt id %s was not found!" % row['segment_id']
-			close_routine( routine, error="Exception: %s" % e, status="ERR" )
+			close_routine( routine, error="Exception: %s %s" % (e,row), status="ERR" )
 			transaction.commit()
 			return
 
