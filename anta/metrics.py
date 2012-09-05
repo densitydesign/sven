@@ -156,10 +156,12 @@ def importcsv( routine, csvfile, column="stemmed" ):
 	"""
 	
 	log_routine( routine, entry="importcsv started", completion=0 );
+	transaction.commit()
+
 	i = 0
 
 	for row in csvfile:
-		print row
+		#print row
 		
 		# update stemmed_refined cell
 		try:
@@ -171,19 +173,19 @@ def importcsv( routine, csvfile, column="stemmed" ):
 			s.save()
 
 		except:
-			print	" segemnt id %s was not found!" % row['segment_id']
+			#print	" segemnt id %s was not found!" % row['segment_id']
 			transaction.commit()
 
 
 		i = i+1
 		if i % 25 == 0:
-			log_routine( routine, entry="importcsv at line: %s" % i, completion=0 );
+			log_routine( routine, entry="importcsv at line: %s" % i, completion=0 )
 	
 			transaction.commit()
 
+	close_routine( routine )
 	transaction.commit()
-	return close_routine( routine )
-
+	
 
 def similarity( corpus, language, parser, column="stemmed" ):
 	print """
