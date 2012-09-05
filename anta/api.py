@@ -847,7 +847,7 @@ def segments_import( request, corpus_id ):
 		response['routine'] = routine.json()
 	
 		try:
-			subprocess.Popen([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'importcsv', '-x', filename ], stdout=None, stderr=None)
+			subprocess.Popen([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'importcsv', '-x', filename, '-d',"," ], stdout=None, stderr=None)
 		except Exception, e:
 			return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
 		return render_to_json( response )
