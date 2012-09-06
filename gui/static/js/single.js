@@ -36,7 +36,8 @@ query.getDocument(id_document, function(response){
 			.attr("class", "tag badge badge-info")
 			.text(function(d){return d.name;})
 			console.log(pdfURL_source)
-	pdfViewer(pdfURL_source, 'source', 'pdf-container');
+	//pdfViewer(pdfURL_source, 'source', 'pdf-container');
+	document.getElementById('iframe1').src = "../../../gui/viewer/?id=" + pdfURL_source;
 });
 
 $('#select-relations a:first').tab('show');
@@ -145,9 +146,11 @@ query.getDocument(id_document, function(response){
 				.text(function(d){return d.name;})
 		
     	
-		pdfViewer(pdfUrl_target, 'target', 'pdf-container');
+		//pdfViewer(pdfUrl_target, 'target', 'pdf-container');
+		$("#target_document").css({visibility:"visible"});
 		$("#target_document .text").width($("#target_document").width());
    		$("#target_document .text").height(600);
+   		document.getElementById('iframe2').src = "../../../gui/viewer/?id=" + pdfUrl_target;
 	
 	},args);
 };
