@@ -266,7 +266,7 @@ h3 {
 	}
 	
 #target_document {
-	border-left: 1px solid #ddd;
+	visibility:hidden;
 }	
 
 
@@ -299,12 +299,11 @@ h3 {
 /* PDF Viewer */
 
 .pdf-container {
-	height:500px;
-	overflow:auto;
+	height:600px;
 	background:#F3F3F4;
 	text-align: center;
 	}
-
+/*
 .pageUp::before {
   content: url(images/toolbarButton-pageUp.png);
 }
@@ -327,6 +326,7 @@ h3 {
 	display:inline-block;
 }
 
+*/
 .text {
 	float:left;
 }

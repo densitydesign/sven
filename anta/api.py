@@ -20,8 +20,8 @@ from django.db.models import Count
 #    ---- JSON API CONST ----
 #    ========================
 #
-API_LOGIN_REQUESTED_URL = '/sven/anta/api/login-requested'	 # needs to be logged in
-API_ACCESS_DENIED_URL = '/sven/anta/api/access-denied'	 # needs to be logged in and th corpus should be cool
+API_LOGIN_REQUESTED_URL = '/api/login-requested'	 # needs to be logged in
+API_ACCESS_DENIED_URL = '/api/access-denied'	 # needs to be logged in and th corpus should be cool
 API_DEFAULT_OFFSET = 0
 API_DEFAULT_LIMIT = 50
 API_AVAILABLE_METHODS = [ 'PUT', 'DELETE', 'POST', 'GET' ]
@@ -125,6 +125,19 @@ def relation( request, id ):
 	if response['meta']['method'] == 'DELETE':
 		r.delete()		
 	
+	# if method is POST, update the document
+	if response['meta']['method'] == 'POST':
+		form = UpdateDocumentForm( request.REQUEST )
+		if form.is_valid():
+			# save
+			d.title = form.cleaned_data['title'] if len(form.cleaned_data['title'])>0 else d.title
+			d.ref_date = form.cleaned_data['ref_date'] if form.cleaned_data['ref_date'] is not None else d.ref_date
+			d.language = form.cleaned_data['language'] if len(form.cleaned_data['language'])>0 else d.language
+			d.save()
+
+		else:
+			return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS)
+
 	
 	return render_to_json( response )
 
@@ -308,7 +321,12 @@ def document(request, document_id):
 	
 	# delete a document
 	if response['meta']['method'] == 'DELETE':
-		return _delete_instance( request, response, instance=d )
+		
+
+		return _delete_instance( request, response, instance=d, attachments=[
+			"%s/%s/%s" % (settings.MEDIA_ROOT,d.corpus.name,os.path.basename(d.url.url) ),
+			textify( d, settings.MEDIA_ROOT )
+		])
 
 	# if method is POST, update the document
 	if response['meta']['method'] == 'POST':
@@ -906,14 +924,22 @@ def access_denied( request ):
 #    try except handling on the road
 #    Intended for api internal use only.
 #
-def _delete_instance( request, response, instance ):
+def _delete_instance( request, response, instance, attachments=[] ):
 	
 	try:
 		instance.delete();
-		return render_to_json( response );
 	except Exception, e:
 		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_EMPTY )
-
+	
+	for f in attachments:
+		if f:
+			try:
+				os.remove(f);
+			except Exception, e:
+				return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_EMPTY )
+		
+	return render_to_json( response );
+	
 
 def _store_analysis( corpus, type=""):
 	try:

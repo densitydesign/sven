@@ -92,3 +92,12 @@ def dynamics(request):
 	data['custom'] = CUSTOM_SETTINGS
 	c = RequestContext(request, data)
 	return render_to_response("gui/dynamics.html", c)
+	
+# PdfViewer
+@login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
+def pdfviewer(request):
+	data = {}
+	data['active'] = "pdfviewer"
+	data['custom'] = CUSTOM_SETTINGS
+	c = RequestContext(request, data)
+	return render_to_response("gui/viewer.html", c)
