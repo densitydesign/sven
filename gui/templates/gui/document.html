@@ -1,7 +1,7 @@
 {% extends "gui/base.html" %}
 
 {% block js_head %}
-	<script type="text/javascript" src="{{custom.STATIC_URL}}js/pdf.js"></script>
+	<!--<script type="text/javascript" src="{{custom.STATIC_URL}}js/pdf.js"></script>-->
 	<script type="text/javascript" src="{{custom.STATIC_URL}}js/bootstrap/bootstrap-button.js"></script>
 	<script type="text/javascript" src="{{custom.STATIC_URL}}js/bootstrap/bootstrap-typeahead.js"></script>
 	<script type="text/javascript" src="{{custom.STATIC_URL}}js/bootstrap/bootstrap-tab.js"></script>
@@ -25,6 +25,7 @@
 	<div class="tags"></div>
 	
 	<div class="doc_preview">
+		<!--
 		<div class="controls">
 			
 			<div class="btn-group">
@@ -46,15 +47,18 @@
 			
 			</div>
 			
-		<!--	<div id="prev" class="pageUp btn-pdf" ></div>
+			<div id="prev" class="pageUp btn-pdf" ></div>
 			<div id="next" class="pageDown btn-pdf"></div>
 			<div id="out" class="zoomOut btn-pdf"></div>
 			<div id="in" class="zoomIn btn-pdf"></div>
-		-->
+		
      	</div>
+     	-->
 		<div class="text">
 		
-			<div class="pdf-container"></div>
+			<div class="pdf-container">
+			<iframe id="iframe1" frameborder="0" width="100%" height="100%"></iframe>
+			</div>
 		
 		</div>
 		<div class="clear"></div>
@@ -130,6 +134,7 @@
 	<div class="tags"></div>
 	
 	<div class="doc_preview">
+	<!--
 		<div class="controls">
 			<div class="btn-group">
 			<span class="btn btn-small btn-inverse">
@@ -151,9 +156,12 @@
 			</div>
 			
      	</div>
+     	-->
 		<div class="text">
 		
-			<div class="pdf-container"></div>
+			<div class="pdf-container">
+				<iframe id="iframe2" frameborder="0" width="100%" height="100%"></iframe>
+			</div>
 		
 		</div>
 		<div class="clear"></div>
