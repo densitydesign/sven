@@ -318,3 +318,19 @@ svenjs.Sven.prototype.status = function(id, successCallback, args){
     
 };
 
+/* export entities */
+svenjs.Sven.prototype.export = function(id, successCallback, args){
+		
+    var url = this.url + "/anta/api/segments/export/corpus/" + id;
+
+    $.ajax({
+        type: 'GET',
+        url: url,
+        data: args,
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+    
+};
+
