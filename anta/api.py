@@ -20,8 +20,8 @@ from django.db.models import Count
 #    ---- JSON API CONST ----
 #    ========================
 #
-API_LOGIN_REQUESTED_URL = '/anta/api/login-requested'	 # needs to be logged in
-API_ACCESS_DENIED_URL = '/anta/api/access-denied'	 # needs to be logged in and th corpus should be cool
+API_LOGIN_REQUESTED_URL = '/api/login-requested'	 # needs to be logged in
+API_ACCESS_DENIED_URL = '/api/access-denied'	 # needs to be logged in and th corpus should be cool
 API_DEFAULT_OFFSET = 0
 API_DEFAULT_LIMIT = 50
 API_AVAILABLE_METHODS = [ 'PUT', 'DELETE', 'POST', 'GET' ]
