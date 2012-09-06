@@ -1,0 +1,36 @@
+{% extends "anta/middle.html" %}
+{% load i18n %}
+
+
+{% block custom_page %}
+	<h1>{% trans "import refined file"%} {{ preferences.corpus_id }}</h1>
+	<input type="file" id="fileupload" name="csv[]" multiple>
+{% endblock %}
+
+{% block custom_plugins %}
+	<script src="{{ custom.STATIC_URL }}js/jquery.ui.widget.js"></script>
+	<script src="{{ custom.STATIC_URL }}js/jquery.iframe-transport.js"></script>
+	<script src="{{ custom.STATIC_URL }}js/jquery.fileupload.js"></script>
+	<script>
+		$(function(){
+			$("#fileupload").fileupload({
+				url:"{% url anta_api_segments_import preferences.corpus_id %}",
+				dataType: 'json',
+				done: function(e, data){
+					console.log(e, data.result);
+				},
+				fail: function( e, data ){
+					console.log("failed!", data.error);
+				},
+				progressall: function(e, data){
+					var progress = parseInt(data.loaded / data.total * 100, 10);
+					console.log("progress:",progress)
+				}
+
+			})
+
+		});
+	</script>
+
+
+{% endblock %}

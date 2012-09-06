@@ -1,5 +1,6 @@
-import os,sys,mimetypes, math
+import os,sys,mimetypes, math, csv
 from datetime import datetime
+
 
 # get path of the django project
 path = ("/").join( sys.path[0].split("/")[:-2] )
@@ -10,6 +11,7 @@ if path not in sys.path:
 os.environ['DJANGO_SETTINGS_MODULE'] = 'sven.settings'
 
 from django.conf import settings
+from django.db import transaction
 from optparse import OptionParser
 from sven.anta.models import *
 from sven.anta.sync import error
@@ -56,13 +58,13 @@ def standard( corpus, routine ):
 	for i in Document.objects.values('language').distinct():
 		language = i['language']
 		try:
-			tfidf( corpus=corpus, routine=routine, language=language, settings=settings, ref_completion=0.4/number_of_languages  )
+			tfidf( corpus=corpus, routine=routine, language=language, settings=settings, ref_completion=1.0/number_of_languages  )
 		except Exception, e:
 			return close_routine( routine, error="Exception: %s" % e, status="ERR")
 
 	routine.completion = 1.0
 	routine.save()
-	close_routine( routine, error="", status="OK", )
+	close_routine( routine, error="", status="OK" )
 
 
 def tfidf( corpus, routine, language, settings, ref_completion=1.0, column="stemmed" ):
@@ -144,6 +146,45 @@ def export( corpus, language, parser, column="stemmed" ):
 		print s.id, s.stemmed, s.distro, s.max_tfidf, s.max_tf
 		break
 
+
+@transaction.commit_manually
+def importcsv( routine, csvfile, column="stemmed" ):
+	print """
+	========================================
+	---- IMPORT SEGMENTS ROM REFINE CSV ----
+	========================================
+	"""
+	
+	log_routine( routine, entry="importcsv started", completion=0 );
+	transaction.commit()
+
+	rows = list(csvfile)
+	totalrows = len(rows)
+	for i, row in enumerate(rows):
+		# update stemmed_refined cell
+		try:
+			s = Segment.objects.get(id=row['segment_id'])
+			buffer_stemmed = s.stemmed
+			s.stemmed = row['concept']
+			s.stemmed_refined = buffer_stemmed
+			s.save()
+
+		except Exception, e:
+			#print	" segemnt id %s was not found!" % row['segment_id']
+			close_routine( routine, error="Exception: %s %s" % (e,row), status="ERR" )
+			transaction.commit()
+			return
+
+		if i % 25 == 0:
+			log_routine( routine, entry="importcsv at line: %s" % i, completion=i/float(totalrows) )
+			print i, i/float(totalrows)
+			
+			transaction.commit()
+
+	close_routine( routine, status="OK" )
+	transaction.commit()
+	
+
 def similarity( corpus, language, parser, column="stemmed" ):
 	print """
 	====================
@@ -209,7 +250,7 @@ def similarity( corpus, language, parser, column="stemmed" ):
 	return
 	
 def main( argv):
-	usage = "usage: %prog -c corpus_name -l language -f function [tfidf|similarity|export [-o column]]"
+	usage = "usage: %prog -f function [ standard|importcsv [-o column] [-x csvfile] ]"
 	parser = OptionParser( usage=usage )
 	
 	parser.add_option("-r", "--routine", dest="routine",
@@ -224,9 +265,15 @@ def main( argv):
 	parser.add_option("-f", "--function", dest="func",
 		help="function")
 	
+	parser.add_option("-d", "--delimiter", dest="delimiter", default="\t",
+		help="csv cell delimiter")
+
 	parser.add_option( "-o", "--tfidfcolumn", dest="tfidfcolumn", default="stemmed",
 		help="function")
 	
+	parser.add_option( "-x", "--csv", dest="filename", default="",
+		help="csv file absolute path")
+
 	( options, argv ) = parser.parse_args()
 	
 	if options.routine is None:
@@ -242,33 +289,55 @@ def main( argv):
 	routine.save()
 
 	error_message = None
-	if options.corpus is None:
-		error_message = "Use -c to specify the corpus"
-
-	elif options.func is None:
+	
+	if options.func is None:
 		error_message = "Use -f to specify the desired function."
 
 	
-	# load corpus
-	try:
-		corpus = Corpus.objects.get( pk=options.corpus )
-	except Exception, e:
-		error_message = "Exception: %s" % e
+	# load corpus only for certain options
+	if options.func == "standard":
+		if options.corpus is None:
+			error_message = "Use -c to specify the corpus"
+		try:
+			corpus = Corpus.objects.get( pk=options.corpus )
+		except Exception, e:
+			error_message = "Exception: %s" % e
 
-	
-	# otuput error message
-
+	if options.func == "importcsv":
+		import unicodecsv,codecs
+		try:
+			f = open( options.filename, "rU")
+			#f = open( options.csv, 'rb' )
+			csvfile = csv.DictReader( f, delimiter=options.delimiter )
+			#content = f.read()
+			#print "delimiter: options.delimiter", content
+			#csv.reader(f, dialect, **kwds)
+			#csvfile = unicodecsv.reader( content, encoding='utf-8')
+			
+		except Exception, e:
+			error_message = "Exception: %s" % e
+	#
+	#     ==============================
+	#     ---- otuput error message ----
+	#     ==============================
+	#
 	if error_message is not None:
+		print error_message
 		close_routine( routine, error=error_message, status="ERR")
 		error( message=error_message, parser=parser )
 	
-	# check function
+	#
+	#     =================================
+	#     ---- execute valid functions ----
+	#     =================================
+	#
 	if options.func == "standard":
 		return standard( routine=routine, corpus=corpus ) # tf + tfidf
-	
+	elif options.func == "importcsv":
+		return importcsv( routine=routine, csvfile=csvfile )
 
-	close_routine( routine, error="", status="OK")
-
+	close_routine( routine, error="Fatal: function not found", status="ERR")
+		
 
 	return
 	if options.func == "standard":
