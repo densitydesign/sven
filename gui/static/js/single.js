@@ -35,7 +35,7 @@ query.getDocument(id_document, function(response){
 		.enter().append("span")
 			.attr("class", "tag badge badge-info")
 			.text(function(d){return d.name;})
-	
+			console.log(pdfURL_source)
 	pdfViewer(pdfURL_source, 'source', 'pdf-container');
 });
 

@@ -47,6 +47,57 @@ $(document).ajaxSend(function(event, xhr, settings) {
 });
 
 
+/* get corpora */
+svenjs.Sven.prototype.getCorpora = function(successCallback, args){
+		
+    var url = this.url + "/anta/api/corpus/";
+
+    $.ajax({
+        type: 'GET',
+        url: url,
+        data: args,
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+    
+};
+
+
+/* get a specific corpus */
+svenjs.Sven.prototype.getCorpus = function(id, successCallback, args){
+		
+    var url = this.url + "/anta/api/corpus/" + id;
+
+    $.ajax({
+        type: 'GET',
+        url: url,
+        data: args,
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+    
+};
+
+
+/* add a corpus */
+svenjs.Sven.prototype.addCorpus = function(successCallback, args){
+		
+    var url = this.url + "/anta/api/corpus/";
+
+    $.ajax({
+        type: 'POST',
+        url: url,
+        data: args,
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+    
+};
+
+
 /* get documents */
 svenjs.Sven.prototype.getDocuments = function(successCallback, args){
 	
@@ -54,7 +105,7 @@ svenjs.Sven.prototype.getDocuments = function(successCallback, args){
     var url = this.url + "/anta/api/documents/?indent=true";
 	
 	var args = args || { };
-	args.corpus = 1;
+	args.corpus = args.corpus || 1;
     
     $.ajax({
         type: 'GET',
@@ -78,7 +129,7 @@ svenjs.Sven.prototype.getDocument = function(id, successCallback, args){
     var url = this.url + "/anta/api/documents/" + id + "/" + "?indent=true";
 
 	var args = args || { };
-	args.corpus = 1;
+	args.corpus = args.corpus || 1;
 
     $.ajax({
         type: 'GET',
@@ -223,6 +274,38 @@ svenjs.Sven.prototype.streamgraph = function(id, successCallback, args){
 		
     //var url = this.url + "/sketch/query/" + this.database + "/" + collection + "/" + command + "/";
     var url = this.url + "/anta/api/streamgraph/corpus/" + id + "/?filters={}";
+
+    $.ajax({
+        type: 'GET',
+        url: url,
+        data: args,
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+    
+};
+
+/* analysis status */
+svenjs.Sven.prototype.startAnalysis = function(id, successCallback, args){
+		
+    var url = this.url + "/anta/api/tfidf/corpus/" + id;
+
+    $.ajax({
+        type: 'GET',
+        url: url,
+        data: args,
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+    
+};
+
+/* analysis status */
+svenjs.Sven.prototype.status = function(id, successCallback, args){
+		
+    var url = this.url + "/anta/api/status/corpus/" + id;
 
     $.ajax({
         type: 'GET',

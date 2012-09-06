@@ -3,7 +3,7 @@
 <head>
 
   <meta charset="utf-8">
-  <title>gui</title>
+  <title>Sven (alpha)</title>
 
   <meta name="description" content="gui user interface">
   <meta name="author" content="SitePoint">
@@ -97,17 +97,25 @@
 	
 
   	<div class="sven-container">
-
+		
+	<div id="sven-alert">
+		{% block sven-alert %}
+	    {% endblock %}
+	</div>
 	
 	<div id="content">
-	{% block content %}
-    {% endblock %}
+		{% block content %}
+    	{% endblock %}
 	</div>
 
   
-  {% block js_body %}
-  {% endblock %}
+  	{% block js_body %}
+  	{% endblock %}
 	</div>
-
+	
+	<div id="footer" class="sven-container">
+		<p class="light small">Sven | <a href="http://www.denistydesign.org">DensityDesign Lab</a></p>
+	</div>
+	
 </body>
 </html>

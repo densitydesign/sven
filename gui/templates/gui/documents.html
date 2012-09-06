@@ -16,17 +16,23 @@
 
 {% block content %}
 
- 
+
+<div id="documents-corpus">
+	
+	<p>Ok, it seems you have still to create a corpus for your documents. A corpus is like a collection of documents: all the analysis will be performed inside the documents of the corpus. You can easily create a new corpus entering a corpus name below and pressing the Create button.</p>
+	
+	  <input type="text" id="corpus-name" placeholder="Corpus name">
+	  <br/>
+	  <button class="btn btn-primary" id="create-corpus">Create</button>
+</div> 
 
 
 <div id="documents-list">
 	
 	<div class="page-header">
 		<h3>Documents</h3>
+		<button type="submit" class="btn btn-primary pull-right" id="upload-button">Upload new documents</button>
 		<p>Here you have the list of all the available documents. Use the Upload button to add new documents from your computer.</p>
-		<div class="right">
-			<button type="submit" class="btn btn-primary" id="upload-button">Upload new documents</button>
-		</div>
 		<div class="clear"></div>
 	</div>
 </div>
