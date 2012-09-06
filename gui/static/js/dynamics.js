@@ -13,8 +13,9 @@ query.getCorpora(function(response){
 		var data = response,
 			nodes = d3.entries(data.nodes).map(function(d){ return d.value; }),
 			edges = d3.entries(data.edges).map(function(d){ return d.value; })
-	
-			console.log(data)
+		
+		console.log(data)
+		
 		var graph = sven.viz.graph()
 			.target("#graph")
 			.id(function(d){ return d.id ? d.id : d; })
