@@ -1134,7 +1134,7 @@
 			sig.addNode(idNode,{
 	  	         'x': Math.random(),
 	  	         'y': Math.random(),
-	  	         'size': Math.random()*20,//size ? size(data) : 40,
+	  	         'size': 10,//size ? size(data) : 40,
 				 'color': color(idNode),
 				 'label' : label(data)
 	  	       });
@@ -1246,8 +1246,8 @@
 			       
 				   
 			     }).graphProperties({
-			       minNodeSize: 0.5,
-			       maxNodeSize: 20,
+			       minNodeSize: 2,
+			       maxNodeSize: 10,
 			       minEdgeSize: 1,
 			       maxEdgeSize: 2
 			     }).mouseProperties({
