@@ -740,7 +740,7 @@ def pending_routine_corpus( request, corpus_id ):
 		
 	try:	
 		response['objects'] = [ a.json() for a in Routine.objects.filter( corpus__id = corpus_id ).order_by( "-id" )[  response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
-	except Eception, e:
+	except Exception, e:
 		return throw_error( response, error="Exception thrown: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )	
 	
 	return  render_to_json( response )
