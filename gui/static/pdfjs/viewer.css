@@ -1,8 +1,79 @@
+/* Copyright 2012 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+* {
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+}
+
+body,
+input,
+button,
+select {
+  font: message-box;
+}
+
 .hidden {
   display: none;
 }
 [hidden] {
   display: none !important;
+}
+
+#viewerContainer:-webkit-full-screen {
+  top: 0px;
+  border-top: 5px solid transparent;
+  background-color: #404040;
+  background-image: url(images/texture.png);
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#viewerContainer:-moz-full-screen {
+  top: 0px;
+  border-top: 5px solid transparent;
+  background-color: #404040;
+  background-image: url(images/texture.png);
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+:-webkit-full-screen .page:last-child {
+  margin-bottom: 40px;
+}
+
+:-moz-full-screen .page:last-child {
+  margin-bottom: 40px;
+}
+
+#viewerContainer:full-screen {
+  top: 0px;
+  background-color: #404040;
+  background-image: url(images/texture.png);
+  width: 100%;
+  height: 100%;
 }
 
 /* outer/inner center provides horizontal center */
@@ -30,7 +101,6 @@ html[dir='rtl'] .innerCenter {
 #outerContainer {
   width: 100%;
   height: 100%;
-  position:relative;
 }
 
 #sidebarContainer {
@@ -138,7 +208,6 @@ html[dir='rtl'] #sidebarContent {
   right: 0;
   bottom: 0;
   left: 0;
-  background:#F3F3F4;
 }
 
 .toolbar {
@@ -157,27 +226,38 @@ html[dir='rtl'] #sidebarContent {
 #toolbarSidebar {
   width: 200px;
   height: 29px;
-  background-image: url(images/texture.png),
-                    -webkit-linear-gradient(hsla(0,0%,30%,.99), hsla(0,0%,25%,.95));
-  background-image: url(images/texture.png),
-                    -moz-linear-gradient(hsla(0,0%,30%,.99), hsla(0,0%,25%,.95));
-  background-image: url(images/texture.png),
-                    -ms-linear-gradient(hsla(0,0%,30%,.99), hsla(0,0%,25%,.95));
-  background-image: url(images/texture.png),
-                    -o-linear-gradient(hsla(0,0%,30%,.99), hsla(0,0%,25%,.95));
-  background-image: url(images/texture.png),
-                    linear-gradient(hsla(0,0%,30%,.99), hsla(0,0%,25%,.95));
-  box-shadow: inset -2px 0 0 hsla(0,0%,100%,.08),
-              inset 0 1px 1px hsla(0,0%,0%,.15),
-              inset 0 -1px 0 hsla(0,0%,100%,.05),
-              0 1px 0 hsla(0,0%,0%,.15),
-              0 1px 1px hsla(0,0%,0%,.1);
+ background-color: #414141;
+  *background-color: #222222;
+  background-image: -ms-linear-gradient(top, #555555, #222222);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#555555), to(#222222));
+  background-image: -webkit-linear-gradient(top, #555555, #222222);
+  background-image: -o-linear-gradient(top, #555555, #222222);
+  background-image: -moz-linear-gradient(top, #555555, #222222);
+  background-image: linear-gradient(top, #555555, #222222);
+  background-repeat: repeat-x;
+  border-color: #222222 #222222 #000000;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  filter: progid:dximagetransform.microsoft.gradient(startColorstr='#555555', endColorstr='#222222', GradientType=0);
+  filter: progid:dximagetransform.microsoft.gradient(enabled=false);
+  margin-left:0px;
 }
 
 #toolbarViewer {
   position: relative;
   height: 32px;
-  background: #999;
+ background-color: #414141;
+  *background-color: #222222;
+  background-image: -ms-linear-gradient(top, #555555, #222222);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#555555), to(#222222));
+  background-image: -webkit-linear-gradient(top, #555555, #222222);
+  background-image: -o-linear-gradient(top, #555555, #222222);
+  background-image: -moz-linear-gradient(top, #555555, #222222);
+  background-image: linear-gradient(top, #555555, #222222);
+  background-repeat: repeat-x;
+  border-color: #222222 #222222 #000000;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  filter: progid:dximagetransform.microsoft.gradient(startColorstr='#555555', endColorstr='#222222', GradientType=0);
+  filter: progid:dximagetransform.microsoft.gradient(enabled=false);
   border-left: 1px solid hsla(0,0%,0%,.5);
   box-shadow: inset 1px 0 0 hsla(0,0%,100%,.08),
               inset 0 1px 1px hsla(0,0%,0%,.15),
@@ -505,7 +585,7 @@ html[dir='rtl'] .dropdownToolbarButton {
   margin:0;
   padding:0;
   border:none;
-  background: transparent;
+  background: rgba(0,0,0,0); /* Opera does not support 'transparent' <select> background */
 }
 
 .dropdownToolbarButton > select > option {
@@ -578,6 +658,11 @@ html[dir='rtl'] .toolbarButton.pageDown::before {
 .toolbarButton.zoomIn::before {
   display: inline-block;
   content: url(images/toolbarButton-zoomIn.png);
+}
+
+.toolbarButton.fullscreen::before {
+  display: inline-block;
+  content: url(images/toolbarButton-fullscreen.png);
 }
 
 .toolbarButton.print::before {
@@ -682,7 +767,7 @@ html[dir='rtl'] .toolbarButton.pageDown::before {
 }
 
 #thumbnailView {
-  position: absolute;
+  position: fixed;
   width: 120px;
   top: 33px;
   bottom: 0;
@@ -947,6 +1032,28 @@ canvas {
   border-bottom-right-radius: 2px;
 }
 
+#loadingBar .progress.indeterminate {
+  width: 100%;
+  height: 25px;
+  background-image: -moz-linear-gradient( 30deg, #404040, #404040 15%, #898989, #404040 85%, #404040);
+  background-image: -webkit-linear-gradient( 30deg, #404040, #404040 15%, #898989, #404040 85%, #404040);
+  background-image: -ms-linear-gradient( 30deg, #404040, #404040 15%, #898989, #404040 85%, #404040);
+  background-image: -o-linear-gradient( 30deg, #404040, #404040 15%, #898989, #404040 85%, #404040);
+  background-size: 75px 25px;
+  -moz-animation: progressIndeterminate 1s linear infinite;
+  -webkit-animation: progressIndeterminate 1s linear infinite;
+}
+
+@-moz-keyframes progressIndeterminate {
+  from { background-position: 0px 0px; }
+  to { background-position: 75px 0px; }
+}
+
+@-webkit-keyframes progressIndeterminate {
+  from { background-position: 0px 0px; }
+  to { background-position: 75px 0px; }
+}
+
 .textLayer {
   position: absolute;
   left: 0;
@@ -1082,6 +1189,17 @@ canvas {
 }
 #PDFBug table {
   font-size: 10px;
+}
+
+#viewer.textLayer-visible .textLayer > div,
+#viewer.textLayer-hover .textLayer > div:hover {
+  background-color: white;
+  color: black;
+}
+
+#viewer.textLayer-shadow .textLayer > div {
+  background-color: rgba(255,255,255, .6);
+  color: black;
 }
 
 @page {

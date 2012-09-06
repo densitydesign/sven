@@ -4,7 +4,7 @@
 
 
 
-//var kDefaultURL = 'http://127.0.0.1:8000/anta/api/download/document/1';
+var kDefaultURL = fileUrl;
 var kDefaultScale = 'auto';
 var kDefaultScaleDelta = 1.1;
 var kUnknownScale = 0;
@@ -1748,7 +1748,7 @@ window.addEventListener('load', function webViewerLoad(evt) {
       !window.FileList || !window.Blob) {
     document.getElementById('openFile').setAttribute('hidden', 'true');
   } else {
-    document.getElementById('fileInput').value = null;
+   // document.getElementById('fileInput').value = null;
   }
 
   // Special debugging flags in the hash section of the URL.
@@ -1784,7 +1784,7 @@ window.addEventListener('load', function webViewerLoad(evt) {
   }
 
   if (!PDFView.supportsPrinting) {
-    document.getElementById('print').classList.add('hidden');
+   // document.getElementById('print').classList.add('hidden');
   }
 
   // Listen for warnings to trigger the fallback UI.  Errors should be caught
@@ -1851,7 +1851,7 @@ function updateViewarea() {
   store.set('scrollLeft', Math.round(topLeft[0]));
   store.set('scrollTop', Math.round(topLeft[1]));
   var href = PDFView.getAnchorUrl(pdfOpenParams);
-  document.getElementById('viewBookmark').href = href;
+  //document.getElementById('viewBookmark').href = href;
 }
 
 window.addEventListener('resize', function webViewerResize(evt) {
