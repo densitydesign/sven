@@ -75,7 +75,7 @@ def log_routine( routine, entry="", completion=None, status="PN"):
 	routine.save()
 	return routine
 
-def close_routine( routine, error, status="CLO"):
+def close_routine( routine, error="", status="CLO"):
 	routine.status	= status
 	routine.last_entry	= error
 	routine.end_date		= datetime.now()

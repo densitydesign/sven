@@ -517,7 +517,7 @@ def tfidf( request, corpus_id ):
 	except Exception, e:
 		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
 
-	routine = start_routine( type='tfidf', corpus=c )
+	routine = start_routine( type='TFIDF', corpus=c )
 	if routine is None:
 		throw_error( response, error="A very strange error", code=API_EXCEPTION_EMPTY)
 
@@ -792,7 +792,70 @@ def segments_export( request, corpus_id ):
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def segments_import( request, corpus_id ):
-	response = _json( request )
+	response = _json( request,  enable_method=False )
+	path = "/tmp/"
+	
+	# uncomment to debug
+	response['path'] = path
+	
+	if not os.path.exists( path ):
+		return throw_error(response, code=API_EXCEPTION_DOESNOTEXIST, error="path %s does not exits!" % path )
+
+	try:
+		c = Corpus.objects.get(pk=corpus_id)
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	response['uploads'] = []
+
+	# request files. cfr upload.html template with blueimp file upload
+	if not request.FILES.has_key('csv[]'):
+		return throw_error( response, error="request.FILES['csv[]'] was not found", code=API_EXCEPTION_INCOMPLETE)
+	
+	for f in request.FILES.getlist('csv[]'):
+		# store locally and save happily
+		if f.size == 0:
+			return throw_error(response, error="uploaded file is empty", code=API_EXCEPTION_EMPTY)
+		
+		# filename
+		filename = path + "sven.import.csv" 
+
+		# get permission to store the document. If it exists, will force override!
+		try:
+			destination = open( filename , 'wb+')
+		except Exception, e:
+			return throw_error( response, error="Exception: %s " % e, code=API_EXCEPTION_EMPTY)
+		
+		# save file
+		for chunk in f.chunks():
+			destination.write(chunk)
+			destination.close()
+
+		"""
+		IMPORT SEGMETS metrics.py
+		"""
+		from distiller import start_routine, stop_routine
+		import subprocess, sys
+
+		
+		routine = start_routine( type='IMPORT', corpus=c )
+		if routine is None:
+			throw_error( response, error="A very strange error", code=API_EXCEPTION_EMPTY)
+
+		# call a sub process, and pass the related routine id
+		scriptpath = os.path.dirname(__file__) + "/metrics.py"
+		response['routine'] = routine.json()
+	
+		try:
+			subprocess.Popen([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'importcsv', '-x', filename, '-d',"," ], stdout=None, stderr=None)
+		except Exception, e:
+			return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
+		return render_to_json( response )
+
+
+
+		response['uploads'] = filename;
+	
 	return  render_to_json( response )
 
 #

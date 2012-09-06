@@ -40,6 +40,16 @@ def document(request, document_id ):
 	data['document'] = Document.objects.get( id=document_id ) 
 	return render_to_response('anta/document.html', RequestContext(request, data))
 
+#
+# upload csv file (IMPORT segemnts)
+# cfr. function importtest.
+#
+@login_required( login_url=LOGIN_REQUESTED_URL )
+def import_view(request):
+	data = _data( request )
+	
+	return render_to_response('anta/import.html', RequestContext(request, data))
+
 
 
 #
