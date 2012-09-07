@@ -128,4 +128,18 @@ function checkStatus(){
 }
 
 
+				//query.exportEntities(corpusID,function(response){
+				//	
+				//	})
+				
+			
+ $('#export')
+      .click(function () {
+        var btn = $(this);
+        btn.button('loading');
+        query.exportEntities(corpusID, function(response){
+        	window.location = response;
+        	btn.button('reset');
+        	});
 
+      })

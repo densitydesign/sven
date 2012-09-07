@@ -1,0 +1,99 @@
+  
+  <div class="modal hide fade" id="import">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal">×</button>
+      <h3>Upload new csv</h3>
+    </div>
+    <div class="modal-body">
+      
+	<span class="btn btn-success fileinput-button">
+		<span>Choose files...</span>
+		<input type="file" id="fileupload" name="csv[]" multiple>
+	</span>
+	
+  	<div class="modal-message"></div>
+	
+  	<div class="modal-gallery">
+  		
+  	</div>
+	
+	
+	<span class="modal-upload btn btn-primary">
+		<span>Upload</span>
+	</span>
+	  
+    </div>
+    <div class="modal-footer">
+      <a href="#" class="btn" data-dismiss="modal">Close</a>
+    </div>
+  </div>
+  
+ 
+ 
+ <script>
+	
+	var corpusID;
+	
+	
+	
+	api = new svenjs.Sven("");
+	
+	/* getting the first corpus... */
+	api.getCorpora(function(response){
+		corpusID = response.results[0].id;
+		
+	})
+	
+	
+	
+		
+		
+		
+		
+		$(function(){
+			$("#fileupload").fileupload({
+				url:"api/segments/import/corpus/" + corpusID,
+				dataType: 'json',
+				done: function(e, data){
+					console.log(e, data.result);
+				},
+				fail: function( e, data ){
+					console.log("failed!", data.error);
+				},
+				progressall: function(e, data){
+					var progress = parseInt(data.loaded / data.total * 100, 10);
+					console.log("progress:",progress)
+				}
+
+		});
+	
+ 	
+	
+	 $('#import-button').click(function(){
+	 	
+      	d3.select(".fileinput-button")
+      		.style("display","inline")
+		
+		 d3.select(".progress")
+			.style("margin-top","5px")
+		 	.style("display","none")
+		
+		d3.select(".modal-message")
+			.style("display","none")
+			
+   		 d3.select(".modal-upload")
+   		 	.style("display","none")
+		
+		d3.select(".modal-gallery")
+	 		.selectAll(".file-info")
+			.remove()
+		
+		$('#import').modal();
+ 	
+	 });
+	 })
+	
+ </script>
+
+
+
