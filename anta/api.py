@@ -8,7 +8,7 @@ from sven.anta.sync import store_document
 from django.conf import settings
 from django.contrib.auth import login, logout
 from django.core import serializers
-import os, json, datetime
+import os, json, datetime, operator
 
 from sven.anta.utils import *
 from sven.anta.forms import *
@@ -81,20 +81,8 @@ def relations( request ):
 		response['results'] = [r.json() for r in Relation.objects.filter( source__corpus__name=corpus, target__corpus__name=corpus) [response['meta']['offset']:response['meta']['limit'] ]  ]
 		return render_to_json( response )
 	
-	if len(response['meta']['filters']) > 0:
-		#mod for python 2.6 bug
-		newFilters = {}
-		oldFilters = response['meta']['filters']
-		for oldFilter in oldFilters:
-			newFilters[str(oldFilter)] = str(oldFilters[oldFilter])
-		# with filters: models static var
-		response['meta']['total'] = Relation.objects.filter(**newFilters).count()
-		response['results'] = [r.json() for r in Relation.objects.filter(**newFilters)[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
-	else:
-		response['meta']['total'] = Relation.objects.count()
-		response['results'] = [r.json() for r in Relation.objects.all()[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
-	
-	return render_to_json( response )
+	return _get_instances( request, response, model_name="Relation" )
+
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def create_relation( request, response ):
@@ -116,15 +104,38 @@ def create_relation( request, response ):
 def relation( request, id ):
 	response = _json( request )
 	# all documents
-	r =  _get_relation( id )
-	if r is None:
-		return throw_error( response, "Relation %s does not exist...," % id, code=API_EXCEPTION_DOESNOTEXIST )	
+	try:
+		r =  Relation.objects.get(id=id)
+	except Exception, e:
+		return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )	
 	
 	response['results'] = [r.json()]
-		
+	
 	if response['meta']['method'] == 'DELETE':
 		r.delete()		
+		return render_to_json( response )
+
+	# create documents
+	if response['meta']['method'] == 'POST':
+		## DOES NOT WORK. whiy? 
+		form = ApiRelationForm( request.REQUEST, instance=r )
+		
+		if not form.is_valid():
+
+			return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS )	
+		
+		
+		form.save(commit=False)
+		r.creation_date = datetime.now()
+		r.owner = request.user
+		r.save()
+		r = Relation.objects.get(pk=id)
+		response['results'] = [r.json()]
+		return render_to_json( response )
+
+		# return create_relation( request, response )
 	
+
 	# if method is POST, update the relation
 	"""
 	if response['meta']['method'] == 'POST':
@@ -244,23 +255,8 @@ def documents(request):
 	if response['meta']['method'] == 'POST':
 		return create_document( request, response, corpus=corpus )
 
+	return _get_instances( request, response, model_name="Document" )
 
-	if len(response['meta']['filters']) > 0:
-		#mod for python 2.6 bug
-		newFilters = {}
-		oldFilters = response['meta']['filters']
-		for oldFilter in oldFilters:
-			newFilters[str(oldFilter)] = str(oldFilters[oldFilter])
-		# with filters: models static var
-		response['meta']['total'] = Document.objects.filter(corpus__id=corpus.id).filter(**newFilters).count()
-		response['results'] = [d.json() for d in Document.objects.filter(corpus__id=corpus.id).filter(**newFilters)[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
-	else:
-		
-		response['meta']['total'] = Document.objects.filter(corpus__id=corpus.id).count()		
-		response['results'] = [d.json() for d in Document.objects.filter(corpus__id=corpus.id)[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
-	
-	
-	return render_to_json( response )
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def create_document( request, response, corpus ):
@@ -501,6 +497,7 @@ def attach_tag( request, document_id, tag_id ):
 		return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
 
 	# load document
+
 	response['results'] = [ d.json() ]
 	return render_to_json( response )
 
@@ -941,6 +938,28 @@ def _delete_instance( request, response, instance, attachments=[] ):
 		
 	return render_to_json( response );
 	
+def _get_instances( request, response, model_name, app_name="anta" ):
+	from django.db.models.loading import get_model
+	from django.db.models import Q
+	m = get_model(app_name,model_name)
+	
+	# get toal objects
+	response['meta']['total'] = m.objects.count()
+	
+	try:
+		# has OR clause (does not handle filters )
+		if response['meta']['queries'] is not None:
+			#queries = reduce(operator.or_, [Q(x) for x in response['meta']['queries']])
+			#response['results'] = [i.json() for i in m.objects.filter( queries, **response['meta']['filters']).order_by(*response['meta']['order_by'])[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+			
+			pass
+
+		response['results'] = [i.json() for i in m.objects.filter( **response['meta']['filters']).order_by(*response['meta']['order_by'])[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_EMPTY )
+		
+	return render_to_json( response )
+	#.objects.all()
 
 def _store_analysis( corpus, type=""):
 	try:
@@ -1020,10 +1039,30 @@ def _json( request, enable_method=True ):
 	if request.REQUEST.has_key('filters'):
 		try:
 			j['meta']['filters'] = json.loads( request.REQUEST.get('filters') )
-		except:
-			j['meta']['filters'] = []
+		except Exception, e:
+			j['meta']['warnings'] = "property 'filters' JSON Exception: %s" % e
+			j['meta']['filters'] = {}
 	else:
-		j['meta']['filters'] = []
+		j['meta']['filters'] = {}
+
+	if request.REQUEST.has_key('queries'):
+		try:
+			j['meta']['queries'] = json.loads( request.REQUEST.get('queries') )
+		except Exception, e:
+			j['meta']['warnings'] = "property 'queries' JSON Exception: %s" % e
+			j['meta']['queries'] = None
+	else:
+		j['meta']['queries'] = None
+
+
+	if request.REQUEST.has_key('order_by'):
+		try:
+			j['meta']['order_by'] = json.loads( request.REQUEST.get('order_by') )
+		except Exception, e:
+			j['meta']['warnings'] = "property 'order_by' JSON Exception: %s" % e
+			j['meta']['order_by'] = {}
+	else:
+		j['meta']['order_by'] = {}
 
 	# test against available methods, default with GET
 	if not j['meta']['method']  in API_AVAILABLE_METHODS:
