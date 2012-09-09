@@ -125,7 +125,8 @@ def relation( request, id ):
 	if response['meta']['method'] == 'DELETE':
 		r.delete()		
 	
-	# if method is POST, update the document
+	# if method is POST, update the relation
+	"""
 	if response['meta']['method'] == 'POST':
 		form = UpdateDocumentForm( request.REQUEST )
 		if form.is_valid():
@@ -137,7 +138,7 @@ def relation( request, id ):
 
 		else:
 			return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS)
-
+	"""
 	
 	return render_to_json( response )
 
