@@ -8,7 +8,7 @@
       
 	<span class="btn btn-success fileinput-button">
 		<span>Choose files...</span>
-		<input type="file" id="fileupload" name="csv[]" multiple>
+		<input type="file" id="fileimport" name="csv[]" multiple>
 	</span>
 	
   	<div class="modal-message"></div>
@@ -31,18 +31,16 @@
  
  
  <script>
-	
-	var corpusID;
-	
+		
 	
 	
 	api = new svenjs.Sven("");
 	
 	/* getting the first corpus... */
 	api.getCorpora(function(response){
-		corpusID = response.results[0].id;
 		
-	})
+		corpusID = response.results[0].id;
+	
 	
 	
 	
@@ -51,8 +49,8 @@
 		
 		
 		$(function(){
-			$("#fileupload").fileupload({
-				url:"api/segments/import/corpus/" + corpusID,
+			$("#fileimport").fileupload({
+				url:"http://127.0.0.1:8000/anta/api/segments/import/corpus/" + corpusID,
 				dataType: 'json',
 				done: function(e, data){
 					console.log(e, data.result);
@@ -67,7 +65,7 @@
 
 		});
 	
- 	
+ 	});
 	
 	 $('#import-button').click(function(){
 	 	
