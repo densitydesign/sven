@@ -11,14 +11,14 @@ class LoginForm( forms.Form ):
 	password = forms.CharField( max_length=64, label='Password', widget=forms.PasswordInput(render_value=False ) )
 	
 #
-#    ====================
-#    ---- MODEL FORM ----
-#    ====================
+#    ===========================
+#    ---- PSEUDO-MODEL FORM ----
+#    ===========================
 class UpdateDocumentForm( forms.Form ):
 	title = forms.CharField( required=False )
 	ref_date = forms.DateTimeField( required=False )
 	language = forms.CharField( max_length=2, required=False )
-	
+
 
 class TagForm( forms.ModelForm ):
 	class Meta:
@@ -39,7 +39,7 @@ class ApiDocumentsFilter( forms.Form ):
 	start_date = forms.DateField()
 	end_date = forms.DateField(initial=datetime.today)
 	
-class ApiRelationForm(ModelForm):	
+class ApiRelationForm( ModelForm ):	
 	class Meta:
 		model = Relation	
 

@@ -205,7 +205,7 @@ class Owners( models.Model ):
 class Relation( models.Model ):
 	source = models.ForeignKey( Document, related_name="source" )
 	target = models.ForeignKey( Document, related_name="target" )
-	creation_date = models.DateTimeField(default=datetime.now, blank=True)
+	creation_date = models.DateTimeField(default=datetime.now, blank=True, null=True)
 	description = models.CharField( max_length=160)
 	polarity = models.CharField( max_length=3, choices=POLARITY_CHOICES )
 	owner = models.ForeignKey( User, blank=True, null=True )
@@ -225,7 +225,7 @@ class Relation( models.Model ):
 			'description'	: self.description,
 			'polarity'	: self.polarity,
 			'intensity'	: self.intensity( min=min, max=max),
-			'owner': self.owner.json()
+			'owner':  self.owner.json() if self.owner else None
 		}
 
 class Analysis(models.Model ):
