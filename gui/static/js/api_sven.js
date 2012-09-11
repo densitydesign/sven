@@ -227,6 +227,26 @@ svenjs.Sven.prototype.deleteRelation = function(id, successCallback){
 
 };
 
+/* update relation */
+svenjs.Sven.prototype.updateRelation = function(id, successCallback, args){
+	
+    var url = this.url + "/anta/api/relations/" + id + "/" + "?method=POST&indent=true";
+	
+    
+    $.ajax({
+        type: 'GET',
+        url: url,
+        data: args,
+        complete: function(){
+        	console.log(this.url);
+    		},
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+
+};
+
 /* download */
 svenjs.Sven.prototype.download = function(id, successCallback, args){
 

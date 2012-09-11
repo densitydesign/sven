@@ -64,7 +64,10 @@ $('a[data-toggle="tab"]').on('show', function (e) {
  						.text(function(d){ var testo = this;
     						query.getDocument(d.target, function(response){
     								d.relation_target = response.results[0].title
-    								d3.select(testo).html('<a href="#">' + d.relation_target + '</a>');
+    								d3.select(testo).html('<div class="btn-link">' + d.relation_target + '</div>').on("click", function(){
+    									pdfUrl_target = '../../../anta/api/documents/download/' + d.target;
+    									addTargetDocument(d.target);
+    									});
     							})
     						});
 						
@@ -72,8 +75,9 @@ $('a[data-toggle="tab"]').on('show', function (e) {
     		 		relation.append("div")
  						.attr("class","relation_type")
  						.text(function(d){return d.polarity});
- 							
- 					relation.append("div")
+ 					
+ 					
+ 					relation.append("button")
  						.attr("class","btn btn-small btn-danger")
 						.text('delete')
 						.on('click', function(d){$("#dialog-confirm").dialog('open'); 
@@ -89,6 +93,56 @@ $('a[data-toggle="tab"]').on('show', function (e) {
 								})
 							})
 							
+					relation.append("button")
+ 						.attr("class","btn btn-small btn-warning")
+						.text('modify')
+						.on('click', function(d,i){
+							var modClass = ".modCont_" + i;
+							console.log(modClass);
+							$(modClass).hide();
+							});
+					
+					var modCont = relation.append("div")
+						//.attr("class","alert alert-info modCont")
+						.attr("class",function(d,i){return "alert alert-info modCont_" + i})
+							
+								
+// 					modCont.append("button")
+// 						.attr("class","close")
+// 						.attr("data-dismiss","alert")
+// 						.attr("type","button")
+// 						.text("x")
+
+					
+					var relValue = [{"value":"PPO", "text":"Very Positive"}, {"value":"POS","text":"Positive"}, {"value":"NEU", "text":"Neutral"}, {"value":"NEG","text":"Negative"}, {"value":"NNE","text":"Very Negative"}];
+					modCont.append("label")
+						.text("Type of relation")
+							
+					modCont.append("div")
+								.attr("id", "radio")
+								.attr("class", "btn-group")
+								.attr("data-toggle", "buttons-radio")
+									.selectAll("button")
+									.data(relValue)
+									.enter()
+									.append("button")
+									.attr("class", "btn  btn-small")
+									.attr("value", function(k){return k.value})
+									.text(function(k){return k.text})
+					
+					
+					modCont.append("label")
+						.text("Description")
+					
+					modCont.append("textarea")
+							.attr("maxlength","50")
+							.attr("id","description")
+							.text(function(d){return d.description})
+					
+					//modCont.append("div")
+					//	.attr("class","clear")
+
+
 							
     			d3.select(".rel_doc").append("div")
 					.attr("class","clear")
