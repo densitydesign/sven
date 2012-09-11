@@ -64,7 +64,7 @@ $('a[data-toggle="tab"]').on('show', function (e) {
  						.text(function(d){ var testo = this;
     						query.getDocument(d.target, function(response){
     								d.relation_target = response.results[0].title
-    								d3.select(testo).text(d.relation_target);
+    								d3.select(testo).html('<a href="#">' + d.relation_target + '</a>');
     							})
     						});
 						

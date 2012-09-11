@@ -8,7 +8,7 @@
       
 	<span class="btn btn-success fileinput-button">
 		<span>Choose files...</span>
-		<input type="file" id="fileimport" name="csv[]" multiple>
+		<input type="file" id="fileimport" name="csv[]">
 	</span>
 	
   	<div class="modal-message"></div>
@@ -36,24 +36,62 @@
 	
 	api = new svenjs.Sven("");
 	
-	/* getting the first corpus... */
+	/* getting the first corpus...*/
 	api.getCorpora(function(response){
 		
 		corpusID = response.results[0].id;
-	
-	
-	
-	
-		
+
 		
 		
 		
 		$(function(){
 			$("#fileimport").fileupload({
-				url:"http://127.0.0.1:8000/anta/api/segments/import/corpus/" + corpusID,
 				dataType: 'json',
+			add: function(e, data){
+				
+				data.url = "/anta/api/segments/import/corpus/" + corpusID + "/";
+				
+				d3.select("#import .modal-gallery")
+					.append("div")
+					.data([data])
+					.attr("class","file-info")
+					.text(function(d){
+						console.log(d)
+						return d.files[0].name;
+					})
+					.append("div")
+					.attr("class","progress progress-striped active")
+						.append("div")
+						.attr("class","bar")
+				
+		      	d3.select("#import .fileinput-button")
+		      		.style("display","none")
+				
+		      	d3.select("#import .modal-message")
+		      		.style("display","inline")
+					.html("<strong>The following files are ready to be imported:</strong>")
+				
+		      	d3.select("#import .modal-upload")
+		      		.style("display","inline")
+					.on("click",function(){
+						data.submit();
+					})
+			},
 				done: function(e, data){
-					console.log(e, data.result);
+					console.log(e, data.result, data);
+				d3.select("#import .modal-upload")
+					.on("click", function(){})
+				
+				d3.select("#import .file-info")
+					.select(".progress")
+					.style("display","none")
+					
+				d3.select("#import .file-info")
+					.append("span")
+					.attr("class","label label-success")
+					.style("display","table")
+					.style("margin-top","5px")
+					.text("Uploaded")
 				},
 				fail: function( e, data ){
 					console.log("failed!", data.error);
@@ -63,34 +101,40 @@
 					console.log("progress:",progress)
 				}
 
-		});
-	
- 	});
-	
-	 $('#import-button').click(function(){
+			});
+				 $('#import-button').click(function(){
 	 	
-      	d3.select(".fileinput-button")
+      	d3.select("#import .fileinput-button")
       		.style("display","inline")
 		
-		 d3.select(".progress")
+		 d3.select("#import .progress")
 			.style("margin-top","5px")
 		 	.style("display","none")
 		
-		d3.select(".modal-message")
+		d3.select("#import .modal-message")
 			.style("display","none")
 			
-   		 d3.select(".modal-upload")
+   		 d3.select("#import .modal-upload")
    		 	.style("display","none")
 		
-		d3.select(".modal-gallery")
+		d3.select("#import .modal-gallery")
 	 		.selectAll(".file-info")
 			.remove()
 		
 		$('#import').modal();
  	
-	 });
-	 })
-	
+	 			});
+		});
+		
+		$('#import').on('hidden',function(){
+			
+			window.location.reload();
+			
+			});
+
+
+});
+
  </script>
 
 
