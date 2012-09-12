@@ -64,16 +64,20 @@ $('a[data-toggle="tab"]').on('show', function (e) {
  						.text(function(d){ var testo = this;
     						query.getDocument(d.target, function(response){
     								d.relation_target = response.results[0].title
-    								d3.select(testo).text(d.relation_target);
+    								d3.select(testo).html('<div class="btn-link">' + d.relation_target + '</div>').on("click", function(){
+    									pdfUrl_target = '../../../anta/api/documents/download/' + d.target;
+    									addTargetDocument(d.target);
+    									});
     							})
     						});
 						
-
+					
+					
     		 		relation.append("div")
  						.attr("class","relation_type")
  						.text(function(d){return d.polarity});
- 							
- 					relation.append("div")
+ 					
+ 					relation.append("button")
  						.attr("class","btn btn-small btn-danger")
 						.text('delete')
 						.on('click', function(d){$("#dialog-confirm").dialog('open'); 
@@ -89,6 +93,64 @@ $('a[data-toggle="tab"]').on('show', function (e) {
 								})
 							})
 							
+					relation.append("button")
+ 						.attr("class","btn btn-small btn-warning")
+						.text('modify')
+						.on('click', function(d,i){
+							var modClass = ".modCont_" + i;
+							$(modClass).toggle();
+							});
+					
+					var modCont = relation.append("div")
+						.attr("class",function(d,i){return "modCont_" + i})
+						.attr("style","display:none");
+
+
+					
+					var relValue = [{"value":"PPO", "text":"Very Positive"}, {"value":"POS","text":"Positive"}, {"value":"NEU", "text":"Neutral"}, {"value":"NEG","text":"Negative"}, {"value":"NNE","text":"Very Negative"}];
+					
+					modCont.append("label")
+						.text("Type of relation")
+							
+					modCont.append("div")
+								.attr("class", "radioType btn-group")
+								.attr("data-toggle", "buttons-radio")
+									.selectAll("button")
+									.data(relValue)
+									.enter()
+									.append("button")
+									.attr("class", function(k){var polarity = d3.select(this.parentNode).data()[0].polarity; if(polarity == k.value){return "btn  btn-small active";}else{return "btn  btn-small";}})
+									.attr("value", function(k){return k.value})
+									.text(function(k){return k.text})
+
+					
+					
+					modCont.append("label")
+						.text("Description")
+					
+					modCont.append("textarea")
+							.attr("maxlength","50")
+							.attr("class","description")
+							.text(function(d){return d.description})
+					
+					modCont.append("div")
+						.attr("class","clear")
+					
+					modCont.append("div")
+						.attr("id","addRelation")
+						.attr("class","btn btn-info")
+						.text("update relation")
+						.on("click", function(d){
+							var polarity = d3.select(this.parentNode).select(".radioType").select(".active").attr("value");
+							var pClass = "."+$(this).parent().attr("class");
+							var description = $(pClass + " .description" ).val();
+							var args = {"polarity":polarity, "source": d.source, "target":d.target, "description":description}; 
+							console.log(args, d.id);
+							updateRalation(d.id, args)
+							});
+
+
+
 							
     			d3.select(".rel_doc").append("div")
 					.attr("class","clear")
@@ -289,7 +351,10 @@ function drawRelation(){
  						.text(function(d){ var testo = this;
     						query.getDocument(d.target, function(response){
     								d.relation_target = response.results[0].title
-    								d3.select(testo).text(d.relation_target);
+    								d3.select(testo).html('<div class="btn-link">' + d.relation_target + '</div>').on("click", function(){
+    									pdfUrl_target = '../../../anta/api/documents/download/' + d.target;
+    									addTargetDocument(d.target);
+    									});
     							})
     						});
 						
@@ -315,6 +380,65 @@ function drawRelation(){
 							});
 							
 							
+    			relation.append("button")
+ 						.attr("class","btn btn-small btn-warning")
+						.text('modify')
+						.on('click', function(d,i){
+							var modClass = ".modCont_" + i;
+							$(modClass).toggle();
+							});
+					
+					var modCont = relation.append("div")
+						.attr("class",function(d,i){return "modCont_" + i})
+						.attr("style","display:none");
+
+
+					
+					var relValue = [{"value":"PPO", "text":"Very Positive"}, {"value":"POS","text":"Positive"}, {"value":"NEU", "text":"Neutral"}, {"value":"NEG","text":"Negative"}, {"value":"NNE","text":"Very Negative"}];
+					
+					modCont.append("label")
+						.text("Type of relation")
+							
+					modCont.append("div")
+								.attr("class", "radioType btn-group")
+								.attr("data-toggle", "buttons-radio")
+									.selectAll("button")
+									.data(relValue)
+									.enter()
+									.append("button")
+									.attr("class", function(k){var polarity = d3.select(this.parentNode).data()[0].polarity; if(polarity == k.value){return "btn  btn-small active";}else{return "btn  btn-small";}})
+									.attr("value", function(k){return k.value})
+									.text(function(k){return k.text})
+
+					
+					
+					modCont.append("label")
+						.text("Description")
+					
+					modCont.append("textarea")
+							.attr("maxlength","50")
+							.attr("class","description")
+							.text(function(d){return d.description})
+					
+					modCont.append("div")
+						.attr("class","clear")
+					
+					modCont.append("div")
+						.attr("id","addRelation")
+						.attr("class","btn btn-info")
+						.text("update relation")
+						.on("click", function(d){
+							var polarity = d3.select(this.parentNode).select(".radioType").select(".active").attr("value");
+							var pClass = "."+$(this).parent().attr("class");
+							var description = $(pClass + " .description" ).val();
+							var args = {"polarity":polarity, "source": d.source, "target":d.target, "description":description}; 
+							console.log(args, d.id);
+							updateRalation(d.id, args)
+							});
+
+
+
+							
     			d3.select(".rel_doc").append("div")
 					.attr("class","clear")
 			
@@ -323,3 +447,38 @@ function drawRelation(){
     		},{filters:'{"source":' + id_document + '}'});
 	
 	}
+	
+function updateRalation(id, args){
+	
+			query.updateRelation(id, function(response){
+				
+				var status = response.status;
+				if (status != 'ok'){
+					$(".updateResult").empty();
+					d3.select(".updateResult")
+						.append("div")
+						.style("display","block")
+						.attr("class","alert alert-error")
+						.html(function(d){
+							var errorString = d3.values(response.error).join("<br/>")
+							return '<a class="close" data-dismiss="alert" href="#">&times;</a><strong>Oh. Something went wrong:</strong><p>'+errorString+'</p>'
+						})
+					
+					return;
+				}
+				console.log("andata bene cazzo")
+				$(".updateResult").empty();
+				d3.select(".updateResult")
+					.append("div")
+					.style("display","block")
+					.attr("class","alert alert-success")
+					.html(function(d){
+						return '<a class="close" data-dismiss="alert" href="#">&times;</a><strong>Great! </strong><p>The relation has been successfully updated.</p>'
+					})
+				
+				drawRelation();
+					
+				},args)
+		
+
+}

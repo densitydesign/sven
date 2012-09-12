@@ -227,6 +227,26 @@ svenjs.Sven.prototype.deleteRelation = function(id, successCallback){
 
 };
 
+/* update relation */
+svenjs.Sven.prototype.updateRelation = function(id, successCallback, args){
+	
+    var url = this.url + "/anta/api/relations/" + id + "/" + "?method=POST&indent=true";
+	
+    
+    $.ajax({
+        type: 'GET',
+        url: url,
+        data: args,
+        complete: function(){
+        	console.log(this.url);
+    		},
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+
+};
+
 /* download */
 svenjs.Sven.prototype.download = function(id, successCallback, args){
 
@@ -314,6 +334,20 @@ svenjs.Sven.prototype.status = function(id, successCallback, args){
         success: successCallback,
         error: successCallback,
         dataType: 'json'
+    });
+    
+};
+
+/* export entities */
+svenjs.Sven.prototype.exportEntities = function(id, successCallback){
+		
+    var url = this.url + "/anta/api/segments/export/corpus/" + id;
+	console.log(url)
+     $.ajax({
+        type: 'GET',
+        url: url,
+        success: successCallback(url),
+        error: successCallback
     });
     
 };
