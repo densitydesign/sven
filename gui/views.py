@@ -16,6 +16,7 @@ from sven.anta.api import *
 
 CUSTOM_SETTINGS = {
 	'STATIC_URL':'/static/',
+	'STATIC_URL': settings.STATIC_URL, #'/static/',
 	'LOGIN_URL':'/gui/login'
 }
 

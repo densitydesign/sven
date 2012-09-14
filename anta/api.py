@@ -8,7 +8,7 @@ from sven.anta.sync import store_document
 from django.conf import settings
 from django.contrib.auth import login, logout
 from django.core import serializers
-import os, json, datetime, operator
+import os, json, datetime, operator, inspect
 
 from sven.anta.utils import *
 from sven.anta.forms import *
@@ -42,10 +42,14 @@ API_EXCEPTION_EMPTY			=	'Empty'
 
 def index(request):
 	response = _json( request )
+
+	
+
 	#user = User.objects.create_user('daniele', 'lennon@thebeatles.com', 'danielepassword')
 	#user.is_staff = True
 	#user.save()
 	return render_to_json( response )
+
 
 def get_corpora(request):
 	response = _json( request )
@@ -408,7 +412,28 @@ def segment_stem( request, segment_id ):
 #    ==================
 #    ---- SPECIALS ----
 #    ==================
-#	 
+#	
+
+#
+#   Attach a corpus with the current user.
+#   Warning! No restriction applied: every user can own every corpus.
+#   @todo admin only, with a given corpus id and user_id
+#
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def attach_corpus( request, corpus_id):
+	response = _json( request, enable_method=False )
+	corpus = _get_or_die("Corpus", response=response, filters={'id':corpus_id})
+	
+	# save 'ownership'
+	_save_or_die( "Owners", response=response, filters={'corpus':corpus, 'user':request.user})
+		
+	response['corpus'] = corpus.json()
+	response['corpus'] = corpus.json()
+	response['user'] = request.user.json()
+
+	return render_to_json( response )
+	
+
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def use_corpus( request, corpus_id=None ):
 	response = _json( request, enable_method=False )
@@ -548,7 +573,39 @@ def tfidf( request, corpus_id ):
 	return render_to_json( response )
 
 
+def update_tfidf( request, corpus_id ):
+	"""
+	START the classic tfidf extraction. 
+	Open related sub-process with routine id.
+	Return the routine created.
+	"""
+	from distiller import start_routine, stop_routine
+	import subprocess, sys
 
+	response = _json( request, enable_method=False )
+	
+	try:
+		c = Corpus.objects.get(pk=corpus_id)
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	routine = start_routine( type='TFIDF', corpus=c )
+	if routine is None:
+		throw_error( response, error="A very strange error", code=API_EXCEPTION_EMPTY)
+
+	# call a sub process, and pass the related routine id
+	scriptpath = os.path.dirname(__file__) + "/metrics.py"
+	response['routine'] = routine.json()
+	
+	try:
+		subprocess.Popen([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'standard' ], stdout=None, stderr=None)
+	except Exception, e:
+		return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
+	return render_to_json( response )
+
+
+
+# !! DEP.
 def start_metrics( request, corpus_id):
 	from utils import pushdocs
 	from ampoule import decant
@@ -961,6 +1018,30 @@ def _get_instances( request, response, model_name, app_name="anta" ):
 	return render_to_json( response )
 	#.objects.all()
 
+#
+#   Usage: corpus = get_or_die("Corpus", response, {'id':2})
+#
+def _get_or_die( model_name, response, app_name="anta", filters={}):
+	from django.db.models.loading import get_model
+	m = get_model(app_name,model_name)
+	try:
+		return m.objects.get( **filters ) 
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_EMPTY )
+
+#
+#   Usage: corpus = get_or_die("Corpus", response, {'id':2})
+#
+def _save_or_die( model_name, response, app_name="anta", filters={}):
+	from django.db.models.loading import get_model
+	m = get_model(app_name,model_name)
+	try:
+		return m( **filters ).save()
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_EMPTY )
+
+
+
 def _store_analysis( corpus, type=""):
 	try:
 		# check if analysis exists
@@ -1017,9 +1098,11 @@ def _get_relation( relation_id ):
 	except:
 		return None
 
+def _whosdaddy():
+	return inspect.stack()[2][3]
 
 def _json( request, enable_method=True ):
-	j =  {"status":"ok", 'meta':{ 'indent':False } }
+	j =  {"status":"ok", 'meta':{ 'indent':False, 'action':_whosdaddy() } }
 	if request.REQUEST.has_key('indent'):
 		j['meta']['indent'] = True
 

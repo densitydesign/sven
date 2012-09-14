@@ -48,6 +48,8 @@ urlpatterns = patterns('',
 	url(r'^api/corpus/(\d+)/$', 'sven.anta.api.corpus', name='anta_api_corpus' ),    
 	url(r'^api/use-corpus/$', 'sven.anta.api.use_corpus', name='anta_api_use_corpus' ),
 	url(r'^api/use-corpus/(\d+)/$', 'sven.anta.api.use_corpus', name='anta_api_use_corpus' ),
+	url(r'^api/attach-corpus/(\d+)$', 'sven.anta.api.attach_corpus', name='anta_api_attach_corpus' ),
+	
 
 	# segments
 	url(r'^api/stems/$', 'sven.anta.api.segment_stems', name='anta_api_segment_stems' ),    
@@ -64,6 +66,7 @@ urlpatterns = patterns('',
 	
 	url(r'^api/start-metrics/(\d+)/$', 'sven.anta.api.start_metrics', name='anta_api_start_metrics' ),
 	url(r'^api/tfidf/corpus/(\d+)/$', 'sven.anta.api.tfidf', name='anta_api_tfidf' ),
+	url(r'^api/update-tfidf/corpus/(\d+)/$', 'sven.anta.api.update_tfidf', name='anta_api_update_tfidf' ),
 
 	url(r'^api/relations/graph/corpus/(\d+)/$', 'sven.anta.api.relations_graph', name='anta_api_relations_graph' ),
 	url(r'^api/documents/download/(\d+)/$', 'sven.anta.api.download_document', name='anta_api_download_document'),

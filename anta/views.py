@@ -18,9 +18,24 @@ LOGIN_REQUESTED_URL = CUSTOM_SETTINGS['LOGIN_URL']
 
 @login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
 def index(request):
+	# get last corpus
+	if Corpus.objects.filter( owners__user = request.user ).count() == 0:
+		return install( request )
+
+
 	data = _data( request )
 	data['sessiondata'] = request.COOKIES
 	return render_to_response('anta/index.html', RequestContext(request, data))
+
+#
+#   perform a clean install. Ask user to create a corpus
+#
+@login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
+def install( request ):
+	data = _data( request )
+	return render_to_response('anta/install.html', RequestContext(request, data))
+
+
 
 #
 # upload files. test.
