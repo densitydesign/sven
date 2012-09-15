@@ -102,6 +102,7 @@ def stop_routine( routine ):
 #
 def decant( corpus, routine, settings, ref_completion=1.0 ):
 	from sven.anta.models import Analysis, Routine, Segment, Document, Document_Segment, Document_Tag
+	from sven.anta.models import Analysis, Routine, Segment, Document, Document_Segment, Document_Tag, Tag
 	from sven.anta.utils import textify
 	# path = settings.MEDIA_ROOT + options.corpus
 	# print NL_STOPWORDS

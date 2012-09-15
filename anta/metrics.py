@@ -62,6 +62,21 @@ def standard( corpus, routine ):
 	routine.save()
 	close_routine( routine, error="", status="OK" )
 
+
+def tf_tfidf( corpus, routine ):
+	number_of_documents = Document.objects.filter(corpus=corpus ).count()
+
+	if number_of_documents == 0:
+		return close_routine( routine, error="No document found", status="ERR")
+
+	tf( corpus=corpus, routine=routine, completion_start=0.0, completion_score=0.5 )
+	
+	if routine.status == "ERR":
+		return
+
+	tfidf( corpus=corpus, routine=routine, completion_start=0.5, completion_score=1.0 )
+	close_routine( routine, error="", status="OK" )
+
 #
 #   Trunk Segemnt table little by little...
 #
@@ -136,14 +151,15 @@ def tf( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 			if number_of_aliases > 1: # print just some lines
 				print  ds.segment.content, ds.segment.stemmed, number_of_aliases, ds.tf
 			if current_segment % 25 == 0:
-				log_routine( routine, completion = float(current_segment) / number_of_documents_segments )
+				log_routine( routine, completion = completion_start +  ( float(current_segment) / number_of_documents_segments ) * (completion_score-completion_start) )
 				transaction.commit()
 	
 
 			current_segment = current_segment + 1
 			
 
-	close_routine( routine, error="", status="OK" )
+	if completion_score == 1.0:
+		close_routine( routine, error="", status="OK" )
 	transaction.commit()
 	
 
@@ -157,7 +173,9 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 	---- TFIDF COMPUTATION ----
 	===========================
 	"""
-
+	routine.type = "TFIDF"
+	routine.save()
+	transaction.commit()
 	# 1. get number of document
 	number_of_documents = Document.objects.filter(corpus=corpus ).count()
 	
@@ -232,10 +250,12 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 			print
 
 			if current_stem % 25 == 0:
-				log_routine( routine, completion = completion_start + (float(current_stem) / number_of_stems)*completion_score )
+				log_routine( routine, completion = completion_start + (float(current_stem) / number_of_stems)*(completion_score-completion_start) )
 				# save percentage and commit transaction
 				transaction.commit()
 
+	if completion_score == 1.0:
+		close_routine( routine, error="", status="OK" )
 	transaction.commit()
 	return
 	
@@ -451,7 +471,7 @@ def main( argv):
 		
 	
 	# load corpus only for certain options
-	if options.func == "standard" or options.func == "tfidf" or options.func == "clean" or options.func == "tf":
+	if options.func == "standard" or options.func == "tfidf" or options.func == "clean" or options.func == "tf" or options.func == "tf_tfidf":
 		if options.corpus is None:
 			error_message = "Use -c to specify the corpus"
 		try:
@@ -489,7 +509,10 @@ def main( argv):
 	#
 	if options.func == "standard":
 		return standard( routine=routine, corpus=corpus ) # pattern tf + stems tfidf
-	
+
+	elif options.func == "tf_tfidf":
+		return tf_tfidf( routine=routine, corpus=corpus ) # delete segments
+
 	elif options.func == "clean":
 		return clean( routine=routine, corpus=corpus ) # delete segments
 
