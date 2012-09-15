@@ -79,6 +79,9 @@ def close_routine( routine, error="", status="CLO"):
 	routine.status	= status
 	routine.last_entry	= error
 	routine.end_date		= datetime.now()
+	if status =="OK":
+		routine.completion = 1.0
+	
 	routine.save()
 	return routine
 
@@ -98,7 +101,7 @@ def stop_routine( routine ):
 #    recalculate tf/idf foreach tf
 #
 def decant( corpus, routine, settings, ref_completion=1.0 ):
-	from sven.anta.models import *
+	from sven.anta.models import Analysis, Routine, Segment, Document, Document_Segment, Document_Tag
 	from sven.anta.utils import textify
 	# path = settings.MEDIA_ROOT + options.corpus
 	# print NL_STOPWORDS

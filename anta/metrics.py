@@ -97,8 +97,55 @@ def clean( corpus, routine ):
 	close_routine( routine, error="", status="OK" )
 	transaction.commit()
 
+#
+#   Update tf calculation based on stems groups, per corpus basis
+# 
+@transaction.commit_manually
+def tf( corpus, routine, completion_start=0.0, completion_score=1.0 ):
+	print """
+	======================
+	---- TF, RELOADED ----
+	======================
+	"""
+	# change routine type
+	routine.type = "TF"
+	routine.save()
+	transaction.commit()
 
+	# get percentage info:
+	number_of_documents_segments = Document_Segment.objects.count()
+	print "number_of_documents_segments: %s" % number_of_documents_segments
 
+	if number_of_documents_segments == 0:
+		close_routine( routine, error="Not enought segments in your corpus. Try 'standard' routine first...", status="ERR")
+		transaction.commit()
+		return
+
+	current_segment = 0
+
+	for d in Document.objects.filter(corpus=corpus):
+		print "document: %s" % d
+		number_of_stems_per_document = Document_Segment.objects.filter( document=d ).values('segment__stemmed').distinct().count()
+		print "number_of_stems_per_document: %s" % number_of_stems_per_document
+
+		for ds in Document_Segment.objects.filter( document=d ):
+			# count alliases( segment with same stemmed version )
+			number_of_aliases = Document_Segment.objects.filter( document=d, segment__stemmed=ds.segment.stemmed ).count()
+			ds.tf = float(number_of_aliases) / number_of_stems_per_document
+			ds.save()
+			if number_of_aliases > 1: # print just some lines
+				print  ds.segment.content, ds.segment.stemmed, number_of_aliases, ds.tf
+			if current_segment % 25 == 0:
+				log_routine( routine, completion = float(current_segment) / number_of_documents_segments )
+				transaction.commit()
+	
+
+			current_segment = current_segment + 1
+			
+
+	close_routine( routine, error="", status="OK" )
+	transaction.commit()
+	
 
 #
 #   Perform tfidf calculation based on stems groups
@@ -404,7 +451,7 @@ def main( argv):
 		
 	
 	# load corpus only for certain options
-	if options.func == "standard" or options.func == "tfidf" or options.func == "clean":
+	if options.func == "standard" or options.func == "tfidf" or options.func == "clean" or options.func == "tf":
 		if options.corpus is None:
 			error_message = "Use -c to specify the corpus"
 		try:
@@ -441,10 +488,13 @@ def main( argv):
 	#     =================================
 	#
 	if options.func == "standard":
-		return standard( routine=routine, corpus=corpus ) # tf + tfidf
+		return standard( routine=routine, corpus=corpus ) # pattern tf + stems tfidf
 	
 	elif options.func == "clean":
-		return clean( routine=routine, corpus=corpus ) # tf + tfidf
+		return clean( routine=routine, corpus=corpus ) # delete segments
+
+	elif options.func == "tf":
+		return tf( routine=routine, corpus=corpus ) # update tf
 
 	elif options.func == "tfidf":
 		return tfidf( routine=routine, corpus=corpus ) # tfidf ONLY, per language analysis
