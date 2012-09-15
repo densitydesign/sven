@@ -101,7 +101,7 @@ def stop_routine( routine ):
 #    recalculate tf/idf foreach tf
 #
 def decant( corpus, routine, settings, ref_completion=1.0 ):
-	from sven.anta.models import Analysis, Routine, Segment, Document, Document_Segment, Document_Tag, Tag
+	from sven.anta.models import Analysis, Routine, Segment, Document, Document_Segment, Document_Tag, Tag, Concept
 	from sven.anta.utils import textify
 	# path = settings.MEDIA_ROOT + options.corpus
 	# print NL_STOPWORDS
@@ -250,8 +250,8 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 						c = Concept( content=k, language=d.language )
 
 						c.save()
-					except:
-						print "[warning] unable to save concept: ", k
+					except Exception, e:
+						print "[warning] unable to save concept: %s, exception: %s" % (k, e)
 						continue
 				try:
 					sc = Segment_Concept.objects.get( segment=s, concept=c )

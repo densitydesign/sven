@@ -52,14 +52,7 @@ def standard( corpus, routine ):
 		return close_routine( routine, error="Exception: %s" % e, status="ERR")
 
 	# 2. get all languages in corpus
-	try:
-		tfidf( corpus=corpus, routine=routine, completion_start=0.5, completion_score=0.5 )
-	except Exception, e:
-		return close_routine( routine, error="Exception: %s" % e, status="ERR")
-
-	# 3. for each language, perform a tfidf
-	routine.completion = 1.0
-	routine.save()
+	tf_tfidf( corpus=corpus, routine=routine )
 	close_routine( routine, error="", status="OK" )
 
 
@@ -87,6 +80,10 @@ def clean( corpus, routine ):
 	---- CLEAN SEGMENTS ----
 	========================
 	"""
+	# change routine type
+	routine.type = "CLEAN"
+	routine.save()
+	transaction.commit()
 
 	number_of_segments = Segment.objects.count()
 	loops = int( math.ceil( number_of_segments / 25.0 ) )
