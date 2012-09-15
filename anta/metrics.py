@@ -47,30 +47,64 @@ def standard( corpus, routine ):
 
 	# 1. distiller.decant (tf computation )
 	try:
-		decant( corpus=corpus, routine=routine, settings=settings, ref_completion=0.6 )
+		decant( corpus=corpus, routine=routine, settings=settings, ref_completion=0.5 )
 	except Exception, e:
 		return close_routine( routine, error="Exception: %s" % e, status="ERR")
 
 	# 2. get all languages in corpus
-	number_of_languages = Document.objects.values('language').distinct().count()
+	try:
+		tfidf( corpus=corpus, routine=routine, completion_start=0.5, completion_score=0.5 )
+	except Exception, e:
+		return close_routine( routine, error="Exception: %s" % e, status="ERR")
 
 	# 3. for each language, perform a tfidf
-	for i in Document.objects.values('language').distinct():
-		language = i['language']
-		try:
-			tfidf( corpus=corpus, routine=routine, language=language, settings=settings, ref_completion=1.0/number_of_languages  )
-		except Exception, e:
-			return close_routine( routine, error="Exception: %s" % e, status="ERR")
-
 	routine.completion = 1.0
 	routine.save()
 	close_routine( routine, error="", status="OK" )
 
 #
-#   Perform tfidf calculation based on stems groups
-#   ===============================================
+#   Trunk Segemnt table little by little...
 #
-def tfidf( corpus, routine, language, settings, ref_completion=1.0, column="stemmed" ):
+@transaction.commit_manually
+def clean( corpus, routine ):
+	print """
+	========================
+	---- CLEAN SEGMENTS ----
+	========================
+	"""
+
+	number_of_segments = Segment.objects.count()
+	loops = int( math.ceil( number_of_segments / 25.0 ) )
+	
+	print "number_of_segments: %s" % number_of_segments
+	print "loops: %s" % loops
+	
+	try:
+		# manually change
+		for i in range(0, loops):
+			for j in Segment.objects.all()[0:25]:
+				j.delete()
+				log_routine( routine, completion = float(i) / loops )
+					
+			transaction.commit()
+		log_routine( routine, completion = 1.0 )
+				
+		
+	except Exception, e:
+		close_routine( routine, error="Exception: %s" % e, status="ERR")
+		transaction.commit()
+	
+	close_routine( routine, error="", status="OK" )
+	transaction.commit()
+
+
+
+
+#
+#   Perform tfidf calculation based on stems groups
+#  
+@transaction.commit_manually
+def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="stemmed" ):
 	print """
 	===========================
 	---- TFIDF COMPUTATION ----
@@ -83,28 +117,84 @@ def tfidf( corpus, routine, language, settings, ref_completion=1.0, column="stem
 	# 2. get all languages in corpus
 	number_of_languages = Document.objects.values('language').distinct().count()
 
+	# 3. get GLOBAL number of segments (aka stems, segments grouped by their stemmed version: they do not need to be in the same corpus!!!)
+	number_of_stems = Segment.objects.values('stemmed', 'language').annotate(Count('stemmed'), Count('language')).count()
+
+	#SELECT COUNT(*), stemmed FROM anta_segment GROUP BY stemmed 
+
 	# out some information
 	print "column:",column
-	print "corpus:",corpus.id, corpus.name
+	print "corpus:",corpus.json()
 	print "document in corpus:",number_of_documents
-	
-	return
+	print "stems in corpus (grouped by stemmed, language):",number_of_stems
+
+	cursor = connection.cursor()
+
+	# global counter (all languages cycle)
+	current_stem = 0
 
 	# 3. for each language, perform a tfidf
-	for i in Document.objects.values('language').distinct():
-		pass
-	cursor = connection.cursor()
+	for i in Document.objects.filter(corpus=corpus ).values('language').annotate(num_document=Count('language')).distinct():
+		print "language info: ",i
+		
+		language = i['language']
+		# count tfidf group
+		# SELECT COUNT(*), stemmed FROM anta_segment WHERE language="EN" GROUP BY stemmed 
+		stem_count = Segment.objects.filter(language=language).values('stemmed').annotate(Count('stemmed')).count()
+		
+		# check length. If it's 0, exit with error....
+		if stem_count == 0:
+			close_routine( routine, error="Not enought segments in your corpus. Try standard routine first...", status="ERR")
+			transaction.commit()
+			return 
+
+		# 5. for each segment in this language...
+		cursor.execute("""
+			SELECT
+				COUNT( DISTINCT ds.document_id ) as distribution, 
+				s.language,
+				s.stemmed 
+			FROM `anta_document_segment` ds
+			JOIN anta_segment s ON ds.segment_id = s.id
+			JOIN anta_document d ON d.id = ds.document_id
+			WHERE d.corpus_id = %s AND s.language = %s
+			GROUP BY s.stemmed ORDER BY distribution DESC, stemmed ASC""", [ corpus.id, language ]
+		)
+
+		for row in dictfetchall(cursor):
+			# increment global runner (stats)
+			current_stem = current_stem + 1;
+			
+			# store tfidf inside each segment-document relationships
+			try:
+				dss = Document_Segment.objects.filter( segment__stemmed=row['stemmed'], segment__language=language)
+				
+				df = float( row['distribution'] ) / number_of_documents
+				print float(current_stem) / number_of_stems * 100.0, row[ column ], row['distribution'], df
+			except Exception, e:
+				print e
+				close_routine( routine, error="Exception: %s" % e, status="ERR")
+				transaction.rollback()
+				return
+			for ds in dss:
+				ds.tfidf = ds.tf * math.log(1/df) 
+				ds.save()
+			
+				# tf is term frequency exactly from words
+				print ds.tf,ds.document.id, ds.segment.content
+			print
+
+			if current_stem % 25 == 0:
+				log_routine( routine, completion = completion_start + (float(current_stem) / number_of_stems)*completion_score )
+				# save percentage and commit transaction
+				transaction.commit()
+
+	transaction.commit()
+	return
 	
 	# group by stem!
-	cursor.execute("""
-		SELECT
-			COUNT( DISTINCT ds.document_id ) as distribution, 
-			s.%s FROM `anta_document_segment` ds 
-		JOIN anta_segment s ON ds.segment_id = s.id
-		JOIN anta_document d ON d.id = ds.document_id
-		WHERE d.corpus_id = %s
-		GROUP BY s.%s ORDER BY distribution DESC, %s ASC""", [ column, corpus.id, column, column ]
-	)
+	
+	
     
 	for row in dictfetchall(cursor):
 		
@@ -314,7 +404,7 @@ def main( argv):
 		
 	
 	# load corpus only for certain options
-	if options.func == "standard" or options.func == "tfidf":
+	if options.func == "standard" or options.func == "tfidf" or options.func == "clean":
 		if options.corpus is None:
 			error_message = "Use -c to specify the corpus"
 		try:
@@ -353,6 +443,9 @@ def main( argv):
 	if options.func == "standard":
 		return standard( routine=routine, corpus=corpus ) # tf + tfidf
 	
+	elif options.func == "clean":
+		return clean( routine=routine, corpus=corpus ) # tf + tfidf
+
 	elif options.func == "tfidf":
 		return tfidf( routine=routine, corpus=corpus ) # tfidf ONLY, per language analysis
 

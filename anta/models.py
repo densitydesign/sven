@@ -269,7 +269,7 @@ class Routine(models.Model):
 			'id'	: self.id,
 			'type'	: self.type,
 			'corpus'	: self.corpus.json() if self.corpus else None,
-			'start_date'	: self.start_date.isoformat(),
+			'start_date'	: self.start_date.isoformat() if self.start_date else None,
 			'end_date'	: self.end_date.isoformat() if self.end_date else None,
 			'last_entry': self.last_entry,
 			'status'	: self.status,
