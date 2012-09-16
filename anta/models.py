@@ -391,4 +391,37 @@ class Document_Segment( models.Model ):
 	class Meta:
 		unique_together = ("segment", "document")
 
-		
+class Stem( models.Model ):
+	content = models.CharField( max_length=128, primary_key=True )
+	sample  = models.CharField( max_length=128 )
+	avg_tfidf 	= models.FloatField( default='0')
+	avg_tf 		= models.FloatField( default='0')
+	min_tfidf	= models.FloatField( default='0')
+	min_tf 		= models.FloatField( default='0')
+	max_tfidf 	= models.FloatField( default='0')
+	max_tf 		= models.FloatField( default='0')
+	distribution	= models.IntegerField( default='0')
+	aliases		= models.IntegerField( default='0')
+	class Meta:
+		managed = False
+
+	def json(self):
+		"""
+		group by segment__stemmed
+		"""
+		return {
+			'content'	:self.content,
+			'sample'	:self.sample,
+			'aliases': self.aliases,
+			'distribution': self.distribution,
+			'avg_tfidf' : self.avg_tfidf,
+			'avg_tf': self.avg_tf,
+			'min_tfidf' : self.min_tfidf,
+			'min_tf': self.min_tf,
+			'max_tfidf' : self.max_tfidf,
+			'max_tf': self.max_tf
+		}
+
+
+
+

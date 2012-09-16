@@ -85,17 +85,21 @@ def clean( corpus, routine ):
 	routine.save()
 	transaction.commit()
 
-	number_of_segments = Segment.objects.count()
-	loops = int( math.ceil( number_of_segments / 25.0 ) )
+	number_of_links = Document_Segment.objects.filter(document__corpus=corpus).count()
+	loops = int( math.ceil( number_of_links / 25.0 ) )
 	
-	print "number_of_segments: %s" % number_of_segments
+	print "corpus: %s" % corpus.json()
+	
+	print "number_of_links: %s" % number_of_links
 	print "loops: %s" % loops
 	
 	try:
 		# manually change
 		for i in range(0, loops):
-			for j in Segment.objects.all()[0:25]:
+			for j in Document_Segment.objects.filter(document__corpus=corpus)[0:25]:
+				j.segment.delete()
 				j.delete()
+
 				log_routine( routine, completion = float(i) / loops )
 					
 			transaction.commit()

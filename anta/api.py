@@ -13,7 +13,7 @@ import os, json, datetime, operator, inspect
 from sven.anta.utils import *
 from sven.anta.forms import *
 from django.contrib.auth.models import User
-from django.db.models import Count
+from django.db.models import Count, Min, Max, Avg
 
 #
 #    ========================
@@ -368,23 +368,28 @@ def document(request, document_id):
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def segments( request ):
 	response = _json( request )
+
 	return render_to_json( response )
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
-def segment_stems( request, document_id=None ):
+def segment_stems( request, corpus_id=None ):
 	response = _json( request )
 
 	# split order_by stuff
 	# order_by = ["tfidf DESC","tfidf ASC","distribution ASC", "distribution DESC"]
-
-
+	
 	# where
 	where = [] # [("stemmed LIKE %s", contains ),("document_id",2) ]
-	order_by = [ "tfidf DESC, distribution DESC, aliases DESC"]
+	order_by = [ "distribution DESC", "avg_tfidf DESC",  "aliases DESC"]
 
 	# build query
 	query = [ """
-		SELECT s.id, s.stemmed, s.content, ds.tfidf, count( distinct ds.document_id ) as distribution, count( distinct s.id ) as aliases FROM anta_segment s 
+		SELECT 
+			s.stemmed as content, GROUP_CONCAT( s.content ) as sample, 
+			AVG( ds.tfidf ) as avg_tfidf, MAX( ds.tfidf ) as max_tfidf, MIN( ds.tfidf ) as min_tfidf,
+			AVG( ds.tf ) as avg_tf, MAX( ds.tf ) as max_tf, MIN( ds.tf ) as min_tf,
+			COUNT( distinct ds.document_id ) as distribution,
+			COUNT( distinct s.id ) as aliases FROM anta_segment s 
 			JOIN anta_document_segment ds ON s.id = ds.segment_id
 		""",
 		"WHERE " + " AND ".join( where ) if len( where ) else "",
@@ -396,7 +401,7 @@ def segment_stems( request, document_id=None ):
 
 	binds = [ response['meta']['offset'], response['meta']['limit'] ]
 
-	ss = Segment.objects.raw( " ".join( query ), binds )
+	ss = Stem.objects.raw( " ".join( query ), binds )
 
 	response['results'] = [ s.json() for s in ss ]
 	
@@ -598,7 +603,7 @@ def update_tfidf( request, corpus_id ):
 	response['routine'] = routine.json()
 	
 	try:
-		subprocess.Popen([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'standard' ], stdout=None, stderr=None)
+		subprocess.Popen([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'tf_tfidf' ], stdout=None, stderr=None)
 	except Exception, e:
 		return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
 	return render_to_json( response )
