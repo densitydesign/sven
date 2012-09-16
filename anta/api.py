@@ -366,6 +366,27 @@ def document(request, document_id):
 #    ==================
 #
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
+def segments_clean( request, corpus_id ):
+	response = _json( request, enable_method=False )
+	
+	from distiller import start_routine
+
+	try:
+		c = Corpus.objects.get(pk=corpus_id)
+		routine = start_routine( type='CLEAN', corpus=c )
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	# call a sub process, and pass the related routine id
+	scriptpath = os.path.dirname(__file__) + "/metrics.py"
+
+	return _start_process([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'clean' ],
+		routine=routine,
+		response=response
+	)
+	
+
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def segments( request ):
 	response = _json( request )
 
@@ -984,6 +1005,20 @@ def access_denied( request ):
 #    try except handling on the road
 #    Intended for api internal use only.
 #
+def _start_process( popen_args, routine, response ):
+	import subprocess, sys
+
+	response['routine'] = routine.json()
+
+	try:
+		subprocess.Popen(popen_args, stdout=None, stderr=None)
+	except Exception, e:
+		return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
+	
+	return render_to_json( response )
+
+
+
 def _delete_instance( request, response, instance, attachments=[] ):
 	
 	try:

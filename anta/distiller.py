@@ -34,7 +34,8 @@ def start_routine( type, corpus=None ):
 	"""
 	If a routine does not exist, it will create it.
 	If a routine exists and:
-		1. is OK routine will be set to RIP; a new one will be created.
+		1. is OK, routine will be set to RIP; a new one will be created.
+		2. is PN, outine won't be overridden and 
 	Return the current routine, created or not.
 	"""
 	from sven.anta.models import Routine
@@ -53,7 +54,9 @@ def start_routine( type, corpus=None ):
 	
 	if r.status == "ERR":
 		return restart_routine( r, status="CLO")
-		
+	
+	if r.status == "PN" :
+		raise Exception("routine of this type is already running!")
 	return r
 	
 	

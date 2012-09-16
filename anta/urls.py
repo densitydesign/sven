@@ -74,7 +74,7 @@ urlpatterns = patterns('',
 
 	# url(r'^api/status/corpus/(\d+)/$', 'sven.anta.api.pending_analysis_corpus', name='anta_api_pending_analysis_corpus' ),
 
-	
+	url(r'^api/segments/clean/corpus/(\d+)/$', 'sven.anta.api.segments_clean', name='anta_api_segments_clean' ),
 	url(r'^api/segments/export/corpus/(\d+)/$', 'sven.anta.api.segments_export', name='anta_api_segments_export' ),
 	url(r'^api/segments/import/corpus/(\d+)/$', 'sven.anta.api.segments_import', name='anta_api_segments_import' ),
 	
