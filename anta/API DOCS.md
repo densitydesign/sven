@@ -86,7 +86,20 @@ Here below a table for those http params always accepted:
         <td>change funcion behaviour. e.g, POST create or update an element</td>
         <td>?method=[GET,DELETE,POST]&…</td>
     </tr>
-    
+    <tr>
+        <td>limit</td>
+        <td>integer</td>
+        <td>50</td>
+        <td>SQL LIMIT clause</td>
+        <td>?limit=50…</td>
+    </tr>
+     <tr>
+        <td>offset</td>
+        <td>integer</td>
+        <td>0</td>
+        <td>SQL OFFSET CLAUSE, in conjunction with LIMIT</td>
+        <td>?offset=50&limit=50…</td>
+    </tr>
     <tr>
         <td>order_by</td>
         <td>json array</td>
@@ -138,6 +151,7 @@ Details, function by function
 
 Each Paragraph descrbes in detail a url api-view function, in alphabetic order.
 In some url you may have a {} couple. It contains the variable name.
+Special functions are marked by a * sign. Of course, special functions have specials input / output… ALL functions requires authentified session COOKIES.
 
 ### segments_clean
 ---
@@ -149,4 +163,36 @@ Request:
     
 Listen for OK or KO response only. The corresponding `Routine` object will be available, even if it __is not updated__ with current value.
 	
+	
+### *segment_stems
+---
+Return a list of `Stem` object. Stem are not managed by Django (syncdb won't create any table for it), it's just a Model class to group Segment into group according to their "stemmed" value.
+
+Corpus specific url pattern:
+	
+	
+Retrieve all the stems stored:
+
+	http://127.0.0.1:8000/anta/api/stems/?indent=true&order_by=["distribution DESC","max_tfidf DESC"]
+	
+accepted REQUEST params: `limit`, `offset`, `order_by`.
+
+<!-- table>
+    <tr>
+        <th>param name</th>
+        <th>type</th>
+        <th>default</th>
+        <th>effect</th>
+        <th>sample / choices</th>
+    </tr>
+    <tr>
+        <td>contains</td>
+        <td>string</td>
+        <td></td>
+        <td>SQL clause WHERE … LIKE</td>
+        <td>	?contains=ghost%&…</td>
+    </tr>
+</table -->	
+	
+
 --- to be continued ---

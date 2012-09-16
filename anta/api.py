@@ -398,13 +398,7 @@ def segment_stems( request, corpus_id=None ):
 
 	# split order_by stuff
 	# order_by = ["tfidf DESC","tfidf ASC","distribution ASC", "distribution DESC"]
-	
-	# where
-	where = [] # [("stemmed LIKE %s", contains ),("document_id",2) ]
-	order_by = [ "distribution DESC", "avg_tfidf DESC",  "aliases DESC"]
-
-	# build query
-	query = [ """
+	basic_query = """
 		SELECT 
 			s.stemmed as content, GROUP_CONCAT( s.content ) as sample, 
 			AVG( ds.tfidf ) as avg_tfidf, MAX( ds.tfidf ) as max_tfidf, MIN( ds.tfidf ) as min_tfidf,
@@ -412,20 +406,59 @@ def segment_stems( request, corpus_id=None ):
 			COUNT( distinct ds.document_id ) as distribution,
 			COUNT( distinct s.id ) as aliases FROM anta_segment s 
 			JOIN anta_document_segment ds ON s.id = ds.segment_id
-		""",
-		"WHERE " + " AND ".join( where ) if len( where ) else "",
-		"GROUP BY stemmed",
-		"ORDER BY " + ", ".join( order_by ) if len( order_by ) else "",
-		""" LIMIT %s,%s """
-	]
-	response["query"] = " ".join( query )
+			JOIN anta_document d ON d.id = ds.document_id
+		"""
 
-	binds = [ response['meta']['offset'], response['meta']['limit'] ]
+	where = []
+	binds = []
 
-	ss = Stem.objects.raw( " ".join( query ), binds )
+	if corpus_id is not None:
+		try:
+			c = Corpus.objects.get(pk=corpus_id)
+		except Exception, e:
+			return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+		where.append("d.corpus_id = %s")
+		binds.append(corpus_id)
 
-	response['results'] = [ s.json() for s in ss ]
-	
+
+
+	if 'order_by' in response['meta']:
+		order_by = response['meta']['order_by']
+	else:
+		order_by = [ "distribution DESC", "avg_tfidf DESC",  "aliases DESC"]
+
+	response['meta']['total'] = 0
+
+	from django.db import connection
+	try:
+		cursor = connection.cursor()
+		cursor.execute( " ".join([
+			"""SELECT count(*) FROM ( SELECT COUNT(*) FROM anta_segment s 
+				JOIN anta_document_segment ds ON s.id = ds.segment_id
+				JOIN anta_document d ON d.id = ds.document_id""",
+			"WHERE " + " AND ".join( where ) if len( where ) else "",
+			"GROUP BY stemmed )"
+		]), binds)
+		(number_of_rows,) =cursor.fetchone()
+		response['meta']['total'] = number_of_rows
+
+		# build query
+		query = [ basic_query,
+			"WHERE " + " AND ".join( where ) if len( where ) else "",
+			"GROUP BY stemmed",
+			"ORDER BY " + ", ".join( order_by ) if len( order_by ) else "",
+			""" LIMIT %s,%s """
+		]
+		response["query"] = " ".join( query )
+
+		binds.append( response['meta']['offset'] )
+		binds.append( response['meta']['limit'] )
+
+		ss = Stem.objects.raw( " ".join( query ), binds )
+
+		response['results'] = [ s.json() for s in ss ]
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
 	return render_to_json( response )
 
 def segment_stem( request, segment_id ):

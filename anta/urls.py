@@ -52,7 +52,8 @@ urlpatterns = patterns('',
 	
 
 	# segments
-	url(r'^api/stems/$', 'sven.anta.api.segment_stems', name='anta_api_segment_stems' ),    
+	url(r'^api/stems/$', 'sven.anta.api.segment_stems', name='anta_api_segment_stems' ), 
+	url(r'^api/stems/corpus/(\d+)$', 'sven.anta.api.segment_stems', name='anta_api_segment_stems' ),       
 	url(r'^api/stem/(\d+)/$', 'sven.anta.api.segment_stem', name='anta_api_segment_stem' ),    
 	# url(r'^api/stems/document/(\d+)/$', 'sven.anta.api.segment', name='anta_api_segment' ),    
 	
