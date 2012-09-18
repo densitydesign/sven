@@ -1,4 +1,4 @@
-import os,sys,mimetypes, math, csv
+import os,sys,mimetypes, math, csv, codecs
 from datetime import datetime
 
 
@@ -55,6 +55,35 @@ def standard( corpus, routine ):
 	tf_tfidf( corpus=corpus, routine=routine )
 	close_routine( routine, error="", status="OK" )
 
+
+@transaction.commit_manually
+def entities_alchemy( corpus, routine ):
+	print """
+	=================================
+	---- ENTITIES VIA ALCHEMYAPI ----
+	=================================
+	"""
+	from services import alchemy
+	
+
+	number_of_documents = Document.objects.filter( corpus=corpus ).count()
+	print "[info] number_of_documents:",number_of_documents
+	print "[info] alchmy apikey:", settings.ALCHEMY_API_KEY
+
+	for d in  Document.objects.filter( corpus=corpus ):
+		if d.language not in ['EN', 'FR']:
+			continue
+
+		textified =  textify( d, settings.MEDIA_ROOT )
+		try:
+			with codecs.open( textified, "r", "utf-8" ) as f:
+   				print f.read()
+			print textified
+		except Exception, e:
+			continue
+	
+	close_routine( routine, error="", status="OK" )
+	transaction.commit()
 
 def tf_tfidf( corpus, routine ):
 	number_of_documents = Document.objects.filter(corpus=corpus ).count()
@@ -189,10 +218,10 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 	#SELECT COUNT(*), stemmed FROM anta_segment GROUP BY stemmed 
 
 	# out some information
-	print "column:",column
-	print "corpus:",corpus.json()
-	print "document in corpus:",number_of_documents
-	print "stems in corpus (grouped by stemmed, language):",number_of_stems
+	print "[info] column:",column
+	print "[info] corpus:",corpus.json()
+	print "[info] document in corpus:",number_of_documents
+	print "[info] stems in corpus (grouped by stemmed, language):",number_of_stems
 
 	cursor = connection.cursor()
 
@@ -201,7 +230,7 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 
 	# 3. for each language, perform a tfidf
 	for i in Document.objects.filter(corpus=corpus ).values('language').annotate(num_document=Count('language')).distinct():
-		print "language info: ",i
+		print "[info] language info: ",i
 		
 		language = i['language']
 		# count tfidf group
@@ -226,7 +255,8 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 			WHERE d.corpus_id = %s AND s.language = %s
 			GROUP BY s.stemmed ORDER BY distribution DESC, stemmed ASC""", [ corpus.id, language ]
 		)
-
+		print "[info] query executed..."
+		
 		for row in dictfetchall(cursor):
 			# increment global runner (stats)
 			current_stem = current_stem + 1;
@@ -236,25 +266,29 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 				dss = Document_Segment.objects.filter( segment__stemmed=row['stemmed'], segment__language=language)
 				
 				df = float( row['distribution'] ) / number_of_documents
-				print float(current_stem) / number_of_stems * 100.0, row[ column ], row['distribution'], df
+				# print float(current_stem) / number_of_stems * 100.0, row[ column ], row['distribution'], df
 			except Exception, e:
 				print e
 				close_routine( routine, error="Exception: %s" % e, status="ERR")
-				transaction.rollback()
+				transaction.commit()
 				return
 			for ds in dss:
 				ds.tfidf = ds.tf * math.log(1/df) 
 				ds.save()
 			
 				# tf is term frequency exactly from words
-				print ds.tf,ds.document.id, ds.segment.content
-			print
+				# print ds.tf,ds.document.id, ds.segment.content
+			
 
 			if current_stem % 25 == 0:
-				log_routine( routine, completion = completion_start + (float(current_stem) / number_of_stems)*(completion_score-completion_start) )
+				completion = completion_start + (float(current_stem) / number_of_stems)*(completion_score-completion_start)
+				print "[info] query executed...",completion
+				log_routine( routine, completion = completion )
 				# save percentage and commit transaction
 				transaction.commit()
-
+	
+	print "[info] query completed!"
+				
 	if completion_score == 1.0:
 		close_routine( routine, error="", status="OK" )
 	transaction.commit()
@@ -453,6 +487,9 @@ def main( argv):
 
 	( options, argv ) = parser.parse_args()
 	
+	if options.func is None:
+		error( message="Use -f to specify the desired function.", parser=parser )
+	
 	if options.routine is None:
 		error( message="Use -r to specify the routine", parser=parser )
 	try:	
@@ -467,12 +504,10 @@ def main( argv):
 
 	error_message = None
 	
-	if options.func is None:
-		error( message="Use -f to specify the desired function.", parser=parser )
 		
 	
 	# load corpus only for certain options
-	if options.func == "standard" or options.func == "tfidf" or options.func == "clean" or options.func == "tf" or options.func == "tf_tfidf":
+	if options.func in ["standard","tfidf","clean","tf","tf_tfidf","entities_alchemy"]:
 		if options.corpus is None:
 			error_message = "Use -c to specify the corpus"
 		try:
@@ -519,6 +554,10 @@ def main( argv):
 
 	elif options.func == "tf":
 		return tf( routine=routine, corpus=corpus ) # update tf
+
+	elif options.func == "entities_alchemy":
+		return entities_alchemy( routine=routine, corpus=corpus ) # update tf
+
 
 	elif options.func == "tfidf":
 		return tfidf( routine=routine, corpus=corpus ) # tfidf ONLY, per language analysis
