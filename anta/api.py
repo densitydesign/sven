@@ -531,7 +531,7 @@ def use_corpus( request, corpus_id=None ):
 
 	return render_to_json( response )
 		
-
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def attach_free_tag( request, document_id ):
 	"""
 	This function requires name and type given as args
@@ -567,6 +567,7 @@ def attach_free_tag( request, document_id ):
 	response['results'] = [ d.json() ]
 	return render_to_json( response )
 
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def attach_tag( request, document_id, tag_id ):
 	response = _json( request, enable_method=False )
 	try:
@@ -585,6 +586,7 @@ def attach_tag( request, document_id, tag_id ):
 	response['results'] = [ d.json() ]
 	return render_to_json( response )
 
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def detach_tag( request, document_id, tag_id ):
 	response = _json( request, enable_method=False )
 	try:
@@ -601,6 +603,7 @@ def detach_tag( request, document_id, tag_id ):
 	response['results'] = [ d.json() ]
 	return render_to_json( response )
 
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def tfidf( request, corpus_id ):
 	"""
 	START the classic tfidf extraction. 
@@ -631,37 +634,25 @@ def tfidf( request, corpus_id ):
 		return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
 	return render_to_json( response )
 
-
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def update_tfidf( request, corpus_id ):
-	"""
-	START the classic tfidf extraction. 
-	Open related sub-process with routine id.
-	Return the routine created.
-	"""
-	from distiller import start_routine, stop_routine
-	import subprocess, sys
-
 	response = _json( request, enable_method=False )
 	
+	from distiller import start_routine
+
 	try:
 		c = Corpus.objects.get(pk=corpus_id)
+		routine = start_routine( type='RELTF', corpus=c )
 	except Exception, e:
 		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
 
-	routine = start_routine( type='TFIDF', corpus=c )
-	if routine is None:
-		throw_error( response, error="A very strange error", code=API_EXCEPTION_EMPTY)
-
 	# call a sub process, and pass the related routine id
 	scriptpath = os.path.dirname(__file__) + "/metrics.py"
-	response['routine'] = routine.json()
-	
-	try:
-		subprocess.Popen([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'tf_tfidf' ], stdout=None, stderr=None)
-	except Exception, e:
-		return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
-	return render_to_json( response )
 
+	return _start_process([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'tf_tfidf' ],
+		routine=routine,
+		response=response
+	)
 
 
 # !! DEP.
