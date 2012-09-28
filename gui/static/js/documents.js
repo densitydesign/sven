@@ -1,6 +1,8 @@
 var query = new svenjs.Sven("");  //svenjs.Sven("http://127.0.0.1:8000");  
 
 var corpusID;
+var deleteList;
+var deletedFile;
 
 /* Check if any corpuses exist */
 
@@ -75,6 +77,29 @@ function getDocumentsList(){
 			.handle("actors", function(d){ return d.actors.map(function(v){return v.name;}).join(","); })
 			.handle("title", function(d){ return "<a href='/gui/documents/"+ d.id +"'>" + d.title + "</a>" })
 			.update()
+		
+		//d3.select("#checked").on("click", function(){console.log(d3.selectAll(".datatable-selected > .datatable-check").data())})
+		dataTable.on("selected", function(){
+		
+			
+			
+			
+			deleteList = d3.selectAll(".datatable-selected > .datatable-check").data();
+			console.log(deleteList.length);
+			if (deleteList.length > 0){
+				
+				d3.select("#delete")
+					.attr("style","display:inline")
+				
+				d3.select("#delete").text("delete (" + deleteList.length + ")")
+				
+			}else{
+				d3.select("#delete")
+					.attr("style","display:none")
+				
+			}
+		
+		})
 	
 	},args);
 }
@@ -143,3 +168,83 @@ function checkStatus(){
         	});
 
       })
+      
+
+ $('#delete').click(function(){
+ 		d3.select("#deleteAlert .modal-gallery")
+	 		.selectAll(".file-info")
+			.remove()
+	 	
+	 	deletedFile = [];
+	 	
+	 	$('#deleteAlert').modal();
+	 	
+
+      d3.select("#deleteAlert .modal-gallery").selectAll("div")
+					.data(deleteList)
+					.enter()
+					.append("div")
+					.attr("class",function(d,i){return "file-info bold " + "del_" + i})
+					.text(function(d, i){
+						return i+1 + ". " + d.title;
+					})
+		
+		d3.select("#deleteAlert .modal-upload")
+		      		.style("display","inline")
+					.on("click",function(){
+						 var btn = $(this);
+        				
+        				
+						for ( i in deleteList){
+						btn.button('loading');
+							var id = deleteList[i].id
+							query.deleteDocument(id, function(response){
+								
+								if (response.status == "ok"){
+									btn.button('reset');
+									d3.select("#deleteAlert .del_" + i)
+									.append("span")
+									.attr("class","label label-success")
+									.style("display","inline")
+									.style("margin-top","5px")
+									.text("Deleted")
+									
+									deletedFile.push(id);
+									deleteList.splice(0,1);
+									console.log(deleteList);
+									
+									}
+									else{console.log(response);
+									d3.select("#deleteAlert .del_" + i)
+									.append("span")
+									.attr("class","label label-danger")
+									.style("display","inline")
+									.style("margin-top","5px")
+									.text("Error")
+									}
+								
+							});
+							
+							}
+					})
+		
+		
+		/* When finishing delating... */
+		
+       $('#deleteAlert').on('hidden',function(){
+			
+			if (!deletedFile.length)
+				return;
+			var args = {}
+			//args['limit'] = uploadedFiles.length;
+			query.startAnalysis(corpusID, function(response){
+				
+				console.log(response);
+				window.location.reload()
+				
+			}, args)
+			
+			
+		})
+ 	
+	 })

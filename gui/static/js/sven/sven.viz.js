@@ -123,29 +123,57 @@
 					.attr("y",y.range()[1]/2)
 					
 				
-				
+
 			// add a rect for each date.
+
+						
 			var rect = group.selectAll("rect.node")
 				.data(function(d){ return d.children; })
 				.enter().append("svg:rect")
 					.attr("class", "node")
-					.attr("id", function(d){ return "node-" + d.id_document; })
+					.attr("id", function(d){$(this).popover({placement:"left", trigger:"hover"}); return "node-" + d.id_document; })
 					.attr("y", function(d,i,b) { return i*elementHeight + (y.range()[1] -elementHeight*(groups[b].children.length-1))/2 ; })//return y.range()[1] - (i+1)*elementHeight - elementHeight*(groups[b].children.length-1); })
 					.attr("height", fixHeight)//elementHeight)
 					.attr("width", x.rangeBand())
 					.attr("fill", function(d){ return color.values()[d.actor]; })
 					.attr("stroke", "#ffffff")//function(d){ return d3.rgb(color.values()[d.actor]).darker(); })
-					.on("mouseover", function(d){ fill_tooltip(d);  $("#tooltip").show();})
-					.on("mousemove", function(){ var w = $("#tooltip").width(); var h = $("#tooltip").height(); $("#tooltip").css({top: (d3.event.pageY - h-20) + "px", left: (d3.event.pageX - w/2 ) + "px"});})
-					.on("mouseout", function(){ return $("#tooltip").hide();})
-					.on("click", function(d){ getRelations(d, d.id)})
+					.attr("rel", "popover")
+					.attr("data-content",function(d){var dt = new Date(d.date);var format= d3.time.format("%B %e, %Y"); var content =  "<p>" + format(dt) + "</p><p>actor: <b>" + d.actor + "</b></p><p>relations: <b>" + d.relations_count + "</b></p>"; return content;} )
+					.attr("data-original-title", function(d){return d.title})
+					//.on("mouseover", function(d){var left = d3.select(this).data()[0]._x + d3.select(this).attr("width")/2 -5;d3.select("body").append("div").attr("style","width:16px;height:16px;background:black;position:absolute;left:" + left +"px;top:300px")})
+					//.on("mouseover", function(d){ fill_tooltip(d);  $("#tooltip").show();})
+				    .on("mouseover", function(d){ if(d.relations_count > 0){
+															 d3.select(this.parentNode).select("rect.relBtn")
+															.attr("height",d3.select(this).attr("height"))
+ 															.attr("width",d3.select(this).attr("height"))
+ 															.attr("x", d3.select(this).attr("x") + d3.select(this).attr("width")/2 - d3.select(this).attr("height")/2)
+ 															.attr("y", d3.select(this).attr("y"))
+ 															.attr("stroke", "white")
+ 															.attr("rel","tooltip")
+ 															.attr("title",d.relations_count + " relation(s)")
+ 															.attr("fill",function(d){$(this).tooltip();return "black"})
+ 															.attr("visibility","visible")
+ 															.attr("cursor","pointer")
+ 															.on("mouseover", function(){d3.select(this).attr("visibility","visible");})
+ 															.on("mouseout", function(){ d3.select(this).attr("visibility","hidden");})
+ 															.on("click", function(){ getRelations(d, d.id)})
+																}
+															})
+					//.on("mousemove", function(){ var w = $("#tooltip").width(); var h = $("#tooltip").height(); $("#tooltip").css({top: (d3.event.pageY - h-20) + "px", left: (d3.event.pageX - w/2 ) + "px"});})
+					.on("mouseout", function(){ d3.select(this.parentNode).select("rect.relBtn").attr("visibility","hidden");})
+					.on("click", function(d){ window.location = "/gui/documents/" + d.id + "/"})
 					.each(function(d){
 						d._visible = true;
 						d._node = this;
 						d._parentNode = this.parentNode;
 						d._x = parseFloat(x(d3.select(this.parentNode).data()[0].x)); 
 						d._y = parseFloat(d3.select(this).attr("y"));
-					})
+					});
+					
+					group.append("svg:rect")
+ 						.attr("class", "relBtn")
+						.attr("visibility","hidden")
+
 			
 			var getRelations = function(d, source) {
 			query.getRelations(function(response){
@@ -481,10 +509,20 @@
 				.data(paths)
 				.enter().append("svg:path")
 				.attr("class","link")
-				.style("stroke-width",4)
-				.attr("d",function(d){ return curve([d.sourceNode,d.targetNode]); })
-				.on("mouseover",function(d){ console.log(d.description); })
-				
+				.attr("cursor","pointer")
+				.style("stroke-width",5)
+				.attr("d",function(d){return curve([d.sourceNode,d.targetNode]); })
+				.on("mouseover",function(d){ d3.select(".desc")
+											.select(".tooltip-inner")
+											.text(d.description);
+											
+											d3.select(".desc")
+											.attr("class","tooltip fade in desc")
+											.attr("style","top: " + (d3.event.pageY - $(".desc").height() -15 ) + "px; left:"+ (d3.event.pageX - $(".desc").width()/2 ) + "px")
+											
+							 })
+				.on("mousemove",function(d){d3.select(".desc").attr("style","top: " + (d3.event.pageY - $(".desc").height() - 15) + "px; left:"+ (d3.event.pageX - $(".desc").width()/2) + "px");})
+				.on("mouseout",function(d){d3.select(".desc").attr("class","tooltip fade out desc")})
 			
 			/*
 

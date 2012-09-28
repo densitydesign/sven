@@ -48,7 +48,7 @@
 		
 		function submitAll(){
 		
-			d3.select(".modal-gallery")
+			d3.select("#uploads .modal-gallery")
 				.selectAll("div.file-info")
 				.each(function(d){
 					console.log(d)
@@ -65,7 +65,7 @@
 			
 			done: function(e, data){				
 				
-				d3.select(".modal-upload")
+				d3.select("#uploads .modal-upload")
 					.on("click", function(){})
 				
 				d3.select(data.sven_target)
@@ -87,7 +87,7 @@
 				
 				data.url = "{% url anta_api_documents %}?corpus=" + corpusID;
 				
-				d3.select(".modal-gallery")
+				d3.select("#uploads .modal-gallery")
 					.append("div")
 					.data([data])
 					.attr("class","file-info")
@@ -100,14 +100,14 @@
 						.append("div")
 						.attr("class","bar")
 				
-		      	d3.select(".fileinput-button")
+		      	d3.select("#uploads .fileinput-button")
 		      		.style("display","none")
 				
-		      	d3.select(".modal-message")
+		      	d3.select("#uploads .modal-message")
 		      		.style("display","inline")
 					.html("<strong>The following files are ready to be uploaded:</strong>")
 				
-		      	d3.select(".modal-upload")
+		      	d3.select("#uploads .modal-upload")
 		      		.style("display","inline")
 					.on("click",function(){
 						submitAll()
@@ -116,7 +116,7 @@
 
 			fail: function( e, data ){
 				
-				d3.select(".modal-upload")
+				d3.select("#uploads .modal-upload")
 					.on("click", function(){})
 				
 				
@@ -152,20 +152,20 @@
 	
 	 $('#upload-button').click(function(){
 	 	
-      	d3.select(".fileinput-button")
+      	d3.select("#uploads .fileinput-button")
       		.style("display","inline")
 		
-		 d3.select(".progress")
+		 d3.select("#uploads .progress")
 			.style("margin-top","5px")
 		 	.style("display","none")
 		
-		d3.select(".modal-message")
+		d3.select("#uploads .modal-message")
 			.style("display","none")
 			
-   		 d3.select(".modal-upload")
+   		 d3.select("#uploads .modal-upload")
    		 	.style("display","none")
 		
-		d3.select(".modal-gallery")
+		d3.select("#uploads .modal-gallery")
 	 		.selectAll(".file-info")
 			.remove()
 		

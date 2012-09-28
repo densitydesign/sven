@@ -199,6 +199,9 @@ query.getDocument(id_document, function(response){
     	targetDocument.select(".date").text(date);
     	
 		/* Tags */
+		
+		$("#target_document .tags").empty();
+		
 		var tag = targetDocument
 			.select(".tags")
 			.selectAll("span.badge")
@@ -237,7 +240,8 @@ query.getDocument(id_document, function(response){
 			});
 		},
 		updater : function(item) {
-
+			
+			console.log("ci sono")
 			relationArgs.target = mapped[item];
 			targetTitle = item;
 			pdfUrl_target = '../../../anta/api/documents/download/' + mapped[item]; // BAD!!!!!!
