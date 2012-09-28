@@ -115,7 +115,6 @@ def start_analysis():
 	pass
 
 def textify( d, absolute_url ):
-	print
 	
 	# return an absolute url
 	output = absolute_url + d.corpus.name + "/" + os.path.basename( d.url.url ).replace("%20"," ")
@@ -125,6 +124,7 @@ def textify( d, absolute_url ):
 	
 	if d.mime_type == "text/plain":
 		print "[info]","file id:",d.id," is already a text/plain"
+		clean(output)
 		return output
 	
 	text = output + ".txt"
@@ -151,17 +151,18 @@ def textify( d, absolute_url ):
 	return False		
 
 def clean( txtfile ):
+	print "[info] cleaning %s" % txtfile
 	# excuded_pattern = [^\w+ \,\:\;\-\–àçòèé&@°\*\?\!\"\'\n]
 	f = codecs.open( txtfile, encoding='utf-8', mode='r')
 	content = f.read()
 	content = content.replace( u"•","-" )
-	content = re.sub( r"\-", "; ", content )
+	content = re.sub( r"\-+", ", ", content )
 	content = re.sub("\|", "; ", content )
 	content = re.sub(r'[\_\”\"\']+', " ", content )
 	# exclude line with number only pages and so on.
 	content = re.sub("\n+[\.\s\d]+\n+", ".\n", content )
 	content = re.sub("\.+",".", content )
-	content = re.sub("[ ]+"," ", content )
+	content = re.sub("[ \-]+"," ", content )
 
 	f.close() 	
 

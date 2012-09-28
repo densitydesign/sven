@@ -8,12 +8,12 @@ from sven.anta.sync import store_document
 from django.conf import settings
 from django.contrib.auth import login, logout
 from django.core import serializers
-import os, json, datetime, operator
+import os, json, datetime, operator, inspect
 
 from sven.anta.utils import *
 from sven.anta.forms import *
 from django.contrib.auth.models import User
-from django.db.models import Count
+from django.db.models import Count, Min, Max, Avg
 
 #
 #    ========================
@@ -42,10 +42,14 @@ API_EXCEPTION_EMPTY			=	'Empty'
 
 def index(request):
 	response = _json( request )
+
+	
+
 	#user = User.objects.create_user('daniele', 'lennon@thebeatles.com', 'danielepassword')
 	#user.is_staff = True
 	#user.save()
 	return render_to_json( response )
+
 
 def get_corpora(request):
 	response = _json( request )
@@ -362,40 +366,99 @@ def document(request, document_id):
 #    ==================
 #
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
+def segments_clean( request, corpus_id ):
+	response = _json( request, enable_method=False )
+	
+	from distiller import start_routine
+
+	try:
+		c = Corpus.objects.get(pk=corpus_id)
+		routine = start_routine( type='CLEAN', corpus=c )
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	# call a sub process, and pass the related routine id
+	scriptpath = os.path.dirname(__file__) + "/metrics.py"
+
+	return _start_process([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'clean' ],
+		routine=routine,
+		response=response
+	)
+	
+
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def segments( request ):
 	response = _json( request )
+
 	return render_to_json( response )
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
-def segment_stems( request, document_id=None ):
+def segment_stems( request, corpus_id=None ):
 	response = _json( request )
 
 	# split order_by stuff
 	# order_by = ["tfidf DESC","tfidf ASC","distribution ASC", "distribution DESC"]
-
-
-	# where
-	where = [] # [("stemmed LIKE %s", contains ),("document_id",2) ]
-	order_by = [ "tfidf DESC, distribution DESC, aliases DESC"]
-
-	# build query
-	query = [ """
-		SELECT s.id, s.stemmed, s.content, ds.tfidf, count( distinct ds.document_id ) as distribution, count( distinct s.id ) as aliases FROM anta_segment s 
+	basic_query = """
+		SELECT 
+			s.stemmed as content, GROUP_CONCAT( s.content ) as sample, 
+			AVG( ds.tfidf ) as avg_tfidf, MAX( ds.tfidf ) as max_tfidf, MIN( ds.tfidf ) as min_tfidf,
+			AVG( ds.tf ) as avg_tf, MAX( ds.tf ) as max_tf, MIN( ds.tf ) as min_tf,
+			COUNT( distinct ds.document_id ) as distribution,
+			COUNT( distinct s.id ) as aliases FROM anta_segment s 
 			JOIN anta_document_segment ds ON s.id = ds.segment_id
-		""",
-		"WHERE " + " AND ".join( where ) if len( where ) else "",
-		"GROUP BY stemmed",
-		"ORDER BY " + ", ".join( order_by ) if len( order_by ) else "",
-		""" LIMIT %s,%s """
-	]
-	response["query"] = " ".join( query )
+			JOIN anta_document d ON d.id = ds.document_id
+		"""
 
-	binds = [ response['meta']['offset'], response['meta']['limit'] ]
+	where = []
+	binds = []
 
-	ss = Segment.objects.raw( " ".join( query ), binds )
+	if corpus_id is not None:
+		try:
+			c = Corpus.objects.get(pk=corpus_id)
+		except Exception, e:
+			return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+		where.append("d.corpus_id = %s")
+		binds.append(corpus_id)
 
-	response['results'] = [ s.json() for s in ss ]
-	
+
+
+	if 'order_by' in response['meta']:
+		order_by = response['meta']['order_by']
+	else:
+		order_by = [ "distribution DESC", "avg_tfidf DESC",  "aliases DESC"]
+
+	response['meta']['total'] = 0
+
+	from django.db import connection
+	try:
+		cursor = connection.cursor()
+		cursor.execute( " ".join([
+			"""SELECT count(*) FROM ( SELECT COUNT(*) FROM anta_segment s 
+				JOIN anta_document_segment ds ON s.id = ds.segment_id
+				JOIN anta_document d ON d.id = ds.document_id""",
+			"WHERE " + " AND ".join( where ) if len( where ) else "",
+			"GROUP BY stemmed )"
+		]), binds)
+		(number_of_rows,) =cursor.fetchone()
+		response['meta']['total'] = number_of_rows
+
+		# build query
+		query = [ basic_query,
+			"WHERE " + " AND ".join( where ) if len( where ) else "",
+			"GROUP BY stemmed",
+			"ORDER BY " + ", ".join( order_by ) if len( order_by ) else "",
+			""" LIMIT %s,%s """
+		]
+		response["query"] = " ".join( query )
+
+		binds.append( response['meta']['offset'] )
+		binds.append( response['meta']['limit'] )
+
+		ss = Stem.objects.raw( " ".join( query ), binds )
+
+		response['results'] = [ s.json() for s in ss ]
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
 	return render_to_json( response )
 
 def segment_stem( request, segment_id ):
@@ -408,7 +471,28 @@ def segment_stem( request, segment_id ):
 #    ==================
 #    ---- SPECIALS ----
 #    ==================
-#	 
+#	
+
+#
+#   Attach a corpus with the current user.
+#   Warning! No restriction applied: every user can own every corpus.
+#   @todo admin only, with a given corpus id and user_id
+#
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def attach_corpus( request, corpus_id):
+	response = _json( request, enable_method=False )
+	corpus = _get_or_die("Corpus", response=response, filters={'id':corpus_id})
+	
+	# save 'ownership'
+	_save_or_die( "Owners", response=response, filters={'corpus':corpus, 'user':request.user})
+		
+	response['corpus'] = corpus.json()
+	response['corpus'] = corpus.json()
+	response['user'] = request.user.json()
+
+	return render_to_json( response )
+	
+
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def use_corpus( request, corpus_id=None ):
 	response = _json( request, enable_method=False )
@@ -447,7 +531,7 @@ def use_corpus( request, corpus_id=None ):
 
 	return render_to_json( response )
 		
-
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def attach_free_tag( request, document_id ):
 	"""
 	This function requires name and type given as args
@@ -483,6 +567,7 @@ def attach_free_tag( request, document_id ):
 	response['results'] = [ d.json() ]
 	return render_to_json( response )
 
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def attach_tag( request, document_id, tag_id ):
 	response = _json( request, enable_method=False )
 	try:
@@ -501,6 +586,7 @@ def attach_tag( request, document_id, tag_id ):
 	response['results'] = [ d.json() ]
 	return render_to_json( response )
 
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def detach_tag( request, document_id, tag_id ):
 	response = _json( request, enable_method=False )
 	try:
@@ -517,6 +603,7 @@ def detach_tag( request, document_id, tag_id ):
 	response['results'] = [ d.json() ]
 	return render_to_json( response )
 
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def tfidf( request, corpus_id ):
 	"""
 	START the classic tfidf extraction. 
@@ -547,8 +634,28 @@ def tfidf( request, corpus_id ):
 		return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
 	return render_to_json( response )
 
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def update_tfidf( request, corpus_id ):
+	response = _json( request, enable_method=False )
+	
+	from distiller import start_routine
+
+	try:
+		c = Corpus.objects.get(pk=corpus_id)
+		routine = start_routine( type='RELTF', corpus=c )
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	# call a sub process, and pass the related routine id
+	scriptpath = os.path.dirname(__file__) + "/metrics.py"
+
+	return _start_process([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'tf_tfidf' ],
+		routine=routine,
+		response=response
+	)
 
 
+# !! DEP.
 def start_metrics( request, corpus_id):
 	from utils import pushdocs
 	from ampoule import decant
@@ -922,6 +1029,20 @@ def access_denied( request ):
 #    try except handling on the road
 #    Intended for api internal use only.
 #
+def _start_process( popen_args, routine, response ):
+	import subprocess, sys
+
+	response['routine'] = routine.json()
+
+	try:
+		subprocess.Popen(popen_args, stdout=None, stderr=None)
+	except Exception, e:
+		return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
+	
+	return render_to_json( response )
+
+
+
 def _delete_instance( request, response, instance, attachments=[] ):
 	
 	try:
@@ -960,6 +1081,30 @@ def _get_instances( request, response, model_name, app_name="anta" ):
 		
 	return render_to_json( response )
 	#.objects.all()
+
+#
+#   Usage: corpus = get_or_die("Corpus", response, {'id':2})
+#
+def _get_or_die( model_name, response, app_name="anta", filters={}):
+	from django.db.models.loading import get_model
+	m = get_model(app_name,model_name)
+	try:
+		return m.objects.get( **filters ) 
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_EMPTY )
+
+#
+#   Usage: corpus = get_or_die("Corpus", response, {'id':2})
+#
+def _save_or_die( model_name, response, app_name="anta", filters={}):
+	from django.db.models.loading import get_model
+	m = get_model(app_name,model_name)
+	try:
+		return m( **filters ).save()
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_EMPTY )
+
+
 
 def _store_analysis( corpus, type=""):
 	try:
@@ -1017,9 +1162,11 @@ def _get_relation( relation_id ):
 	except:
 		return None
 
+def _whosdaddy():
+	return inspect.stack()[2][3]
 
 def _json( request, enable_method=True ):
-	j =  {"status":"ok", 'meta':{ 'indent':False } }
+	j =  {"status":"ok", 'meta':{ 'indent':False, 'action':_whosdaddy() } }
 	if request.REQUEST.has_key('indent'):
 		j['meta']['indent'] = True
 
