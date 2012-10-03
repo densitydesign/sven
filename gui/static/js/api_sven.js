@@ -146,6 +146,25 @@ svenjs.Sven.prototype.getDocument = function(id, successCallback, args){
     
 };
 
+/* delete document */
+svenjs.Sven.prototype.deleteDocument = function(id, successCallback){
+	
+    var url = this.url + "/anta/api/documents/" + id + "/" + "?method=DELETE&indent=true";
+	
+    
+    $.ajax({
+        type: 'GET',
+        url: url,
+        complete: function(){
+        	console.log(this.url);
+    		},
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+
+};
+
 /* get relations */
 svenjs.Sven.prototype.getRelations = function(successCallback, args){
 	
@@ -306,7 +325,7 @@ svenjs.Sven.prototype.streamgraph = function(id, successCallback, args){
     
 };
 
-/* analysis status */
+/* start analysis */
 svenjs.Sven.prototype.startAnalysis = function(id, successCallback, args){
 		
     var url = this.url + "/anta/api/tfidf/corpus/" + id;

@@ -257,6 +257,7 @@
 					.each(function(d){ 
 						d.__selected__ = d.hasOwnProperty('__selected__') ? d.__selected__ : false;
 					})
+					
 				
 			} 
 			
