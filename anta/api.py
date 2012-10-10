@@ -654,8 +654,28 @@ def update_tfidf( request, corpus_id ):
 		response=response
 	)
 
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def update_similarity( request, corpus_id ):
+	response = _json( request, enable_method=False )
+	
+	from distiller import start_routine
 
-# !! DEP.
+	try:
+		c = Corpus.objects.get(pk=corpus_id)
+		routine = start_routine( type='RELSy', corpus=c )
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	# call a sub process, and pass the related routine id
+	scriptpath = os.path.dirname(__file__) + "/metrics.py"
+
+	return _start_process([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'similarity' ],
+		routine=routine,
+		response=response
+	)
+
+
+# !! DEP. @deprecated:
 def start_metrics( request, corpus_id):
 	from utils import pushdocs
 	from ampoule import decant

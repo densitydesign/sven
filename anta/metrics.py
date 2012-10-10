@@ -85,18 +85,28 @@ def entities_alchemy( corpus, routine ):
 	close_routine( routine, error="", status="OK" )
 	transaction.commit()
 
+#
+#   
+#
 def tf_tfidf( corpus, routine ):
 	number_of_documents = Document.objects.filter(corpus=corpus ).count()
 
 	if number_of_documents == 0:
 		return close_routine( routine, error="No document found", status="ERR")
 
-	tf( corpus=corpus, routine=routine, completion_start=0.0, completion_score=0.5 )
+	tf( corpus=corpus, routine=routine, completion_start=0.0, completion_score=0.4 )
 	
 	if routine.status == "ERR":
 		return
 
-	tfidf( corpus=corpus, routine=routine, completion_start=0.5, completion_score=1.0 )
+	tfidf( corpus=corpus, routine=routine, completion_start=0.4, completion_score=0.4 )
+
+	if routine.status == "ERR":
+		return
+
+	similarity( corpus=corpus, routine=routine, completion_start=0.8, completion_score=0.2  )
+
+
 	close_routine( routine, error="", status="OK" )
 
 #
@@ -143,7 +153,7 @@ def clean( corpus, routine ):
 	transaction.commit()
 
 #
-#   Update tf calculation based on stems groups, per corpus basis
+#   Update TF calculation on stems groups for the given corpus
 # 
 @transaction.commit_manually
 def tf( corpus, routine, completion_start=0.0, completion_score=1.0 ):
@@ -293,35 +303,7 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 		close_routine( routine, error="", status="OK" )
 	transaction.commit()
 	return
-	
-	# group by stem!
-	
-	
-    
-	for row in dictfetchall(cursor):
-		
-		print row[ column ], row['distribution']
-		kwargs = {
-    		'{0}__{1}'.format('document', 'corpus'): corpus,
-			'{0}__{1}'.format('segment', column ): row[ column ],
-		}
-		ds = Document_Segment.objects.filter( **kwargs ).all().order_by('-tf')
-		
-		df = float( row['distribution'] ) / number_of_documents
-		# computate tf idf for the given value
-		first = True
-		
-		for s in ds:
-			# computate and store tfidf
-			s.tfidf = s.tf * math.log(1/df) 
-			s.save()
-			
-			if first:
-				print "sample tfidf for '",row[ column ], '{', row['distribution'],"}': tf[",s.tf,"] df[", df, "] idf[",math.log(1/df),"] tfidf[", s.tfidf,"]"
-				first = False
-	# cycle thouhg segments
-	
-	print corpus.name, number_of_documents
+
 
 
 def export( corpus, language, parser, column="stemmed" ):
@@ -391,57 +373,89 @@ def importcsv( routine, csvfile, column="stemmed" ):
 			print i, i/float(totalrows)
 			
 			transaction.commit()
+	similarity( corpus, routine )
+
 
 	close_routine( routine, status="OK" )
 	transaction.commit()
-	
 
-def similarity( corpus, language, parser, column="stemmed" ):
+
+
+@transaction.commit_manually
+def similarity( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 	print """
 	====================
 	---- SIMILARITY ----
 	====================
 	"""
-	
-	try:
-		corpus = Corpus.objects.get( name=corpus )
-	except:
-		return error( message="corpus '%s' was not found!" % corpus, parser=parser )
-	
-	print "corpus:",corpus.id, corpus.name
-	
+	# Stories vlows Enter Nebuloses
+
+	# 1. get number of document
 	number_of_documents = Document.objects.filter(corpus=corpus ).count()
-	print "document in corpus:",number_of_documents
 	
-	# get stemmed list per document
-	cursor = connection.cursor()
-	cursor.execute("SELECT " + column + ", d.id as doc_id FROM anta_document_segment ds  JOIN anta_segment s ON ds.segment_id = s.id JOIN anta_document d ON ds.document_id = d.id WHERE d.corpus_id=%s",[ corpus.id ] ) # we do not need ORDER BY d.id, ds.id
-	
-	# build corpus 
+	# 2. dictionary where keys are the ids of corpus docments and valuse
 	documents = {}
+
+	# out some information
+	print "[info] corpus:",corpus.json()
+	print "[info] document in corpus:",number_of_documents
 	
-	for row in dictfetchall(cursor):
-		if row['doc_id'] not in documents:
-			documents[ row['doc_id'] ] = []
-		documents[ row['doc_id'] ].append( row[ column ] )	
+	# get the list of every stemmed segments inside each document.
+	# the distance algorithm will work on "stemmed" documents!
+	# @todo: verify that PATTERN distance measurement works well with this algorithm.
+	cursor = connection.cursor()
+	cursor.execute("""
+		SELECT count(*)
+			FROM anta_document_segment ds
+		JOIN anta_segment s ON ds.segment_id = s.id
+		JOIN anta_document d ON ds.document_id = d.id
+		WHERE d.corpus_id = %s
+
+	""",[ corpus.id ] )
+
+	number_of_stems = cursor.fetchone()[0]
+
+	cursor.execute("""
+
+		SELECT s.stemmed, d.id as document_id 
+			FROM anta_document_segment ds
+		JOIN anta_segment s ON ds.segment_id = s.id
+		JOIN anta_document d ON ds.document_id = d.id
+		WHERE d.corpus_id = %s
+
+	""",[ corpus.id ] ) # we do not need ORDER BY d.id, ds.id
+	
+
+	log_routine( routine, entry="similarity measurement started", completion=0.1, completion_start=completion_start, completion_score=completion_score)
+	
+	# @todo: improve remapping
+	for row in cursor.fetchall():
+		stemmed, document_id = row
+		#print document_id
+		if document_id not in documents:
+			documents[ document_id ] = []
 		
+		documents[ document_id ].append( stemmed )	
+		
+
+
 	# translate corpus id
 	pattern_id_translation = {}
 	
-	# reformat documents, join space separated stemmed segment values.
+	# reformat each document into a PATTERN compatible document: join space separated stemmed segment values.
 	for d in documents:
 		documents[d] = pvDocument( " ".join( documents[d] ) )
+		log_routine( routine, entry="join stemmed segments", completion=0.15, completion_start=completion_start, completion_score=completion_score)
+	
 		pattern_id_translation[ documents[d].id ] = d
-		
-	print "pattern_id_translation table:", pattern_id_translation
-	print "document in corpus:",number_of_documents
-	print "similarity neighborood ",number_of_documents / 2
+	
 	
 	# store document in corpus.
 	c = pvCorpus( documents.values() )
 	
 	# computate and save similarities
-	for d in documents:
+	for counter, d in enumerate(documents):
+		print counter
 		for n in c.neighbors( documents[d], top=number_of_documents):
 			alpha_id = pattern_id_translation[ documents[d].id ]
 			omega_id = pattern_id_translation[ n[1].id ]
@@ -449,16 +463,27 @@ def similarity( corpus, language, parser, column="stemmed" ):
 			
 			try:
 				dist = Distance.objects.get( alpha__id=alpha_id, omega__id=omega_id )
-				print "distantce exists:", dist.id, cosine_similarity
-			except:
+				print "[info] distantce exists ( %s - %s ), old value: %s, difference: %s" % ( alpha_id, omega_id, dist.cosine_similarity,(dist.cosine_similarity - cosine_similarity) )
+			except Exception, e:
+				print e
 				dist = Distance( alpha_id=alpha_id, omega_id=omega_id )
-				print "create Distance object", dist.id, cosine_similarity
+				print "[info] create Distance object", dist.id, cosine_similarity
 			#	print a distance exist between these two document	
 			dist.cosine_similarity = cosine_similarity
 			dist.save()
-			# print documents[d].id, alpha_id,omega_id
+
+			#
 		
-	return
+			log_routine( routine, entry="neighbors computation", completion = (counter + 1.0) / number_of_documents, completion_start=completion_start, completion_score=completion_score)
+		
+		transaction.commit()
+
+	if completion_score == 1.0:
+		close_routine( routine, error="", status="OK" )
+	transaction.commit()
+
+
+
 	
 def main( argv):
 	usage = "usage: %prog -f function [ standard|importcsv [-o column] [-x csvfile] ]"
@@ -507,7 +532,7 @@ def main( argv):
 		
 	
 	# load corpus only for certain options
-	if options.func in ["standard","tfidf","clean","tf","tf_tfidf","entities_alchemy"]:
+	if options.func in ["standard","tfidf","clean","tf","tf_tfidf","entities_alchemy", "similarity","importcsv"]:
 		if options.corpus is None:
 			error_message = "Use -c to specify the corpus"
 		try:
@@ -545,6 +570,9 @@ def main( argv):
 	#
 	if options.func == "standard":
 		return standard( routine=routine, corpus=corpus ) # pattern tf + stems tfidf
+
+	elif options.func == "similarity":
+		return similarity( routine=routine, corpus=corpus ) # computate distances and store them inside a dedicated table
 
 	elif options.func == "tf_tfidf":
 		return tf_tfidf( routine=routine, corpus=corpus ) # delete segments

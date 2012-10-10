@@ -68,12 +68,12 @@ def restart_routine( routine, status="RIP" ):
 	r = start_routine( type=routine.type, corpus=routine.corpus )
 	return r
 
-def log_routine( routine, entry="", completion=None, status="PN"):
+def log_routine( routine, entry="", completion=None, status="PN", completion_start=0.0, completion_score=1.0 ):
 	routine.status		= status
 	routine.last_entry	= entry
 	
 	if completion is not None:
-		routine.completion = completion
+		routine.completion = completion_start + (completion * completion_score)
 
 	routine.save()
 	return routine

@@ -162,8 +162,19 @@ Request:
     127.0.0.1:8000/anta/api/segments/clean/corpus/{corpus_id}/?indent=true
     
 Listen for OK or KO response only. The corresponding `Routine` object will be available, even if it __is not updated__ with current value.
+
+### segments_export
+---
+	r'^api/segments/export/corpus/(\d+)/$'
 	
-	
+### segments_import
+---
+	r'^api/segments/import/corpus/(\d+)/$'
+
+Please make sure that your request contains a input of type file named `csv[]`
+
+
+
 ### *segment_stems
 ---
 Return a list of `Stem` object. Stem are not managed by Django (syncdb won't create any table for it), it's just a Model class to group Segment into group according to their "stemmed" value.
@@ -194,5 +205,17 @@ accepted REQUEST params: `limit`, `offset`, `order_by`.
     </tr>
 </table -->	
 	
+### update_similarity
+---
+	r'^api/update-similarity/corpus/(\d+)/$',
+
+Perform similarity computation between the documents belonging to the given corpus. 
+
+This function does not employ tf/tfidf stored values but the cosine_similarity PATTERN implementation. 
+
+Since PATTERN computate cosine similarity according to tf/tfidf values of shared words, we provide a _stemmed_ and unpunctuated representation of the document by simply joining segment stems with spaces.
+
+This function is here just for documentation and completeness purpose. It is called automatically by `update_tfidf`, `tfidf` and `segments_import`.
+
 
 --- to be continued ---
