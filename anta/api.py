@@ -4,6 +4,7 @@ from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from sven.anta.models import *
 from sven.anta.sync import store_document
+from sven.core.utils import is_number
 
 from django.conf import settings
 from django.contrib.auth import login, logout
@@ -777,41 +778,59 @@ def relations_graph(request, corpus_id):
 	c =  _get_corpus( corpus_id )
 	if c is None:
 		return throw_error( response, "Corpus %s does not exist...," % corpus_id, code=API_EXCEPTION_DOESNOTEXIST )	
-	
+	response['corpus'] = c.json()
 
-	# understand filters, if any
+	# 0. BASIC filters for django queryset
 	filters = ["d1.corpus_id=%s", "d2.corpus_id=%s"]
 	ids = []
 
-	if len( response['meta']['filters'] ):
-		ids = [ str(d.id) for d in Document.objects.filter(corpus__id=corpus_id,**response['meta']['filters'])]
-		if len(ids) > 0:
-			filters.append( "d1.id IN ( %s )" % ",".join(ids) )
-			filters.append( "d2.id IN ( %s )"  % ",".join(ids) )
-		else:
-			response['meta']['total'] = 0;
-			response['nodes'] = {}
-			response['edges'] = {}
-			return render_to_json( response )
-		response['filtered'] = ids
+	# 1. handle filters via get
 
-	filters.append("t1.type='actor'")
-	filters.append( "t2.type='actor'")
-	
-	if len(ids):
-		actors = Document_Tag.objects.filter(tag__type='actor', document__corpus__id=corpus_id, document__id__in=ids)
+	if len( response['meta']['filters'] ):
+		try:
+			ids = [ str(d.id) for d in Document.objects.filter(corpus=c,**response['meta']['filters'])]
+		except Exception, e:
+			return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION )
 	else:
-		actors = Document_Tag.objects.filter(tag__type='actor', document__corpus__id=corpus_id)
-	# print nodes
+		ids = [ str(d.id) for d in Document.objects.filter(corpus=c)]
+
+	# debug only
+	response['documents_filtered'] = ids
+
+
+	# 2. validate length
+	if len(ids) == 0:
+		response['meta']['total'] = 0;
+		response['nodes'] = {}
+		response['edges'] = {}
+		return throw_error( response, error="Query does not return any values", code=API_EXCEPTION_EMPTY )
+	
+	
+	# 4. test: recalculate distances "on the fly". @todo: Document Patch needed
+
+
+	# 3. add some basic filters
+	filters.append( "d1.id IN ( %s )" % ",".join(ids) )
+	filters.append( "d2.id IN ( %s )"  % ",".join(ids) )
+	filters.append( "t1.type='actor'" ) # filter by tag type actor
+	filters.append( "t2.type='actor'" ) 
+	
+	# 3.5. filter edges?
+	try:
+		min_cosine_similarity = float( request.REQUEST.get('min-cosine-similarity', "0.0" ) )
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_FORMERRORS )
+
+	# 4. load actors as nodes
+	actors = Document_Tag.objects.filter(tag__type='actor', document__corpus__id=corpus_id, document__id__in=ids)
 	nodes = {}
 	for dt in actors:
-		
-		if dt.tag.id in nodes:
-			nodes[ dt.tag.id]['group'] = nodes[ dt.tag.id]['group'] + 1
+		if dt.tag.id in nodes: 
+			nodes[ dt.tag.id ]['size'] = nodes[ dt.tag.id ]['size'] + 1
 			continue
-
+		# create a new node with tag id
 		nodes[ dt.tag.id] = {
-			'group': 1,
+			'size': 1,
 			'name':dt.tag.name,
 			'id':dt.tag.id
 		}
@@ -828,7 +847,9 @@ def relations_graph(request, corpus_id):
 		    SELECT 
 		    t1.id as alpha_actor,  
 		    t2.id as omega_actor,
-		    AVG( y.cosine_similarity ) as average_cosine_similarity
+		    AVG( y.cosine_similarity ) as average_cosine_similarity,
+		    MIN( y.cosine_similarity ) as min_cosine_similarity,
+		    MAX( y.cosine_similarity ) as max_cosine_similarity
 		FROM `anta_distance` y
 		JOIN anta_document_tag dt1 ON y.alpha_id = dt1.document_id
 		JOIN anta_document_tag dt2 ON y.omega_id = dt2.document_id  
@@ -837,8 +858,10 @@ def relations_graph(request, corpus_id):
 		JOIN anta_document d1 ON y.alpha_id = d1.id
 		JOIN anta_document d2 on y.omega_id = d2.id
 		    WHERE 
-		    """ + " AND ".join( filters ) + """
-		GROUP BY alpha_actor, omega_actor
+		    """ + " AND ".join( filters ) +  """
+		
+		GROUP BY alpha_actor, omega_actor 
+			""" + ( " HAVING min_cosine_similarity > %s " % min_cosine_similarity if min_cosine_similarity > 0 else "" ) + """
 		ORDER BY average_cosine_similarity
 	""",[ corpus_id, corpus_id])
 
@@ -848,11 +871,9 @@ def relations_graph(request, corpus_id):
 			'source':row[1],
 			'target':row[0]
 		})
-    # Data modifying operation - commit required
-	response['edges'] = edges
-	# load distances
 
-
+    # write nodes isnide view
+	response['edges'] = edges	
 	response['nodes'] = nodes
 
 	return render_to_json( response )

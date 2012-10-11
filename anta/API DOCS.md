@@ -149,9 +149,47 @@ method=POST usually requires additional information, given as separate REQUEST p
 Details, function by function
 -----------------------------
 
-Each Paragraph descrbes in detail a url api-view function, in alphabetic order.
-In some url you may have a {} couple. It contains the variable name.
+Each Paragraph descrbes in detail an url api-view function, in alphabetic order.
 Special functions are marked by a * sign. Of course, special functions have specials input / output… ALL functions requires authentified session COOKIES.
+
+### attach_free_tag
+---
+	r'^api/attach-free-tag/document/(\d+)/$
+- __@param__ document_id 
+
+<table>
+    <tr>
+        <th>param name</th>
+        <th>type</th>
+        <th>default</th>
+        <th>effect</th>
+        <th>sample / choices</th>
+    </tr>
+    <tr>
+        <td>name</td>	
+        <td>string</td>	
+        <td>None</td>
+        <td>tag content to attach</td>
+        <td>?name=Edgar allan Poe</td>
+    </tr>
+    <tr>
+        <td>type</td>	
+        <td>string</td>	
+        <td>None</td>
+        <td>tag family</td>
+        <td>?type=actor</td>
+    </tr>
+</table>
+
+ 
+### relations_graph
+---
+	r'^api/relations/graph/corpus/(\d+)/$'
+__@param__ corpus_id
+
+
+Return a sigmajs compatible graph with nodes and edges. Each node represent an actor and its size attribute is the number of document assigned to the actor.
+
 
 ### segments_clean
 ---
