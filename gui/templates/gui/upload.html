@@ -87,18 +87,51 @@
 				
 				data.url = "{% url anta_api_documents %}?corpus=" + corpusID;
 				
-				d3.select("#uploads .modal-gallery")
+				var docInfo = {};
+				var fileName = data.files[0].name;
+				var fileNameSplit = fileName.split('_', 4);
+				function fillInfo(){
+					if (fileNameSplit.length == 4){
+					docInfo.actor = fileNameSplit[0].split('-');
+					docInfo.lang = fileNameSplit[1];
+					docInfo.date = fileNameSplit[2];
+					docInfo.title = fileNameSplit[3].split('.')[0];
+					}
+					else{
+					docInfo.actor = '';
+					docInfo.lang = '';
+					docInfo.date = '';
+					docInfo.title = fileNameSplit[0].split('.')[0];
+						}
+						};
+				fillInfo();
+				
+				var singleFile = d3.select("#uploads .modal-gallery")
 					.append("div")
 					.data([data])
 					.attr("class","file-info")
 					.text(function(d){
 						console.log(d)
+						
 						return d.files[0].name;
 					})
-					.append("div")
-					.attr("class","progress progress-striped active")
-						.append("div")
-						.attr("class","bar")
+					//.append("div")
+					//.attr("class","progress progress-striped active")
+					//	.append("div")
+					//	.attr("class","bar")
+	
+					singleFile.append("div")
+					.attr("class", "form")
+					.text("File metadata:")
+					
+					singleFile.selectAll("input")
+					.data(d3.map(docInfo).entries()).enter()
+					.append("input")
+					.attr("type", "text")
+					.attr("placeholder", function(d){
+						return d.key;})
+					.attr("value", function(d){
+						return d.value})
 				
 		      	d3.select("#uploads .fileinput-button")
 		      		.style("display","none")
