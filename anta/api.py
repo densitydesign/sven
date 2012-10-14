@@ -842,6 +842,8 @@ def relations_graph(request, corpus_id):
 	#  "document__ref_date__gt": 20111011, 
     #  "document__ref_date__lt": 20121011
 	
+	# relations = Relation.objects.filter(source__corpus=c, target__corpus=c, source__id__in=ids, target__id__in=ids )
+
 	cursor = connection.cursor()
 	cursor.execute("""
 		    SELECT 
@@ -869,8 +871,10 @@ def relations_graph(request, corpus_id):
 		edges.append({
 			'value':row[2],
 			'source':row[1],
-			'target':row[0]
+			'target':row[0],
+			'color': '#660000'
 		})
+
 
     # write nodes isnide view
 	response['edges'] = edges	

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en" ng-app>
+<head>
+  <meta charset="utf-8">
+  <title>My HTML File</title>
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/bootstrap.css">
+  <script src="js/angular.min.js"></script>
+  <script src="js/anta/controllers.js"></script>
+</head>
+<body>
+	<sidebar>
+
+ 		<section ng-controller="CorpusController">
+ 			<p>User corpus: {{ objects.length}}</p>
+ 			Search: <input ng-model="query">
+ 			Sort by:
+			<select ng-model="orderProp">
+				<option value="name" selected="selected">Alphabetical</option>
+				<option value="age">Newest</option>
+			</select>
+
+ 			<ul>
+				<li ng-repeat="corpus in objects | filter:query | orderBy:orderProp">
+					{{ corpus.name}}
+					<p>{{ corpus.id }}</p>
+				</li>
+			</ul>
+		</section>
+ 
+	</sidebar>
+	<p>Nothing here {{'yet' + '!'}}</p>
+	<p>1 + 2 = {{ 1 + 2 }}</p>
+</body>
+</html>

@@ -1,4 +1,5 @@
 <!doctype html>
+<html lang="en" ng-app>
 	<head>
 		<meta charset="utf-8">
 		<title>anta / {% block title %}{% endblock %}</title>
@@ -12,7 +13,12 @@
 		<link rel="stylesheet/less" type="text/css" href="{{custom.STATIC_URL}}/css/style.less"/>
 		<script src="{{custom.STATIC_URL}}/js/less-1.3.0.min.js" type="text/javascript"></script>
 		
-  		
+		<!-- angular js -->
+		<script src="{{custom.STATIC_URL}}/js/angular.min.js"></script>
+		<script src="{{custom.STATIC_URL}}/js/angular-resource.min.js"></script>
+		<script src="{{custom.STATIC_URL}}/js/anta/controllers.js"></script>
+		<script src="{{custom.STATIC_URL}}/js/anta/services.js"></script>
+
 		{% block custom_head %}<!-- view-specific stylesheets -->{% endblock %}
 	
 		
