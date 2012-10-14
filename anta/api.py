@@ -276,6 +276,18 @@ def create_document( request, response, corpus ):
 	if not os.path.exists( path ):
 		return throw_error(response, code=API_EXCEPTION_DOESNOTEXIST, error="path %s does not exits!" % path )
 
+	# check preloaded vars
+	if request.REQUEST.get('language', None) is not None:
+		form = UpdateDocumentForm( request.REQUEST )
+		if form.is_valid():
+			response['presets'] = {}
+			response['presets']['language'] = form.cleaned_data['language']
+			response['presets']['ref_date'] = form.cleaned_data['ref_date']
+			response['presets']['title'] = form.cleaned_data['title']
+		else:
+			return throw_error(response, code=API_EXCEPTION_FORMERRORS, error=form.errors)
+
+
 	response['uploads'] = []
 
 	# request files. cfr upload.html template with blueimp file upload
@@ -305,6 +317,17 @@ def create_document( request, response, corpus ):
 			d = store_document( filename=filename, corpus=corpus )
 		except Exception, e:
 			return throw_error( response, error="Exception: %s " % e, code=API_EXCEPTION_EMPTY)
+
+		# update with document form fileds above :D. Validation is already done.
+		if 'presets' in response:
+			if response['presets']['language'] is not None:
+				d.language = response['presets']['language'] 
+			if response['presets']['title'] is not None:
+				d.title = response['presets']['title'] 
+			if response['presets']['ref_date'] is not None:
+				d.ref_date = response['presets']['ref_date'] 
+			d.save()
+		
 		response['uploads'].append( d.json() )
 
 	return render_to_json( response )

@@ -17,20 +17,17 @@ anta.f.sameOrigin = function(url){var host=document.location.host;var protocol=d
 anta.f.safeMethod = function(method){return(/^(GET|HEAD|OPTIONS|TRACE)$/.test(method))}
 
 
-anta.configs = anta.configs | {};
+anta.configs = anta.configs || {};
 anta.configs.http = {
-	csfr:(!anta.f.safeMethod(settings.type) && anta.f.sameOrigin(settings.url))? anta.f.getCookie('csrftoken'):''
+	csfr: anta.f.getCookie('csrftoken')//(!anta.f.safeMethod(settings.type) && anta.f.sameOrigin(settings.url))? anta.f.getCookie('csrftoken'):''
 }
 
-$http({
-	headers:{
-		"X-CSRFToken":anta.configs.http.csfr
-	}
-});
+
 
 function CorpusController( $scope, $http ) {
-	$http.post( anta.urls.get_documents, {} ).success(function(result){
+
+	$http.get( anta.urls.get_documents, {method:'GET'}, {headers:{"X-CSRFToken":anta.configs.http.csfr}}).success(function(result){
 		console.log( result );
-		$scope.objects = result.objects
+		$scope.objects = result.results
 	});
 }

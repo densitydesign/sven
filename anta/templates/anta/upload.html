@@ -14,7 +14,7 @@
 	<script>
 		$(function(){
 			$("#fileupload").fileupload({
-				url:"{% url anta_api_documents %}?corpus=1",
+				url:"{% url anta_api_documents %}?corpus=1&language=FR&title=custom title",
 				dataType: 'json',
 				done: function(e, data){
 					console.log(e, data.result);
