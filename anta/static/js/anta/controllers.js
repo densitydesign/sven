@@ -22,12 +22,23 @@ anta.configs.http = {
 	csfr: anta.f.getCookie('csrftoken')//(!anta.f.safeMethod(settings.type) && anta.f.sameOrigin(settings.url))? anta.f.getCookie('csrftoken'):''
 }
 
-
+anta.controllers = {}
+anta.controllers.get = function( $http, url, params, configs){
+	params = typeof params != "object"?{}:params;
+	configs = typeof configs != "object"?{}:configs;
+	return  $http.get( url, params, {headers:{"X-CSRFToken":anta.configs.http.csfr}} );
+}
 
 function CorpusController( $scope, $http ) {
+	anta.controllers.get( $http, anta.urls.get_corpora ).success(function(result){
+		console.log( "CorpusController",result );
+		$scope.objects = result.results
+	});
+}
 
-	$http.get( anta.urls.get_documents, {method:'GET'}, {headers:{"X-CSRFToken":anta.configs.http.csfr}}).success(function(result){
-		console.log( result );
+function DocumentController( $scope, $http ) {
+	anta.controllers.get( $http, anta.urls.get_documents ).success(function(result){
+		console.log( "DocumentController", result );
 		$scope.objects = result.results
 	});
 }
