@@ -1,7 +1,7 @@
 from datetime import datetime
 from django.db.models import Q
 from django.http import HttpResponse, HttpRequest, HttpResponseRedirect
-from django.shortcuts import render_to_response, redirect
+from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login, logout, authenticate
@@ -26,6 +26,15 @@ def index(request):
 	data = _data( request )
 	data['sessiondata'] = request.COOKIES
 	return render_to_response('anta/index.html', RequestContext(request, data))
+
+@login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
+def overview(request, corpus_name ):
+	data = _data( request )
+	# data['corpus'] = get_object_or_404( Corpus, name=corpus_name )
+
+	data['sessiondata'] = request.COOKIES
+	return render_to_response('anta/overview.html', RequestContext(request, data))
+
 
 #
 #   perform a clean install. Ask user to create a corpus
