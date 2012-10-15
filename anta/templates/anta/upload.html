@@ -1,10 +1,18 @@
 {% extends "anta/middle.html" %}
 {% load i18n %}
+{% load extras %}
 
 
 {% block custom_page %}
 	<h1>{% trans "upload file"%}</h1>
 	<input type="file" id="fileupload" name="files[]" multiple>
+	{% verbatim %}
+	<ul ng-controller="DocumentController">
+		<li ng-repeat="document in objects">
+			{{ document.title }}
+		</li>
+	</ul>
+	{% endverbatim %}
 {% endblock %}
 
 {% block custom_plugins %}

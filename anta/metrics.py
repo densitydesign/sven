@@ -373,9 +373,10 @@ def importcsv( routine, csvfile, column="stemmed" ):
 			print i, i/float(totalrows)
 			
 			transaction.commit()
-	similarity( corpus, routine )
 
-
+	# completed import csv
+	# @todo: we need to reintegrate similarity( corpus, routine )
+	log_routine( routine, entry="completed importcsv at line: %s" % i, completion=1.0 )
 	close_routine( routine, status="OK" )
 	transaction.commit()
 
@@ -389,6 +390,9 @@ def similarity( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 	====================
 	"""
 	# Stories vlows Enter Nebuloses
+	log_routine( routine, entry="similarity measurement started succesfully", completion=0.0, completion_start=completion_start, completion_score=completion_score)
+	transaction.commit()
+
 
 	# 1. get number of document
 	number_of_documents = Document.objects.filter(corpus=corpus ).count()
