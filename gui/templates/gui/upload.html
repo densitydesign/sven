@@ -119,19 +119,33 @@
 					//.attr("class","progress progress-striped active")
 					//	.append("div")
 					//	.attr("class","bar")
-	
-					singleFile.append("div")
-					.attr("class", "form")
-					.text("File metadata:")
 					
+								singleFile.append("div")
+					.attr("class", "form")
+					.text("All fields are mandatory:")
+
 					singleFile.selectAll("input")
 					.data(d3.map(docInfo).entries()).enter()
 					.append("input")
+					.attr("class", function(d){
+						return d.key + "Input";})
 					.attr("type", "text")
 					.attr("placeholder", function(d){
 						return d.key;})
 					.attr("value", function(d){
 						return d.value})
+				
+				singleFile.append("div")
+					.append("button")
+					.attr("class", "btn btn-mini btn-warning")
+					.text("update data")
+					.on("click", function(){
+						var title = singleFile.select(".titleInput").property("value");
+						var lang = singleFile.select(".langInput").property("value");
+						data.url = "{% url anta_api_documents %}?corpus=" + corpusID + "&language=" + lang + "&title=" + title + "";
+						console.log(data.url);
+							});
+				
 				
 		      	d3.select("#uploads .fileinput-button")
 		      		.style("display","none")
@@ -139,6 +153,8 @@
 		      	d3.select("#uploads .modal-message")
 		      		.style("display","inline")
 					.html("<strong>The following files are ready to be uploaded:</strong>")
+					
+	
 				
 		      	d3.select("#uploads .modal-upload")
 		      		.style("display","inline")
