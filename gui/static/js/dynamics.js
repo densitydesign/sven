@@ -28,12 +28,13 @@ query.getCorpora(function(response){
 		})
 	
 		// edges
+		
 		var min = d3.min(edges.map(function(d){ return d.value })),
 			max = d3.max(edges.map(function(d){ return d.value })),
-			weight = d3.scale.linear().domain([min,max]).range([0,1])
+			weight = d3.scale.linear().domain([min,max]).range([1,10])
 	
 		edges.forEach(function(d){
-			graph.addEdge(d.source,d.target,{ weight : weight(d.value) })
+			graph.addEdge(d.source,d.target,{ weight : weight(d.value), size: weight(d.value) })
 		})
 
 	});

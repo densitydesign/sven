@@ -53,6 +53,9 @@
 				.each(function(d){
 					console.log(d)
 					d.sven_target = this;
+					var title = d3.select(this).select(".titleInput").property("value");
+					var lang = d3.select(this).select(".langInput").property("value");
+					d.url = "{% url anta_api_documents %}?corpus=" + corpusID + "&language=" + lang + "&title=" + title + "";
 					d.submit();
 				})
 		} 
@@ -85,7 +88,7 @@
 			
 			add: function(e, data){
 				
-				data.url = "{% url anta_api_documents %}?corpus=" + corpusID;
+				//data.url = "{% url anta_api_documents %}?corpus=" + corpusID;
 				
 				var docInfo = {};
 				var fileName = data.files[0].name;
@@ -119,48 +122,95 @@
 					//.attr("class","progress progress-striped active")
 					//	.append("div")
 					//	.attr("class","bar")
-					
-								singleFile.append("div")
-					.attr("class", "form")
-					.text("All fields are mandatory:")
+					.append("form")
+					.attr("class", "form-horizontal contact-form")
+					//.attr("id", "contact-form")
+					.attr("action", "")
+					.append("fieldset")
 
-					singleFile.selectAll("input")
+					singleFile.selectAll("div.control-group")
 					.data(d3.map(docInfo).entries()).enter()
+					.append("div")
+					.attr("class","control-group")
+						.append("label")
+						.attr("class","control-label")
+						.attr("for",function(d){
+						return d.key + "Input";})
+						.text(function(d){
+						return d.key;})
+					
+					singleFile.selectAll("div.control-group")
+					.append("div")
+					.attr("class","controls")
 					.append("input")
 					.attr("class", function(d){
+						return d.key + "Input";})
+					.attr("name", function(d){
 						return d.key + "Input";})
 					.attr("type", "text")
 					.attr("placeholder", function(d){
 						return d.key;})
 					.attr("value", function(d){
 						return d.value})
-				
-				singleFile.append("div")
-					.append("button")
-					.attr("class", "btn btn-mini btn-warning")
-					.text("update data")
-					.on("click", function(){
-						var title = singleFile.select(".titleInput").property("value");
-						var lang = singleFile.select(".langInput").property("value");
-						data.url = "{% url anta_api_documents %}?corpus=" + corpusID + "&language=" + lang + "&title=" + title + "";
-						console.log(data.url);
-							});
-				
-				
+					
+
+
 		      	d3.select("#uploads .fileinput-button")
 		      		.style("display","none")
 				
 		      	d3.select("#uploads .modal-message")
 		      		.style("display","inline")
 					.html("<strong>The following files are ready to be uploaded:</strong>")
+			
 					
-	
-				
-		      	d3.select("#uploads .modal-upload")
+				$('.contact-form').each(function(){
+    				$(this).validate({
+	    rules: {
+	      titleInput: {
+	        minlength: 1,
+	        required: true
+	      },
+	      langInput: {
+	      	maxlength: 2,
+	        required: true
+	      },
+	      dateInput: {
+	        required: true,
+	        date: true
+	      },
+	      actorInput: {
+	        minlength: 1,
+	        required: true
+	      }
+	    },
+	    highlight: function(label) {
+	    	$(label).closest('.control-group').addClass('error');
+	    },
+	    success: function(label) {
+	    	label
+	    		.text('OK!').addClass('valid')
+	    		.closest('.control-group').addClass('success');
+	    }
+	  });
+	  });
+	  
+	  
+	    	d3.select("#uploads .modal-upload")
 		      		.style("display","inline")
 					.on("click",function(){
-						submitAll()
+						var check = true;
+						$('.contact-form').each(function(){
+							if(!$(this).valid()){check = false}
+							
+							});
+						
+						if(check){	
+							submitAll();
+							}
+						else{return}
+						
 					})
+					
 			},
 
 			fail: function( e, data ){

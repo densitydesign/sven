@@ -9,6 +9,7 @@
     <script src="{{custom.STATIC_URL}}js/jquery/jquery.ui.widget.js" type="text/javascript" ></script>
     <script src="{{custom.STATIC_URL}}js/jquery/jquery.iframe-transport.js" type="text/javascript" ></script>
     <script src="{{custom.STATIC_URL}}js/jquery/jquery.fileupload.js" type="text/javascript" ></script>
+    <script src="{{custom.STATIC_URL}}js/jquery/jquery.validate.min.js"></script>
 	
 {% endblock %}
 
@@ -41,8 +42,10 @@
 		 </p>
 		<p>Here you have the list of all the available documents. Use the Upload button to add new documents from your computer.</p>
 		 
+		 
 		<div class="clear"></div>
 	</div>
+	
 </div>
 
 {% include "gui/upload.html" %}

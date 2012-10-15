@@ -256,35 +256,35 @@
 				.attr("d",function(d){ return curve([d.sourceNode,d.targetNode]); })
 			
 		*/
-// 		d3.select("#legend").selectAll("div.legend")
-// 			.data(d3.entries(color.values()))
-// 			.enter().append("div")
-// 				.attr("class","legend")
-// 			//	.style("width","20px")
-// 			//	.style("height","20px")
-// 				.style("background-color",function(d){ return d.value; })
-// 				.text(function(d){ return d.key; })
-// 				.style("color",function(d){ return d3.rgb(d.value).darker(); })
-// 				.attr("title", function(d){ return d.key; })
+		d3.select("#legend").selectAll("div.legend")
+			.data(d3.entries(color.values()))
+			.enter().append("div")
+				.attr("class","legend")
+			//	.style("width","20px")
+			//	.style("height","20px")
+				.style("background-color",function(d){ return d.value; })
+				.text(function(d){ return d.key; })
+				.style("color",function(d){ return d3.rgb(d.value).darker(); })
+				.attr("title", function(d){ return d.key; })
 				
-		d3.select("#legend").append("a")
-	.attr("class","btn dropdown-toggle")
-	.attr("data-toggle","dropdown")
-	.attr("href", "#")
-	.text("Actors")
-	.append("span")
-	.attr("class", "caret")
-
-d3.select("#legend").append("ul")
-	.attr("class", "dropdown-menu")
-	.attr("role", "menu")
-	.attr("aria-labelledby","dropdownMenu")
-	.selectAll("li")
- 			.data(d3.entries(color.values()))
- 			.enter().append("li")
-			.append("div")
-			.attr("class", "btn")
-			.text(function(d){ return d.key; })
+// 		d3.select("#legend").append("a")
+// 	.attr("class","btn dropdown-toggle")
+// 	.attr("data-toggle","dropdown")
+// 	.attr("href", "#")
+// 	.text("Actors")
+// 	.append("span")
+// 	.attr("class", "caret")
+// 
+// d3.select("#legend").append("ul")
+// 	.attr("class", "dropdown-menu")
+// 	.attr("role", "menu")
+// 	.attr("aria-labelledby","dropdownMenu")
+// 	.selectAll("li")
+//  			.data(d3.entries(color.values()))
+//  			.enter().append("li")
+// 			.append("div")
+// 			.attr("class", "btn")
+// 			.text(function(d){ return d.key; })
 	
 		d3.select(target).selectAll("div.details").remove()
 		drawLinks();
@@ -1209,10 +1209,11 @@ d3.select("#legend").append("ul")
 			if (nodesIndex[idNode]) return;
 			
 			// TODO: mah...
+			
 			sig.addNode(idNode,{
 	  	         'x': Math.random(),
 	  	         'y': Math.random(),
-	  	         'size': 10,//size ? size(data) : 40,
+	  	         'size': data.size,
 				 'color': color(idNode),
 				 'label' : label(data)
 	  	       });
@@ -1327,7 +1328,7 @@ d3.select("#legend").append("ul")
 			       minNodeSize: 2,
 			       maxNodeSize: 10,
 			       minEdgeSize: 1,
-			       maxEdgeSize: 2
+			       maxEdgeSize: 10
 			     }).mouseProperties({
 			       maxRatio: 4
 			     }).configProperties({
