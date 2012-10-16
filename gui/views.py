@@ -122,6 +122,7 @@ def _shared_context( request, corpus_name=None, active="" ):
 		data['corpus'] = get_object_or_404( Corpus, name=corpus_name, owner=request.user )
 		request.session["corpus_id"] = data['corpus'].id
 		request.session["corpus_name"] = data['corpus'].name
+		data['info'] = "session corpus switched"
 
 	elif request.session.get("corpus_id", 0) is 0:
 		# corpus_name is none, no session stored... load last corpus created
@@ -139,7 +140,7 @@ def _shared_context( request, corpus_name=None, active="" ):
 
 	
 	else:
-		data['info'] = "session corpus already stored"
+		data['info'] = "session corpus already stored: %s" %corpus_name
 		
 
 	return data
