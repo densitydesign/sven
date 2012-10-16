@@ -8,8 +8,11 @@
 <div id="legend" class="dropdown">
 
 </div>
-
+<button type="submit" class="btn pull-right" title="Show/hide relationships" style="margin-right:10px" id="toggle-button"><i id="toggle-icon" class="icon-eye-close"></i></button>
 <div id="timeline">
+	
+	<div id="blocks"></div>
+	<div id="stack"></div>
 </div>
  
 
@@ -28,7 +31,8 @@
 {% block js_body %}
 <script>
     var args = {};
-    var linkSvg = "{{ custom.STATIC_URL }}/css/images/link2.svg";
+	var staticUrl = "{{custom.STATIC_URL}}";
+//    var linkSvg = "{{ custom.STATIC_URL }}/css/images/link2.svg";
 </script>
 
 <script src="{{ custom.STATIC_URL }}js/time.js" type="text/javascript"></script>
