@@ -23,6 +23,7 @@ urlpatterns = patterns('',
 	# url(r'^/set-relation/corpus/(.?)/', anta.api.set_relation, name="anta_api_set_relation"),
     
     url(r'^overview/corpus/(?P<corpus_name>[a-z0-9-]+)/$', 'sven.anta.views.overview', name='anta_overview'),
+    url(r'^status/corpus/(?P<corpus_name>[a-z0-9-]+)/$', 'sven.anta.views.status', name='anta_status'),
 	
     url(r'^document/(\d+)/$', 'sven.anta.views.document', name='anta_document'),
 	
