@@ -55,7 +55,16 @@
 					d.sven_target = this;
 					var title = d3.select(this).select(".titleInput").property("value");
 					var lang = d3.select(this).select(".langInput").property("value");
-					d.url = "{% url anta_api_documents %}?corpus=" + corpusID + "&language=" + lang + "&title=" + title + "";
+					var date = d3.select(this).select(".dateInput").property("value");
+					date = date + "T00:00";
+					var actors = d3.select(this).select(".actorInput").property("value");
+					var actorsTag = [];
+					actors = actors.split(',');
+					for(i in actors){
+						actorsTag.push('{"type":"actor","name":"' + actors[i] +'"}');
+						};
+					d.url = "{% url anta_api_documents %}?corpus=" + corpusID + "&language=" + lang + "&title=" + title + "&ref_date=" + date + "&tags=[" + actorsTag +"]";
+					console.log(d.url);
 					d.submit();
 				})
 		} 
@@ -94,10 +103,14 @@
 				var fileName = data.files[0].name;
 				var fileNameSplit = fileName.split('_', 4);
 				function fillInfo(){
+					var date = fileNameSplit[2];
+					var y = date.slice(0,4);
+					var m = date.slice(4,6);
+					var d = date.slice(6,8);
 					if (fileNameSplit.length == 4){
 					docInfo.actor = fileNameSplit[0].split('-');
 					docInfo.lang = fileNameSplit[1];
-					docInfo.date = fileNameSplit[2];
+					docInfo.date = y + "-" + m + "-" + d;
 					docInfo.title = fileNameSplit[3].split('.')[0];
 					}
 					else{
