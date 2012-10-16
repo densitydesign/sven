@@ -1,14 +1,14 @@
 var query = new svenjs.Sven("");  
-var show = false;
+var show = true;
 var timeline;
 
 query.getDocuments(function(response){
 
-	var data = response.results;
+	var data = response.objects;
 	var format = d3.time.format("%Y-%m-%dT%H:%M:%S");
-	
+
+		
 	nodes = d3.values(data)
-	
 	nodes.forEach(function(d){
 		d.date = format.parse(d.date);
 		d.id_document = d.id;
@@ -25,14 +25,14 @@ query.getDocuments(function(response){
 	query.getRelations(function(response){
 
 		var links = response.results;
+		
 		if (!links) return;
-    	
+
 		timeline = sven.viz.timeline()
 			.nodes(nodes)
 			.links(links)
 			.target("#timeline")
 			.update()
-		
 				
 	},{filters:{}});
 	
@@ -46,12 +46,10 @@ d3.select("#toggle-button").on("click", function(){
 		l.path.visible = show;
 	})
 	
-	
 	d3.select("#toggle-icon")
 		.attr("class", function(d){
 			return !show ? "icon-eye-open" : "icon-eye-close"
-		})
-		
-	
+	})	
 	timeline.update();
-})
+	
+});

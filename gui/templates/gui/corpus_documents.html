@@ -1,17 +1,17 @@
 {% extends "gui/base.html" %}
 
 {% block css_1 %}
-	<!--<link rel="stylesheet" href="{{ custom.STATIC_URL }}css/datepicker.css" type="text/css"/>-->
+	<link rel="stylesheet" href="{{ custom.STATIC_URL }}css/datepicker.css" type="text/css"/>
 	<link rel="stylesheet" href="{{ custom.STATIC_URL }}css/jquery.fileupload-ui.css" type="text/css"/>
 {% endblock %}
 
 {% block js_head %}
-	<!--<script src="{{ custom.STATIC_URL }}js/bootstrap/bootstrap-modal.js"></script>-->
+	<script src="{{ custom.STATIC_URL }}js/bootstrap/bootstrap-modal.js"></script>
     <script src="{{custom.STATIC_URL}}js/jquery/jquery.ui.widget.js" type="text/javascript" ></script>
     <script src="{{custom.STATIC_URL}}js/jquery/jquery.iframe-transport.js" type="text/javascript" ></script>
     <script src="{{custom.STATIC_URL}}js/jquery/jquery.fileupload.js" type="text/javascript" ></script>
     <script src="{{custom.STATIC_URL}}js/jquery/jquery.validate.min.js"></script>
-    <!--<script src="{{ custom.STATIC_URL }}js/bootstrap/bootstrap-datepicker.js"></script>-->
+    <script src="{{ custom.STATIC_URL }}js/bootstrap/bootstrap-datepicker.js"></script>
 	
 {% endblock %}
 
@@ -61,8 +61,8 @@
 			<table class="table">
 				<thead>
 					<tr>
-						<th><a href="#" class="btn small" id="dp1" data-date-format="yyyy-mm-dd" data-date="2012-02-20">Start date</a></th>
-						<th><a href="#" class="btn small" id="dp2" data-date-format="yyyy-mm-dd" data-date="2012-02-25">End date</a></th>
+						<th>Start date<a href="#" class="btn small" id="dp1" data-date-format="yyyy-mm-dd" data-date="2012-02-20">Change</a></th>
+						<th>End date<a href="#" class="btn small" id="dp2" data-date-format="yyyy-mm-dd" data-date="2012-02-25">Change</a></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -78,7 +78,7 @@
 				<div class="well">
 				<h5>Title contains:</h5> 
 				<hr> 
- 				<input id="filterContains" type="text" placeholder="Type word...">
+ 				<input type="text" placeholder="Type word...">
 				</div>
 			</div>
 			<div class="span3">
@@ -108,7 +108,7 @@
 {% block js_body %}
 <script>
     var args = {};
- 
+ 	args.corpus = {{ corpus.id }};
 </script>
 
 <script src="{{ custom.STATIC_URL }}js/documents.js" type="text/javascript"></script>

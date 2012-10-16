@@ -62,13 +62,29 @@ query.getCorpora(function(response){
 	checkStatus();
 })
 
+	// get actors
+	
+	query.getActors(function(response){
+		console.log(response);
+		var actorList = response.objects;
+		d3.select(".filterActors").selectAll("label.checkbox")
+		.data(actorList)
+		.enter()
+		.append("label")
+		.attr("class", "checkbox")
+		.text(function(d){return d.name;})
+		.append("input")
+		.attr("type", "checkbox")
+		
+		
+		});
 
 function getDocumentsList(){
-	var args = {};
+	//var args = {};
 	args['corpus'] = corpusID;
 	query.getDocuments(function(response){
 
-	    var data = response.results; 
+	    var data = response.objects; 
 		var dataTable = sven.utils.datatable()
 			.data(d3.values(data))
 			.target("#documents-list")
@@ -101,6 +117,60 @@ function getDocumentsList(){
 		
 		})
 	
+
+		
+	var langList = d3.nest()
+    .key(function(d) { return d.language; })
+    .entries(data);
+    
+    d3.select(".filterLang").selectAll("label.checkbox")
+		.data(langList)
+		.enter()
+		.append("label")
+		.attr("class", "checkbox")
+		.text(function(d){return d.key;})
+		.append("input")
+		.attr("type", "checkbox")
+	
+	//datepicker
+	$('#alert').hide();
+	var startDate = new Date(2012,1,20);
+			var endDate = new Date(2012,1,25);
+			$('#dp1').datepicker()
+				.on('changeDate', function(ev){
+					if (ev.date.valueOf() > endDate.valueOf()){
+						$('#alert').show().find('strong').text('The start date can not be greater then the end date');
+					} else {
+						$('#alert').hide();
+						startDate = new Date(ev.date);
+						$('#startDate').text($('#dp1').data('date'));
+					}
+					$('#dp1').datepicker('hide');
+				});
+			$('#dp2').datepicker()
+				.on('changeDate', function(ev){
+					if (ev.date.valueOf() < startDate.valueOf()){
+						$('#alert').show().find('strong').text('The end date can not be less then the start date');
+					} else {
+						$('#alert').hide();
+						endDate = new Date(ev.date);
+						$('#endDate').text($('#dp2').data('date'));
+					}
+					$('#dp2').datepicker('hide');
+				});
+	//end datepicker
+	
+	//apply filters
+	d3.select("#filter").append("button")
+		.attr("class", "btn btn-mini btn-success")
+		.text("Apply filters")
+		.on("click", function(){console.log($('#dp1').data('date'))})
+	
+	var filters = {};
+	filters["date__gte"] = $('#dp1').data('date') + "T00:00";
+	filters["date__lte"] = $('#dp2').data('date') + "T00:00";
+	filters["title__icontains"] = d3.select("#filterContains").property("value");
+	filters["tags__id__in"]
 	},args);
 }
 

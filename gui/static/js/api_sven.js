@@ -341,6 +341,22 @@ svenjs.Sven.prototype.startAnalysis = function(id, successCallback, args){
     
 };
 
+/* update tf-idf */
+svenjs.Sven.prototype.updateAnalysis = function(id, successCallback, args){
+		
+    var url = this.url + "/anta/api/update-tfidf/corpus/" + id;
+
+    $.ajax({
+        type: 'GET',
+        url: url,
+        data: args,
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+    
+};
+
 /* analysis status */
 svenjs.Sven.prototype.status = function(id, successCallback, args){
 		
@@ -367,6 +383,22 @@ svenjs.Sven.prototype.exportEntities = function(id, successCallback){
         url: url,
         success: successCallback(url),
         error: successCallback
+    });
+    
+};
+
+/*get actors */
+svenjs.Sven.prototype.getActors = function(successCallback, args){
+		
+    var url = this.url + "/anta/api/tags/?indent=true&filters={%22type%22:%22actor%22}";
+	
+     $.ajax({
+        type: 'GET',
+        url: url,
+        data: args,
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
     });
     
 };

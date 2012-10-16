@@ -42,10 +42,10 @@
   <script src="{{ custom.STATIC_URL }}js/sven/sven.viz.js"></script>
   
   <!-- Bootstrap -->
-  <!-- <script src="{{ custom.STATIC_URL }}js/bootstrap/bootstrap.min.js"></script> -->
-  <script src="{{ custom.STATIC_URL }}js/bootstrap/bootstrap.js"></script>
-  <link rel="stylesheet" href="{{ custom.STATIC_URL }}css/bootstrap.css" type="text/css"/>
-  <link rel="stylesheet" href="{{ custom.STATIC_URL }}css/bootstrap-responsive.css" type="text/css"/>
+  <!--<script src="{{ custom.STATIC_URL }}js/bootstrap/bootstrap.min.js"></script> -->
+  <script src="{{ custom.STATIC_URL }}js/bootstrap.js"></script>
+  <link rel="stylesheet" href="{{ custom.STATIC_URL }}css/bootstrap.min.css" type="text/css"/>
+  <link rel="stylesheet" href="{{ custom.STATIC_URL }}css/bootstrap-responsive.min.css" type="text/css"/>
   
   <!-- CSS -->
   <link rel="stylesheet" href="{{ custom.STATIC_URL }}css/style_gui.css" type="text/css"/>
@@ -80,9 +80,9 @@
 			
 			</div>
 			<ul class="nav nav-tabs">
-			  <li class="{% if active == 'documents' %} active {% endif %}"><a href="/gui/documents"><i class="menu-icon icon-file"></i>Documents</a></li>
-			  <li class="{% if active == 'timeline' %} active {% endif %}"><a href="/gui/timeline"><i class="menu-icon icon-random"></i>Timeline</a></li>
-			  <li class="{% if active == 'dynamics' %} active {% endif %}"><a href="/gui/dynamics"><i class="menu-icon icon-certificate"></i>Dynamics</a></li>
+			  <li class="{% if active == 'documents' %} active {% endif %}"><a href="/gui/documents">Documents</a></li>
+			  <li class="{% if active == 'timeline' %} active {% endif %}"><a href="/gui/timeline">Timeline</a></li>
+			  <li class="{% if active == 'dynamics' %} active {% endif %}"><a href="/gui/dynamics">Dynamics</a></li>
 			</ul>
 			
 			

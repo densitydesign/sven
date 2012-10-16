@@ -16,14 +16,12 @@
 			interval = sven.time.timeline().limit(62), // two months as default
 			event = d3.dispatch(
 				"change"
-			) 
-		
-		
-		
+			),
+			visibles = {},
+			paths = []
 			
+
 		blocks.update = function(){
-			
-			//console.log("namo!", links)
 			
 			d3.select(target)
 				.selectAll("svg")
@@ -34,8 +32,7 @@
 				p = [20, 10, 30, 10],
 				x = d3.scale.ordinal().rangeBands([0, w - p[1] - p[3]]),
 				y = d3.scale.linear().range([0, h - p[0] - p[2]]),
-				z = d3.scale.ordinal().range(["lightgray"])				
-				
+				z = d3.scale.ordinal().range(["lightgray"])
 			
 			function curve(items) {
 			
@@ -53,14 +50,12 @@
 				return line(points)
 			}
 			
-			
 			var svg = d3.select(target).append("svg:svg")
 				.attr("width", w)
 				.attr("height", h)
 				.append("svg:g")
 					.attr("transform", "translate(" + p[3] + "," + (h - p[2]) + ")")
-			
-			
+						
 			var colorGroups = d3.keys(d3.nest().key(function(d){ return d.actor; }).map(nodes))
 			var color = sven.colors.diverging(colorGroups.length);
 			colorGroups.forEach(function(d){
@@ -86,7 +81,7 @@
 				d.relations = [];
 				d.showRelations = d.hasOwnProperty('showRelations') ? d.showRelations : true;
 			})
-			
+						
 			
 			// azzeriamo links...
 			links.forEach(function(d,i){
@@ -184,7 +179,6 @@
 				.attr("height", 16)
 				.attr("rel","tooltip")
 				.attr("title",function(d){
-					console.log(d)
 					return d.showRelations ? "Hide " + d.relations_count + " relations" : "Show " + d.relations_count + " relations";
 				})
 				.on("click", function(d){
@@ -197,18 +191,16 @@
 				
 			
 			$('.toggle-link').tooltip({placement:"top", trigger:"hover"})
-		
-			var visibles = {}
-			var paths = []
+			
+			paths = []
+			visibles = {}
 			
 			rect.each(function(r){ visibles[r.id_document] = r; })
-			
 			
 			links.forEach(function(d){
 				
 				// controlliamo che source e target non siano entrambi fuori range o che la relazione sia invisibile (togglata)
 				if (!visibles.hasOwnProperty(d.source) && !visibles.hasOwnProperty(d.target) || d.path && !d.path.visible) return;
-				
 				
 				var sourceNode = visibles.hasOwnProperty(d.source) ?
 					visibles[d.source] : blocks.nodesAsObject(d.target).date > blocks.nodesAsObject(d.source).date ?
@@ -218,7 +210,6 @@
 					visibles[d.target] : blocks.nodesAsObject(d.source).date > blocks.nodesAsObject(d.target).date ?
 						sxNode.data()[0] : dxNode.data()[0]
 				
-				
 				var path = {
 					id: d.id,
 					visible:true,
@@ -226,7 +217,6 @@
 					targetNode:targetNode,
 					description:d.description
 				}
-					
 					
 				if (!paths.filter(function(j){ return j.id==d.id; }).length) {
 					paths.push(path);
@@ -244,7 +234,9 @@
 				.attr("stroke-linecap","butt")
 				.style("opacity",function(d){ return d.visible? 1 : 0; })
 				.attr("d",function(d){ return curve([d.sourceNode,d.targetNode]); })
-				.on("mouseover",function(d){ console.log(d.description); })	
+				.on("mouseover",function(d){
+				
+				})	
 	
 		
 			
@@ -492,14 +484,12 @@
 			
 			if (!nodes || !links)
 				return;
-
+			
 			blocks
 				.nodes(nodes)
 				.links(links)
 				.update();
 			
-			console.log(blocks.interval().min(), blocks.interval().max())	
-					
 			stack
 				.data(nodes)
 				.update();
@@ -827,10 +817,11 @@
 			if (nodesIndex[idNode]) return;
 			
 			// TODO: mah...
+			
 			sig.addNode(idNode,{
 	  	         'x': Math.random(),
 	  	         'y': Math.random(),
-	  	         'size': 10,//size ? size(data) : 40,
+	  	         'size': data.size,
 				 'color': color(idNode),
 				 'label' : label(data)
 	  	       });
@@ -945,7 +936,7 @@
 			       minNodeSize: 2,
 			       maxNodeSize: 10,
 			       minEdgeSize: 1,
-			       maxEdgeSize: 2
+			       maxEdgeSize: 10
 			     }).mouseProperties({
 			       maxRatio: 4
 			     }).configProperties({
