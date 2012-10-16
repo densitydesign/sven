@@ -2,7 +2,7 @@ var query = new svenjs.Sven("");
 
 query.getDocuments(function(response){
 
-var data = response.results;
+var data = response.objects;
 
 
 // take the documents

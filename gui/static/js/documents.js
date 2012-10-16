@@ -62,13 +62,29 @@ query.getCorpora(function(response){
 	checkStatus();
 })
 
+	// get actors
+	
+	query.getActors(function(response){
+		console.log(response);
+		var actorList = response.objects;
+		d3.select(".filterActors").selectAll("label.checkbox")
+		.data(actorList)
+		.enter()
+		.append("label")
+		.attr("class", "checkbox")
+		.text(function(d){return d.name;})
+		.append("input")
+		.attr("type", "checkbox")
+		
+		
+		});
 
 function getDocumentsList(){
-	var args = {};
+	//var args = {};
 	args['corpus'] = corpusID;
 	query.getDocuments(function(response){
 
-	    var data = response.results; 
+	    var data = response.objects; 
 		var dataTable = sven.utils.datatable()
 			.data(d3.values(data))
 			.target("#documents-list")
@@ -101,19 +117,7 @@ function getDocumentsList(){
 		
 		})
 	
-	// popola i filtri
-	var actorsList = d3.nest()
-    .key(function(d) { return d.actors.map(function(v){return v.name;}); })
-    .entries(data);
-	
-	d3.select(".filterActors").selectAll("label.checkbox")
-		.data(actorsList)
-		.enter()
-		.append("label")
-		.attr("class", "checkbox")
-		.text(function(d){return d.key;})
-		.append("input")
-		.attr("type", "checkbox")
+
 		
 	var langList = d3.nest()
     .key(function(d) { return d.language; })
@@ -156,6 +160,17 @@ function getDocumentsList(){
 				});
 	//end datepicker
 	
+	//apply filters
+	d3.select("#filter").append("button")
+		.attr("class", "btn btn-mini btn-success")
+		.text("Apply filters")
+		.on("click", function(){console.log($('#dp1').data('date'))})
+	
+	var filters = {};
+	filters["date__gte"] = $('#dp1').data('date') + "T00:00";
+	filters["date__lte"] = $('#dp2').data('date') + "T00:00";
+	filters["title__icontains"] = d3.select("#filterContains").property("value");
+	filters["tags__id__in"]
 	},args);
 }
 
