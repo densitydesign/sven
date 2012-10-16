@@ -33,7 +33,7 @@
  <script>
 		
 	
-	
+	var importedFile = false;
 	api = new svenjs.Sven("");
 	
 	/* getting the first corpus...*/
@@ -91,8 +91,26 @@
 					.style("display","table")
 					.style("margin-top","5px")
 					.text("Uploaded")
+				
+				importedFile = true;
 				},
 				fail: function( e, data ){
+					
+					d3.select("#uploads .modal-upload")
+					.on("click", function(){})
+				
+				
+				d3.select(data.sven_target)
+					.select(".progress")
+					.style("display","none")
+					
+				d3.select(data.sven_target)
+					.append("span")
+					.attr("class","label label-important")
+					.style("display","table")
+					.style("margin-top","5px")
+					.text("NOT uploaded")
+				
 					console.log("failed!", data.error);
 				},
 				progressall: function(e, data){
@@ -127,7 +145,17 @@
 		
 		$('#import').on('hidden',function(){
 			
-			window.location.reload();
+			
+			if(importedFile){
+			api.updateAnalysis(corpusID, function(response){
+				
+				console.log(response);
+				window.location.reload()
+				
+			}, args)
+			importedFile = false;
+			}
+			
 			
 			});
 

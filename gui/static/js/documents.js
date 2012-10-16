@@ -101,6 +101,61 @@ function getDocumentsList(){
 		
 		})
 	
+	// popola i filtri
+	var actorsList = d3.nest()
+    .key(function(d) { return d.actors.map(function(v){return v.name;}); })
+    .entries(data);
+	
+	d3.select(".filterActors").selectAll("label.checkbox")
+		.data(actorsList)
+		.enter()
+		.append("label")
+		.attr("class", "checkbox")
+		.text(function(d){return d.key;})
+		.append("input")
+		.attr("type", "checkbox")
+		
+	var langList = d3.nest()
+    .key(function(d) { return d.language; })
+    .entries(data);
+    
+    d3.select(".filterLang").selectAll("label.checkbox")
+		.data(langList)
+		.enter()
+		.append("label")
+		.attr("class", "checkbox")
+		.text(function(d){return d.key;})
+		.append("input")
+		.attr("type", "checkbox")
+	
+	//datepicker
+	$('#alert').hide();
+	var startDate = new Date(2012,1,20);
+			var endDate = new Date(2012,1,25);
+			$('#dp1').datepicker()
+				.on('changeDate', function(ev){
+					if (ev.date.valueOf() > endDate.valueOf()){
+						$('#alert').show().find('strong').text('The start date can not be greater then the end date');
+					} else {
+						$('#alert').hide();
+						startDate = new Date(ev.date);
+						$('#startDate').text($('#dp1').data('date'));
+					}
+					$('#dp1').datepicker('hide');
+				});
+			$('#dp2').datepicker()
+				.on('changeDate', function(ev){
+					if (ev.date.valueOf() < startDate.valueOf()){
+						$('#alert').show().find('strong').text('The end date can not be less then the start date');
+					} else {
+						$('#alert').hide();
+						endDate = new Date(ev.date);
+						$('#endDate').text($('#dp2').data('date'));
+					}
+					$('#dp2').datepicker('hide');
+				});
+	//end datepicker
+	
 	},args);
 }
 
