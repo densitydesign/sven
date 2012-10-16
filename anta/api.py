@@ -410,11 +410,11 @@ def document(request, document_id):
 	# delete a document
 	if response['meta']['method'] == 'DELETE':
 		
-
 		return _delete_instance( request, response, instance=d, attachments=[
-			"%s/%s/%s" % (settings.MEDIA_ROOT,d.corpus.name,os.path.basename(d.url.url) ),
+			os.path.join(settings.MEDIA_ROOT, d.corpus.name, os.path.basename(d.url.url)),
 			textify( d, settings.MEDIA_ROOT )
 		])
+        
 
 	# if method is POST, update the document
 	if response['meta']['method'] == 'POST':
