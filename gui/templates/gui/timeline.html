@@ -8,8 +8,11 @@
 <div id="legend">
 	<p>Legend<p>
 </div>
-
+<button type="submit" class="btn pull-right" title="Show/hide relationships" style="margin-right:10px" id="toggle-button"><i id="toggle-icon" class="icon-eye-open"></i></button>
 <div id="timeline">
+	
+	<div id="blocks"></div>
+	<div id="stack"></div>
 </div>
  
 
@@ -28,6 +31,7 @@
 {% block js_body %}
 <script>
     var args = {};
+	var staticUrl = "{{custom.STATIC_URL}}";
 </script>
 
 <script src="{{ custom.STATIC_URL }}js/time.js" type="text/javascript"></script>
