@@ -459,6 +459,9 @@ def tags( request ):
 	
 
 def tag( request, tag_id ):
+	
+	queryset = Tag.objects.annotate(num_documents=Count("document__id", distinct=True)).filter( id=tag_id )
+	return JsonQ( request ).get_response( queryset=queryset )
 	pass
 
 #
