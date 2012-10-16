@@ -78,7 +78,19 @@
 			//	.style("fill", "#f4f4f4")
 			//	.style("stroke", "#ffffff");
 
-
+			container.append("defs")
+				.append("pattern")
+					.attr("id", "link")
+					.attr("width",16)
+					.attr("height",16)
+					//.attr("patternUnits", "userSpaceOnUse")
+					.append("image")
+					.attr("x",0)
+					.attr("y", 0)
+					.attr("width",16)
+					.attr("height",16)
+					.attr("xlink:href", linkSvg)
+					
 			
 			// add a group for each
 			var group = container.selectAll("g.group")
@@ -156,7 +168,9 @@
  															.attr("cursor","pointer")
  															.on("mouseover", function(){d3.select(this).attr("visibility","visible");})
  															.on("mouseout", function(){ d3.select(this).attr("visibility","hidden");})
- 															.on("click", function(){ getRelations(d, d.id)})
+ 															.on("click", function(){ console.log(d); getRelations(d, d.id)})
+ 															
+ 															
 																}
 															})
 					//.on("mousemove", function(){ var w = $("#tooltip").width(); var h = $("#tooltip").height(); $("#tooltip").css({top: (d3.event.pageY - h-20) + "px", left: (d3.event.pageX - w/2 ) + "px"});})
@@ -173,19 +187,26 @@
 					group.append("svg:rect")
  						.attr("class", "relBtn")
 						.attr("visibility","hidden")
+						
+						
 
 			
 			var getRelations = function(d, source) {
+	
 			query.getRelations(function(response){
-
+			
+			
     		var relations = response.results;
     		if (relations){
-    			console.log(relations)
+    			//console.log(relations)
     			
     			}
     		d.relations = relations;
+    		console.log(d);
     		drawOneLinks();
+    		
     		},{filters:'{"source":' + source + '}'});
+    		
     		};
 			/*
 			var rectLabel = group.selectAll("text.label")
@@ -245,7 +266,26 @@
 				.text(function(d){ return d.key; })
 				.style("color",function(d){ return d3.rgb(d.value).darker(); })
 				.attr("title", function(d){ return d.key; })
-		
+				
+// 		d3.select("#legend").append("a")
+// 	.attr("class","btn dropdown-toggle")
+// 	.attr("data-toggle","dropdown")
+// 	.attr("href", "#")
+// 	.text("Actors")
+// 	.append("span")
+// 	.attr("class", "caret")
+// 
+// d3.select("#legend").append("ul")
+// 	.attr("class", "dropdown-menu")
+// 	.attr("role", "menu")
+// 	.attr("aria-labelledby","dropdownMenu")
+// 	.selectAll("li")
+//  			.data(d3.entries(color.values()))
+//  			.enter().append("li")
+// 			.append("div")
+// 			.attr("class", "btn")
+// 			.text(function(d){ return d.key; })
+	
 		d3.select(target).selectAll("div.details").remove()
 		drawLinks();
 	
@@ -1169,10 +1209,11 @@
 			if (nodesIndex[idNode]) return;
 			
 			// TODO: mah...
+			
 			sig.addNode(idNode,{
 	  	         'x': Math.random(),
 	  	         'y': Math.random(),
-	  	         'size': 10,//size ? size(data) : 40,
+	  	         'size': data.size,
 				 'color': color(idNode),
 				 'label' : label(data)
 	  	       });
@@ -1287,7 +1328,7 @@
 			       minNodeSize: 2,
 			       maxNodeSize: 10,
 			       minEdgeSize: 1,
-			       maxEdgeSize: 2
+			       maxEdgeSize: 10
 			     }).mouseProperties({
 			       maxRatio: 4
 			     }).configProperties({

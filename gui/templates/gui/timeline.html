@@ -5,8 +5,8 @@
 {% block content %}
 
 
-<div id="legend">
-	<p>Legend<p>
+<div id="legend" class="dropdown">
+
 </div>
 
 <div id="timeline">
@@ -28,6 +28,7 @@
 {% block js_body %}
 <script>
     var args = {};
+    var linkSvg = "{{ custom.STATIC_URL }}/css/images/link2.svg";
 </script>
 
 <script src="{{ custom.STATIC_URL }}js/time.js" type="text/javascript"></script>

@@ -341,6 +341,22 @@ svenjs.Sven.prototype.startAnalysis = function(id, successCallback, args){
     
 };
 
+/* update tf-idf */
+svenjs.Sven.prototype.updateAnalysis = function(id, successCallback, args){
+		
+    var url = this.url + "/anta/api/update-tfidf/corpus/" + id;
+
+    $.ajax({
+        type: 'GET',
+        url: url,
+        data: args,
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+    
+};
+
 /* analysis status */
 svenjs.Sven.prototype.status = function(id, successCallback, args){
 		

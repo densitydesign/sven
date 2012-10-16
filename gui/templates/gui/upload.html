@@ -53,6 +53,18 @@
 				.each(function(d){
 					console.log(d)
 					d.sven_target = this;
+					var title = d3.select(this).select(".titleInput").property("value");
+					var lang = d3.select(this).select(".langInput").property("value");
+					var date = d3.select(this).select(".dateInput").property("value");
+					date = date + "T00:00";
+					var actors = d3.select(this).select(".actorInput").property("value");
+					var actorsTag = [];
+					actors = actors.split(',');
+					for(i in actors){
+						actorsTag.push('{"type":"actor","name":"' + actors[i] +'"}');
+						};
+					d.url = "{% url anta_api_documents %}?corpus=" + corpusID + "&language=" + lang + "&title=" + title + "&ref_date=" + date + "&tags=[" + actorsTag +"]";
+					console.log(d.url);
 					d.submit();
 				})
 		} 
@@ -85,33 +97,133 @@
 			
 			add: function(e, data){
 				
-				data.url = "{% url anta_api_documents %}?corpus=" + corpusID;
+				//data.url = "{% url anta_api_documents %}?corpus=" + corpusID;
 				
-				d3.select("#uploads .modal-gallery")
+				var docInfo = {};
+				var fileName = data.files[0].name;
+				var fileNameSplit = fileName.split('_', 4);
+				function fillInfo(){
+					var date = fileNameSplit[2];
+					var y = date.slice(0,4);
+					var m = date.slice(4,6);
+					var d = date.slice(6,8);
+					if (fileNameSplit.length == 4){
+					docInfo.actor = fileNameSplit[0].split('-');
+					docInfo.lang = fileNameSplit[1];
+					docInfo.date = y + "-" + m + "-" + d;
+					docInfo.title = fileNameSplit[3].split('.')[0];
+					}
+					else{
+					docInfo.actor = '';
+					docInfo.lang = '';
+					docInfo.date = '';
+					docInfo.title = fileNameSplit[0].split('.')[0];
+						}
+						};
+				fillInfo();
+				
+				var singleFile = d3.select("#uploads .modal-gallery")
 					.append("div")
 					.data([data])
 					.attr("class","file-info")
 					.text(function(d){
 						console.log(d)
+						
 						return d.files[0].name;
 					})
+					//.append("div")
+					//.attr("class","progress progress-striped active")
+					//	.append("div")
+					//	.attr("class","bar")
+					.append("form")
+					.attr("class", "form-horizontal contact-form")
+					//.attr("id", "contact-form")
+					.attr("action", "")
+					.append("fieldset")
+
+					singleFile.selectAll("div.control-group")
+					.data(d3.map(docInfo).entries()).enter()
 					.append("div")
-					.attr("class","progress progress-striped active")
-						.append("div")
-						.attr("class","bar")
-				
+					.attr("class","control-group")
+						.append("label")
+						.attr("class","control-label")
+						.attr("for",function(d){
+						return d.key + "Input";})
+						.text(function(d){
+						return d.key;})
+					
+					singleFile.selectAll("div.control-group")
+					.append("div")
+					.attr("class","controls")
+					.append("input")
+					.attr("class", function(d){
+						return d.key + "Input";})
+					.attr("name", function(d){
+						return d.key + "Input";})
+					.attr("type", "text")
+					.attr("placeholder", function(d){
+						return d.key;})
+					.attr("value", function(d){
+						return d.value})
+					
+
+
 		      	d3.select("#uploads .fileinput-button")
 		      		.style("display","none")
 				
 		      	d3.select("#uploads .modal-message")
 		      		.style("display","inline")
 					.html("<strong>The following files are ready to be uploaded:</strong>")
-				
-		      	d3.select("#uploads .modal-upload")
+			
+					
+				$('.contact-form').each(function(){
+    				$(this).validate({
+	    rules: {
+	      titleInput: {
+	        minlength: 1,
+	        required: true
+	      },
+	      langInput: {
+	      	maxlength: 2,
+	        required: true
+	      },
+	      dateInput: {
+	        required: true,
+	        date: true
+	      },
+	      actorInput: {
+	        minlength: 1,
+	        required: true
+	      }
+	    },
+	    highlight: function(label) {
+	    	$(label).closest('.control-group').addClass('error');
+	    },
+	    success: function(label) {
+	    	label
+	    		.text('OK!').addClass('valid')
+	    		.closest('.control-group').addClass('success');
+	    }
+	  });
+	  });
+	  
+	  
+	    	d3.select("#uploads .modal-upload")
 		      		.style("display","inline")
 					.on("click",function(){
-						submitAll()
+						var check = true;
+						$('.contact-form').each(function(){
+							if(!$(this).valid()){check = false}
+							
+							});
+						
+						if(check){	
+							submitAll();
+							}
+						else{return}
+						
 					})
+					
 			},
 
 			fail: function( e, data ){
