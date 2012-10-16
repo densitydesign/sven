@@ -9,6 +9,7 @@ from sven.core.utils import is_number
 from django.conf import settings
 from django.contrib.auth import login, logout
 from django.core import serializers
+from django.db import IntegrityError
 import os, json, datetime, operator, inspect
 
 from sven.anta.utils import *
@@ -287,6 +288,49 @@ def create_document( request, response, corpus ):
 		else:
 			return throw_error(response, code=API_EXCEPTION_FORMERRORS, error=form.errors)
 
+	if request.REQUEST.get('tags', None) is not None:
+		if 'presets' not in response:
+			response['presets'] = {}
+		try:
+			response['presets']['tags'] = json.loads( request.REQUEST.get('tags') )
+		except Exception, e:
+			return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION )
+
+		for tag in response['presets']['tags']:
+			form = TagForm( tag )
+			if form.is_valid():
+				response['message'] = 'form is valid!!!'
+				t = form.save()
+			elif "__all__" in form.errors:
+				try:
+					t = Tag.objects.get(name=tag['name'],type=tag['type'] )
+				except Exception, e:
+					return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION )
+			else:
+				return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS )
+			tag['id'] = t.id
+			
+		# test new tag form
+
+		#form = TagForm( request.REQUEST )
+		#if form.is_valid():
+		#	t = form.save()
+		#elif "__all__" in form.errors:
+		#	try:
+		#		t = Tag.objects.get(name=request.REQUEST.get('name',None),type=request.REQUEST.get('type', None) )
+		#	except Exception, e:
+		#		return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DUPLICATED )
+		#else:
+		#	return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS )
+
+		# save relationship
+		#try:
+		#	dt = Document_Tag( document=d, tag=t )
+		#	dt.save()
+		#except:
+		#	return throw_error( response, error="Relationship document tag already existing", code=API_EXCEPTION_DUPLICATED )
+
+
 
 	response['uploads'] = []
 
@@ -327,6 +371,19 @@ def create_document( request, response, corpus ):
 			if response['presets']['ref_date'] is not None:
 				d.ref_date = response['presets']['ref_date'] 
 			d.save()
+
+			if 'tags' in response['presets']:
+				for t in response['presets']['tags']:	
+					try:
+						dt = Document_Tag( document=d, tag_id=t['id'] )
+						dt.save()
+					except IntegrityError:
+						# relationship already exists
+						continue
+					except Exception, e:
+						# strange exception!
+						response['warnings'] = "Exception: %s" % e
+						continue
 		
 		response['uploads'].append( d.json() )
 
