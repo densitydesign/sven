@@ -1,0 +1,49 @@
+{% extends "anta/middle.html" %}
+{% load i18n %}
+Hello, Anta World!
+
+{% block custom_page %}
+	<h1>{% trans "Installation" %}</h1>	
+	Welcome to Anta.
+	If you're here, you've not already created a corpus!
+	
+	<div class="uploader"><input type="file" id="fileupload" name="files[]" multiple></div>
+	<ul id="list-of-documents" class="list-of"></ul>
+	
+{% endblock %}
+
+{% block custom_sidebar_content %}
+	<div id="todays-specials">
+		<h2> {% trans "Selection" %} (<span id="selection-total-count">0</span>)</h2>
+		<ul>
+			<li>attach tag</li>
+			<li>batch modify</li>
+			<li>delete selection</li>
+		</ul>
+	</div>
+{% endblock %}
+
+{% block magics %}
+	
+{% endblock %}
+
+{% block custom_plugins %}
+	<!-- upload -->
+	<script src="{{ custom.STATIC_URL }}js/jquery.ui.widget.js"></script>
+	<script src="{{ custom.STATIC_URL }}js/jquery.iframe-transport.js"></script>
+	<script src="{{ custom.STATIC_URL }}js/jquery.fileupload.js"></script>
+{% endblock %}
+
+{% block custom_anta_plugins %}
+	<script src="{{ custom.STATIC_URL }}js/anta/documents.js"></script>
+{% endblock %}
+
+{% block custom_javascript_init %}
+	anta.initialisables.push(
+		"anta.upload.init", 
+		"anta.lock.init", 
+		"anta.hotkeys.init", 
+		"anta.selection.init",
+		"anta.documents.init"
+	);
+{% endblock %}

@@ -1,5 +1,7 @@
 {% extends "anta/boilerplate.html" %}
 {% load i18n %}
+{% load extras %}
+
 {% block custom_body %}
 	
 	{% block custom_header %}
@@ -33,14 +35,17 @@
 	{% endblock %}
 	
 	<div id="wrapper">
-		<sidebar>
+		<sidebar ng-controller="CorpusController">
+			{% verbatim %}
+			<p>User corpus: {{ objects.length }}</p>
+			{% endverbatim %}
 			{% block custom_sidebar %}
 			
 			<!-- user profile -->
 			<div id="profile" class="pseudo-section">
 				
 			
-				{% load extras %}
+				
 				<div class="gravatar floating">
 					<img src="{{ user.email|gravatar }}" alt="{{ user.username }}"/>
 				</div>
@@ -55,6 +60,9 @@
 			</div>
 			
 			<ul id="corpora" class="pseudo-section">
+				
+				<li ng-repeat="corpus in objects"><a href="{% url anta_index %}?switch-corpus={% verbatim %}{{ corpus.id}}{% endverbatim %}">{% verbatim %}{{ corpus.name }}{% endverbatim %}</a></li>
+				
 				{% for c in corpora %}
 					
 					
@@ -106,6 +114,7 @@
 	anta.urls = {
 		upload: "{% url anta_api_documents %}?corpus=" + anta.vars.corpus_id,
 		get_documents: "{% url anta_api_documents %}?corpus=" + anta.vars.corpus_id,
+		get_corpora:"{% url anta_api_corpora %}",
 		view_document: "{% url anta_document 0 %}"
 	};
 	

@@ -205,7 +205,7 @@ class Owners( models.Model ):
 class Relation( models.Model ):
 	source = models.ForeignKey( Document, related_name="source" )
 	target = models.ForeignKey( Document, related_name="target" )
-	creation_date = models.DateTimeField(default=datetime.now, blank=True)
+	creation_date = models.DateTimeField(default=datetime.now, blank=True, null=True)
 	description = models.CharField( max_length=160)
 	polarity = models.CharField( max_length=3, choices=POLARITY_CHOICES )
 	owner = models.ForeignKey( User, blank=True, null=True )
@@ -225,7 +225,7 @@ class Relation( models.Model ):
 			'description'	: self.description,
 			'polarity'	: self.polarity,
 			'intensity'	: self.intensity( min=min, max=max),
-			'owner': self.owner.json()
+			'owner':  self.owner.json() if self.owner else None
 		}
 
 class Analysis(models.Model ):
@@ -269,7 +269,7 @@ class Routine(models.Model):
 			'id'	: self.id,
 			'type'	: self.type,
 			'corpus'	: self.corpus.json() if self.corpus else None,
-			'start_date'	: self.start_date.isoformat(),
+			'start_date'	: self.start_date.isoformat() if self.start_date else None,
 			'end_date'	: self.end_date.isoformat() if self.end_date else None,
 			'last_entry': self.last_entry,
 			'status'	: self.status,
@@ -391,4 +391,37 @@ class Document_Segment( models.Model ):
 	class Meta:
 		unique_together = ("segment", "document")
 
-		
+class Stem( models.Model ):
+	content = models.CharField( max_length=128, primary_key=True )
+	sample  = models.CharField( max_length=128 )
+	avg_tfidf 	= models.FloatField( default='0')
+	avg_tf 		= models.FloatField( default='0')
+	min_tfidf	= models.FloatField( default='0')
+	min_tf 		= models.FloatField( default='0')
+	max_tfidf 	= models.FloatField( default='0')
+	max_tf 		= models.FloatField( default='0')
+	distribution	= models.IntegerField( default='0')
+	aliases		= models.IntegerField( default='0')
+	class Meta:
+		managed = False
+
+	def json(self):
+		"""
+		group by segment__stemmed
+		"""
+		return {
+			'content'	:self.content,
+			'sample'	:self.sample,
+			'aliases': self.aliases,
+			'distribution': self.distribution,
+			'avg_tfidf' : self.avg_tfidf,
+			'avg_tf': self.avg_tf,
+			'min_tfidf' : self.min_tfidf,
+			'min_tf': self.min_tf,
+			'max_tfidf' : self.max_tfidf,
+			'max_tf': self.max_tf
+		}
+
+
+
+

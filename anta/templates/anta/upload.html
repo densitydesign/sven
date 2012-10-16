@@ -1,10 +1,18 @@
 {% extends "anta/middle.html" %}
 {% load i18n %}
+{% load extras %}
 
 
 {% block custom_page %}
 	<h1>{% trans "upload file"%}</h1>
 	<input type="file" id="fileupload" name="files[]" multiple>
+	{% verbatim %}
+	<ul ng-controller="DocumentController">
+		<li ng-repeat="document in objects">
+			{{ document.title }}
+		</li>
+	</ul>
+	{% endverbatim %}
 {% endblock %}
 
 {% block custom_plugins %}
@@ -14,7 +22,7 @@
 	<script>
 		$(function(){
 			$("#fileupload").fileupload({
-				url:"{% url anta_api_documents %}?corpus=1",
+				url:'{% url anta_api_documents %}?corpus=1&language=FR&title=custom title&tags=[{"type":"actor","name":"ONG"},{"type":"actor","name":"ONG"}]',
 				dataType: 'json',
 				done: function(e, data){
 					console.log(e, data.result);

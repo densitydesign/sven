@@ -1,4 +1,4 @@
-import os,sys,mimetypes, math, csv
+import os,sys,mimetypes, math, csv, codecs
 from datetime import datetime
 
 
@@ -47,70 +47,263 @@ def standard( corpus, routine ):
 
 	# 1. distiller.decant (tf computation )
 	try:
-		decant( corpus=corpus, routine=routine, settings=settings, ref_completion=0.6 )
+		decant( corpus=corpus, routine=routine, settings=settings, ref_completion=0.5 )
 	except Exception, e:
 		return close_routine( routine, error="Exception: %s" % e, status="ERR")
 
 	# 2. get all languages in corpus
-	number_of_languages = Document.objects.values('language').distinct().count()
-
-	# 3. for each language, perform a tfidf
-	for i in Document.objects.values('language').distinct():
-		language = i['language']
-		try:
-			tfidf( corpus=corpus, routine=routine, language=language, settings=settings, ref_completion=1.0/number_of_languages  )
-		except Exception, e:
-			return close_routine( routine, error="Exception: %s" % e, status="ERR")
-
-	routine.completion = 1.0
-	routine.save()
+	tf_tfidf( corpus=corpus, routine=routine )
 	close_routine( routine, error="", status="OK" )
 
 
-def tfidf( corpus, routine, language, settings, ref_completion=1.0, column="stemmed" ):
+@transaction.commit_manually
+def entities_alchemy( corpus, routine ):
+	print """
+	=================================
+	---- ENTITIES VIA ALCHEMYAPI ----
+	=================================
+	"""
+	from services import alchemy
+	
+
+	number_of_documents = Document.objects.filter( corpus=corpus ).count()
+	print "[info] number_of_documents:",number_of_documents
+	print "[info] alchmy apikey:", settings.ALCHEMY_API_KEY
+
+	for d in  Document.objects.filter( corpus=corpus ):
+		if d.language not in ['EN', 'FR']:
+			continue
+
+		textified =  textify( d, settings.MEDIA_ROOT )
+		try:
+			with codecs.open( textified, "r", "utf-8" ) as f:
+   				print f.read()
+			print textified
+		except Exception, e:
+			continue
+	
+	close_routine( routine, error="", status="OK" )
+	transaction.commit()
+
+#
+#   
+#
+def tf_tfidf( corpus, routine ):
+	number_of_documents = Document.objects.filter(corpus=corpus ).count()
+
+	if number_of_documents == 0:
+		return close_routine( routine, error="No document found", status="ERR")
+
+	tf( corpus=corpus, routine=routine, completion_start=0.0, completion_score=0.4 )
+	
+	if routine.status == "ERR":
+		return
+
+	tfidf( corpus=corpus, routine=routine, completion_start=0.4, completion_score=0.4 )
+
+	if routine.status == "ERR":
+		return
+
+	similarity( corpus=corpus, routine=routine, completion_start=0.8, completion_score=0.2  )
+
+
+	close_routine( routine, error="", status="OK" )
+
+#
+#   Trunk Segemnt table little by little...
+#
+@transaction.commit_manually
+def clean( corpus, routine ):
+	print """
+	========================
+	---- CLEAN SEGMENTS ----
+	========================
+	"""
+	# change routine type
+	routine.type = "CLEAN"
+	routine.save()
+	transaction.commit()
+
+	number_of_links = Document_Segment.objects.filter(document__corpus=corpus).count()
+	loops = int( math.ceil( number_of_links / 25.0 ) )
+	
+	print "corpus: %s" % corpus.json()
+	
+	print "number_of_links: %s" % number_of_links
+	print "loops: %s" % loops
+	
+	try:
+		# manually change
+		for i in range(0, loops):
+			for j in Document_Segment.objects.filter(document__corpus=corpus)[0:25]:
+				j.segment.delete()
+				j.delete()
+
+				log_routine( routine, completion = float(i) / loops )
+					
+			transaction.commit()
+		log_routine( routine, completion = 1.0 )
+				
+		
+	except Exception, e:
+		close_routine( routine, error="Exception: %s" % e, status="ERR")
+		transaction.commit()
+	
+	close_routine( routine, error="", status="OK" )
+	transaction.commit()
+
+#
+#   Update TF calculation on stems groups for the given corpus
+# 
+@transaction.commit_manually
+def tf( corpus, routine, completion_start=0.0, completion_score=1.0 ):
+	print """
+	======================
+	---- TF, RELOADED ----
+	======================
+	"""
+	# change routine type
+	routine.type = "TF"
+	routine.save()
+	transaction.commit()
+
+	# get percentage info:
+	number_of_documents_segments = Document_Segment.objects.count()
+	print "number_of_documents_segments: %s" % number_of_documents_segments
+
+	if number_of_documents_segments == 0:
+		close_routine( routine, error="Not enought segments in your corpus. Try 'standard' routine first...", status="ERR")
+		transaction.commit()
+		return
+
+	current_segment = 0
+
+	for d in Document.objects.filter(corpus=corpus):
+		print "document: %s" % d
+		number_of_stems_per_document = Document_Segment.objects.filter( document=d ).values('segment__stemmed').distinct().count()
+		print "number_of_stems_per_document: %s" % number_of_stems_per_document
+
+		for ds in Document_Segment.objects.filter( document=d ):
+			# count alliases( segment with same stemmed version )
+			number_of_aliases = Document_Segment.objects.filter( document=d, segment__stemmed=ds.segment.stemmed ).count()
+			ds.tf = float(number_of_aliases) / number_of_stems_per_document
+			ds.save()
+			if number_of_aliases > 1: # print just some lines
+				print  ds.segment.content, ds.segment.stemmed, number_of_aliases, ds.tf
+			if current_segment % 25 == 0:
+				log_routine( routine, completion = completion_start +  ( float(current_segment) / number_of_documents_segments ) * (completion_score-completion_start) )
+				transaction.commit()
+	
+
+			current_segment = current_segment + 1
+			
+
+	if completion_score == 1.0:
+		close_routine( routine, error="", status="OK" )
+	transaction.commit()
+	
+
+#
+#   Perform tfidf calculation based on stems groups
+#  
+@transaction.commit_manually
+def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="stemmed" ):
 	print """
 	===========================
 	---- TFIDF COMPUTATION ----
 	===========================
 	"""
-	print "column:",column
-	
-	
-	print "corpus:",corpus.id, corpus.name
-	
+	routine.type = "TFIDF"
+	routine.save()
+	transaction.commit()
+	# 1. get number of document
 	number_of_documents = Document.objects.filter(corpus=corpus ).count()
-	print "document in corpus:",number_of_documents
 	
+	# 2. get all languages in corpus
+	number_of_languages = Document.objects.values('language').distinct().count()
+
+	# 3. get GLOBAL number of segments (aka stems, segments grouped by their stemmed version: they do not need to be in the same corpus!!!)
+	number_of_stems = Segment.objects.values('stemmed', 'language').annotate(Count('stemmed'), Count('language')).count()
+
+	#SELECT COUNT(*), stemmed FROM anta_segment GROUP BY stemmed 
+
+	# out some information
+	print "[info] column:",column
+	print "[info] corpus:",corpus.json()
+	print "[info] document in corpus:",number_of_documents
+	print "[info] stems in corpus (grouped by stemmed, language):",number_of_stems
 
 	cursor = connection.cursor()
-	
-	# group by stem!
-	cursor.execute("SELECT COUNT( DISTINCT ds.document_id ) as distribution, s." + column + " FROM `anta_document_segment` ds JOIN anta_segment s ON ds.segment_id = s.id JOIN anta_document d ON d.id = ds.document_id WHERE d.corpus_id = %s GROUP BY s."+column+" ORDER BY distribution DESC, "+ column +" ASC", [ corpus.id])
-    
-	for row in dictfetchall(cursor):
+
+	# global counter (all languages cycle)
+	current_stem = 0
+
+	# 3. for each language, perform a tfidf
+	for i in Document.objects.filter(corpus=corpus ).values('language').annotate(num_document=Count('language')).distinct():
+		print "[info] language info: ",i
 		
-		print row[ column ], row['distribution']
-		kwargs = {
-    		'{0}__{1}'.format('document', 'corpus'): corpus,
-			'{0}__{1}'.format('segment', column ): row[ column ],
-		}
-		ds = Document_Segment.objects.filter( **kwargs ).all().order_by('-tf')
+		language = i['language']
+		# count tfidf group
+		# SELECT COUNT(*), stemmed FROM anta_segment WHERE language="EN" GROUP BY stemmed 
+		stem_count = Segment.objects.filter(language=language).values('stemmed').annotate(Count('stemmed')).count()
 		
-		df = float( row['distribution'] ) / number_of_documents
-		# computate tf idf for the given value
-		first = True
+		# check length. If it's 0, exit with error....
+		if stem_count == 0:
+			close_routine( routine, error="Not enought segments in your corpus. Try standard routine first...", status="ERR")
+			transaction.commit()
+			return 
+
+		# 5. for each segment in this language...
+		cursor.execute("""
+			SELECT
+				COUNT( DISTINCT ds.document_id ) as distribution, 
+				s.language,
+				s.stemmed 
+			FROM `anta_document_segment` ds
+			JOIN anta_segment s ON ds.segment_id = s.id
+			JOIN anta_document d ON d.id = ds.document_id
+			WHERE d.corpus_id = %s AND s.language = %s
+			GROUP BY s.stemmed ORDER BY distribution DESC, stemmed ASC""", [ corpus.id, language ]
+		)
+		print "[info] query executed..."
 		
-		for s in ds:
-			# computate and store tfidf
-			s.tfidf = s.tf * math.log(1/df) 
-			s.save()
+		for row in dictfetchall(cursor):
+			# increment global runner (stats)
+			current_stem = current_stem + 1;
 			
-			if first:
-				print "sample tfidf for '",row[ column ], '{', row['distribution'],"}': tf[",s.tf,"] df[", df, "] idf[",math.log(1/df),"] tfidf[", s.tfidf,"]"
-				first = False
-	# cycle thouhg segments
+			# store tfidf inside each segment-document relationships
+			try:
+				dss = Document_Segment.objects.filter( segment__stemmed=row['stemmed'], segment__language=language)
+				
+				df = float( row['distribution'] ) / number_of_documents
+				# print float(current_stem) / number_of_stems * 100.0, row[ column ], row['distribution'], df
+			except Exception, e:
+				print e
+				close_routine( routine, error="Exception: %s" % e, status="ERR")
+				transaction.commit()
+				return
+			for ds in dss:
+				ds.tfidf = ds.tf * math.log(1/df) 
+				ds.save()
+			
+				# tf is term frequency exactly from words
+				# print ds.tf,ds.document.id, ds.segment.content
+			
+
+			if current_stem % 25 == 0:
+				completion = completion_start + (float(current_stem) / number_of_stems)*(completion_score-completion_start)
+				print "[info] query executed...",completion
+				log_routine( routine, completion = completion )
+				# save percentage and commit transaction
+				transaction.commit()
 	
-	print corpus.name, number_of_documents
+	print "[info] query completed!"
+				
+	if completion_score == 1.0:
+		close_routine( routine, error="", status="OK" )
+	transaction.commit()
+	return
+
 
 
 def export( corpus, language, parser, column="stemmed" ):
@@ -181,56 +374,92 @@ def importcsv( routine, csvfile, column="stemmed" ):
 			
 			transaction.commit()
 
+	# completed import csv
+	# @todo: we need to reintegrate similarity( corpus, routine )
+	log_routine( routine, entry="completed importcsv at line: %s" % i, completion=1.0 )
 	close_routine( routine, status="OK" )
 	transaction.commit()
-	
 
-def similarity( corpus, language, parser, column="stemmed" ):
+
+
+@transaction.commit_manually
+def similarity( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 	print """
 	====================
 	---- SIMILARITY ----
 	====================
 	"""
-	
-	try:
-		corpus = Corpus.objects.get( name=corpus )
-	except:
-		return error( message="corpus '%s' was not found!" % corpus, parser=parser )
-	
-	print "corpus:",corpus.id, corpus.name
-	
+	# Stories vlows Enter Nebuloses
+	log_routine( routine, entry="similarity measurement started succesfully", completion=0.0, completion_start=completion_start, completion_score=completion_score)
+	transaction.commit()
+
+
+	# 1. get number of document
 	number_of_documents = Document.objects.filter(corpus=corpus ).count()
-	print "document in corpus:",number_of_documents
 	
-	# get stemmed list per document
-	cursor = connection.cursor()
-	cursor.execute("SELECT " + column + ", d.id as doc_id FROM anta_document_segment ds  JOIN anta_segment s ON ds.segment_id = s.id JOIN anta_document d ON ds.document_id = d.id WHERE d.corpus_id=%s",[ corpus.id ] ) # we do not need ORDER BY d.id, ds.id
-	
-	# build corpus 
+	# 2. dictionary where keys are the ids of corpus docments and valuse
 	documents = {}
+
+	# out some information
+	print "[info] corpus:",corpus.json()
+	print "[info] document in corpus:",number_of_documents
 	
-	for row in dictfetchall(cursor):
-		if row['doc_id'] not in documents:
-			documents[ row['doc_id'] ] = []
-		documents[ row['doc_id'] ].append( row[ column ] )	
+	# get the list of every stemmed segments inside each document.
+	# the distance algorithm will work on "stemmed" documents!
+	# @todo: verify that PATTERN distance measurement works well with this algorithm.
+	cursor = connection.cursor()
+	cursor.execute("""
+		SELECT count(*)
+			FROM anta_document_segment ds
+		JOIN anta_segment s ON ds.segment_id = s.id
+		JOIN anta_document d ON ds.document_id = d.id
+		WHERE d.corpus_id = %s
+
+	""",[ corpus.id ] )
+
+	number_of_stems = cursor.fetchone()[0]
+
+	cursor.execute("""
+
+		SELECT s.stemmed, d.id as document_id 
+			FROM anta_document_segment ds
+		JOIN anta_segment s ON ds.segment_id = s.id
+		JOIN anta_document d ON ds.document_id = d.id
+		WHERE d.corpus_id = %s
+
+	""",[ corpus.id ] ) # we do not need ORDER BY d.id, ds.id
+	
+
+	log_routine( routine, entry="similarity measurement started", completion=0.1, completion_start=completion_start, completion_score=completion_score)
+	
+	# @todo: improve remapping
+	for row in cursor.fetchall():
+		stemmed, document_id = row
+		#print document_id
+		if document_id not in documents:
+			documents[ document_id ] = []
 		
+		documents[ document_id ].append( stemmed )	
+		
+
+
 	# translate corpus id
 	pattern_id_translation = {}
 	
-	# reformat documents, join space separated stemmed segment values.
+	# reformat each document into a PATTERN compatible document: join space separated stemmed segment values.
 	for d in documents:
 		documents[d] = pvDocument( " ".join( documents[d] ) )
+		log_routine( routine, entry="join stemmed segments", completion=0.15, completion_start=completion_start, completion_score=completion_score)
+	
 		pattern_id_translation[ documents[d].id ] = d
-		
-	print "pattern_id_translation table:", pattern_id_translation
-	print "document in corpus:",number_of_documents
-	print "similarity neighborood ",number_of_documents / 2
+	
 	
 	# store document in corpus.
 	c = pvCorpus( documents.values() )
 	
 	# computate and save similarities
-	for d in documents:
+	for counter, d in enumerate(documents):
+		print counter
 		for n in c.neighbors( documents[d], top=number_of_documents):
 			alpha_id = pattern_id_translation[ documents[d].id ]
 			omega_id = pattern_id_translation[ n[1].id ]
@@ -238,16 +467,27 @@ def similarity( corpus, language, parser, column="stemmed" ):
 			
 			try:
 				dist = Distance.objects.get( alpha__id=alpha_id, omega__id=omega_id )
-				print "distantce exists:", dist.id, cosine_similarity
-			except:
+				print "[info] distantce exists ( %s - %s ), old value: %s, difference: %s" % ( alpha_id, omega_id, dist.cosine_similarity,(dist.cosine_similarity - cosine_similarity) )
+			except Exception, e:
+				print e
 				dist = Distance( alpha_id=alpha_id, omega_id=omega_id )
-				print "create Distance object", dist.id, cosine_similarity
+				print "[info] create Distance object", dist.id, cosine_similarity
 			#	print a distance exist between these two document	
 			dist.cosine_similarity = cosine_similarity
 			dist.save()
-			# print documents[d].id, alpha_id,omega_id
+
+			#
 		
-	return
+			log_routine( routine, entry="neighbors computation", completion = (counter + 1.0) / number_of_documents, completion_start=completion_start, completion_score=completion_score)
+		
+		transaction.commit()
+
+	if completion_score == 1.0:
+		close_routine( routine, error="", status="OK" )
+	transaction.commit()
+
+
+
 	
 def main( argv):
 	usage = "usage: %prog -f function [ standard|importcsv [-o column] [-x csvfile] ]"
@@ -257,7 +497,7 @@ def main( argv):
 		help="anta routine id")
 
 	parser.add_option("-c", "--corpus", dest="corpus",
-		help="anta corpus_name to be metricsied. Computate tfidf")
+		help="anta Corpus.id")
 		
 	parser.add_option( "-l", "--language", dest="language", default="en",
 		help="language")
@@ -276,12 +516,15 @@ def main( argv):
 
 	( options, argv ) = parser.parse_args()
 	
+	if options.func is None:
+		error( message="Use -f to specify the desired function.", parser=parser )
+	
 	if options.routine is None:
 		error( message="Use -r to specify the routine", parser=parser )
 	try:	
 		routine = Routine.objects.get( pk=options.routine)
 	except Exception, e:
-		error( message="Routine %S -c to specify the corpus" % options.routine, parser=parser )
+		error( message="Exception: %s" % e, parser=parser )
 	
 	# change routine status to CRE.. script is alive!
 	routine.status="CRE"
@@ -290,12 +533,10 @@ def main( argv):
 
 	error_message = None
 	
-	if options.func is None:
-		error_message = "Use -f to specify the desired function."
-
+		
 	
 	# load corpus only for certain options
-	if options.func == "standard":
+	if options.func in ["standard","tfidf","clean","tf","tf_tfidf","entities_alchemy", "similarity","importcsv"]:
 		if options.corpus is None:
 			error_message = "Use -c to specify the corpus"
 		try:
@@ -332,25 +573,31 @@ def main( argv):
 	#     =================================
 	#
 	if options.func == "standard":
-		return standard( routine=routine, corpus=corpus ) # tf + tfidf
+		return standard( routine=routine, corpus=corpus ) # pattern tf + stems tfidf
+
+	elif options.func == "similarity":
+		return similarity( routine=routine, corpus=corpus ) # computate distances and store them inside a dedicated table
+
+	elif options.func == "tf_tfidf":
+		return tf_tfidf( routine=routine, corpus=corpus ) # delete segments
+
+	elif options.func == "clean":
+		return clean( routine=routine, corpus=corpus ) # delete segments
+
+	elif options.func == "tf":
+		return tf( routine=routine, corpus=corpus ) # update tf
+
+	elif options.func == "entities_alchemy":
+		return entities_alchemy( routine=routine, corpus=corpus ) # update tf
+
+
+	elif options.func == "tfidf":
+		return tfidf( routine=routine, corpus=corpus ) # tfidf ONLY, per language analysis
+
 	elif options.func == "importcsv":
 		return importcsv( routine=routine, csvfile=csvfile )
 
 	close_routine( routine, error="Fatal: function not found", status="ERR")
-		
-
-	return
-	if options.func == "standard":
-		# tf + tfidf
-		standard( routine )
-	elif options.func == "tfidf":	
-		tfidf(options.corpus, options.language, parser, options.tfidfcolumn )
-	
-	elif options.func == "similarity":
-		similarity(options.corpus, options.language, parser, options.tfidfcolumn )
-
-	elif options.func == "export":
-		export( options.corpus, options.language, parser, options.tfidfcolumn)
 	
 	
 if __name__ == '__main__':

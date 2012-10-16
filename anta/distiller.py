@@ -34,7 +34,8 @@ def start_routine( type, corpus=None ):
 	"""
 	If a routine does not exist, it will create it.
 	If a routine exists and:
-		1. is OK routine will be set to RIP; a new one will be created.
+		1. is OK, routine will be set to RIP; a new one will be created.
+		2. is PN, outine won't be overridden and 
 	Return the current routine, created or not.
 	"""
 	from sven.anta.models import Routine
@@ -53,7 +54,9 @@ def start_routine( type, corpus=None ):
 	
 	if r.status == "ERR":
 		return restart_routine( r, status="CLO")
-		
+	
+	if r.status == "PN" :
+		raise Exception("routine of this type is already running!")
 	return r
 	
 	
@@ -65,12 +68,12 @@ def restart_routine( routine, status="RIP" ):
 	r = start_routine( type=routine.type, corpus=routine.corpus )
 	return r
 
-def log_routine( routine, entry="", completion=None, status="PN"):
+def log_routine( routine, entry="", completion=None, status="PN", completion_start=0.0, completion_score=1.0 ):
 	routine.status		= status
 	routine.last_entry	= entry
 	
 	if completion is not None:
-		routine.completion = completion
+		routine.completion = completion_start + (completion * completion_score)
 
 	routine.save()
 	return routine
@@ -79,6 +82,9 @@ def close_routine( routine, error="", status="CLO"):
 	routine.status	= status
 	routine.last_entry	= error
 	routine.end_date		= datetime.now()
+	if status =="OK":
+		routine.completion = 1.0
+	
 	routine.save()
 	return routine
 
@@ -98,7 +104,7 @@ def stop_routine( routine ):
 #    recalculate tf/idf foreach tf
 #
 def decant( corpus, routine, settings, ref_completion=1.0 ):
-	from sven.anta.models import *
+	from sven.anta.models import Analysis, Routine, Segment, Segment_Concept, Document, Document_Segment, Document_Tag, Tag, Concept
 	from sven.anta.utils import textify
 	# path = settings.MEDIA_ROOT + options.corpus
 	# print NL_STOPWORDS
@@ -247,8 +253,8 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 						c = Concept( content=k, language=d.language )
 
 						c.save()
-					except:
-						print "[warning] unable to save concept: ", k
+					except Exception, e:
+						print "[warning] unable to save concept: %s, exception: %s" % (k, e)
 						continue
 				try:
 					sc = Segment_Concept.objects.get( segment=s, concept=c )

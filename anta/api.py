@@ -4,16 +4,18 @@ from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from sven.anta.models import *
 from sven.anta.sync import store_document
+from sven.core.utils import is_number
 
 from django.conf import settings
 from django.contrib.auth import login, logout
 from django.core import serializers
-import os, json, datetime
+from django.db import IntegrityError
+import os, json, datetime, operator, inspect
 
 from sven.anta.utils import *
 from sven.anta.forms import *
 from django.contrib.auth.models import User
-from django.db.models import Count
+from django.db.models import Count, Min, Max, Avg
 
 #
 #    ========================
@@ -42,10 +44,14 @@ API_EXCEPTION_EMPTY			=	'Empty'
 
 def index(request):
 	response = _json( request )
+
+	
+
 	#user = User.objects.create_user('daniele', 'lennon@thebeatles.com', 'danielepassword')
 	#user.is_staff = True
 	#user.save()
 	return render_to_json( response )
+
 
 def get_corpora(request):
 	response = _json( request )
@@ -81,20 +87,8 @@ def relations( request ):
 		response['results'] = [r.json() for r in Relation.objects.filter( source__corpus__name=corpus, target__corpus__name=corpus) [response['meta']['offset']:response['meta']['limit'] ]  ]
 		return render_to_json( response )
 	
-	if len(response['meta']['filters']) > 0:
-		#mod for python 2.6 bug
-		newFilters = {}
-		oldFilters = response['meta']['filters']
-		for oldFilter in oldFilters:
-			newFilters[str(oldFilter)] = str(oldFilters[oldFilter])
-		# with filters: models static var
-		response['meta']['total'] = Relation.objects.filter(**newFilters).count()
-		response['results'] = [r.json() for r in Relation.objects.filter(**newFilters)[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
-	else:
-		response['meta']['total'] = Relation.objects.count()
-		response['results'] = [r.json() for r in Relation.objects.all()[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
-	
-	return render_to_json( response )
+	return _get_instances( request, response, model_name="Relation" )
+
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def create_relation( request, response ):
@@ -116,16 +110,40 @@ def create_relation( request, response ):
 def relation( request, id ):
 	response = _json( request )
 	# all documents
-	r =  _get_relation( id )
-	if r is None:
-		return throw_error( response, "Relation %s does not exist...," % id, code=API_EXCEPTION_DOESNOTEXIST )	
+	try:
+		r =  Relation.objects.get(id=id)
+	except Exception, e:
+		return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )	
 	
 	response['results'] = [r.json()]
-		
+	
 	if response['meta']['method'] == 'DELETE':
 		r.delete()		
+		return render_to_json( response )
+
+	# create documents
+	if response['meta']['method'] == 'POST':
+		## DOES NOT WORK. whiy? 
+		form = ApiRelationForm( request.REQUEST, instance=r )
+		
+		if not form.is_valid():
+
+			return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS )	
+		
+		
+		form.save(commit=False)
+		r.creation_date = datetime.now()
+		r.owner = request.user
+		r.save()
+		r = Relation.objects.get(pk=id)
+		response['results'] = [r.json()]
+		return render_to_json( response )
+
+		# return create_relation( request, response )
 	
-	# if method is POST, update the document
+
+	# if method is POST, update the relation
+	"""
 	if response['meta']['method'] == 'POST':
 		form = UpdateDocumentForm( request.REQUEST )
 		if form.is_valid():
@@ -137,7 +155,7 @@ def relation( request, id ):
 
 		else:
 			return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS)
-
+	"""
 	
 	return render_to_json( response )
 
@@ -243,23 +261,8 @@ def documents(request):
 	if response['meta']['method'] == 'POST':
 		return create_document( request, response, corpus=corpus )
 
+	return _get_instances( request, response, model_name="Document" )
 
-	if len(response['meta']['filters']) > 0:
-		#mod for python 2.6 bug
-		newFilters = {}
-		oldFilters = response['meta']['filters']
-		for oldFilter in oldFilters:
-			newFilters[str(oldFilter)] = str(oldFilters[oldFilter])
-		# with filters: models static var
-		response['meta']['total'] = Document.objects.filter(corpus__id=corpus.id).filter(**newFilters).count()
-		response['results'] = [d.json() for d in Document.objects.filter(corpus__id=corpus.id).filter(**newFilters)[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
-	else:
-		
-		response['meta']['total'] = Document.objects.filter(corpus__id=corpus.id).count()		
-		response['results'] = [d.json() for d in Document.objects.filter(corpus__id=corpus.id)[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
-	
-	
-	return render_to_json( response )
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def create_document( request, response, corpus ):
@@ -273,6 +276,61 @@ def create_document( request, response, corpus ):
 	
 	if not os.path.exists( path ):
 		return throw_error(response, code=API_EXCEPTION_DOESNOTEXIST, error="path %s does not exits!" % path )
+
+	# check preloaded vars
+	if request.REQUEST.get('language', None) is not None:
+		form = UpdateDocumentForm( request.REQUEST )
+		if form.is_valid():
+			response['presets'] = {}
+			response['presets']['language'] = form.cleaned_data['language']
+			response['presets']['ref_date'] = form.cleaned_data['ref_date']
+			response['presets']['title'] = form.cleaned_data['title']
+		else:
+			return throw_error(response, code=API_EXCEPTION_FORMERRORS, error=form.errors)
+
+	if request.REQUEST.get('tags', None) is not None:
+		if 'presets' not in response:
+			response['presets'] = {}
+		try:
+			response['presets']['tags'] = json.loads( request.REQUEST.get('tags') )
+		except Exception, e:
+			return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION )
+
+		for tag in response['presets']['tags']:
+			form = TagForm( tag )
+			if form.is_valid():
+				response['message'] = 'form is valid!!!'
+				t = form.save()
+			elif "__all__" in form.errors:
+				try:
+					t = Tag.objects.get(name=tag['name'],type=tag['type'] )
+				except Exception, e:
+					return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION )
+			else:
+				return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS )
+			tag['id'] = t.id
+			
+		# test new tag form
+
+		#form = TagForm( request.REQUEST )
+		#if form.is_valid():
+		#	t = form.save()
+		#elif "__all__" in form.errors:
+		#	try:
+		#		t = Tag.objects.get(name=request.REQUEST.get('name',None),type=request.REQUEST.get('type', None) )
+		#	except Exception, e:
+		#		return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DUPLICATED )
+		#else:
+		#	return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS )
+
+		# save relationship
+		#try:
+		#	dt = Document_Tag( document=d, tag=t )
+		#	dt.save()
+		#except:
+		#	return throw_error( response, error="Relationship document tag already existing", code=API_EXCEPTION_DUPLICATED )
+
+
 
 	response['uploads'] = []
 
@@ -303,6 +361,30 @@ def create_document( request, response, corpus ):
 			d = store_document( filename=filename, corpus=corpus )
 		except Exception, e:
 			return throw_error( response, error="Exception: %s " % e, code=API_EXCEPTION_EMPTY)
+
+		# update with document form fileds above :D. Validation is already done.
+		if 'presets' in response:
+			if response['presets']['language'] is not None:
+				d.language = response['presets']['language'] 
+			if response['presets']['title'] is not None:
+				d.title = response['presets']['title'] 
+			if response['presets']['ref_date'] is not None:
+				d.ref_date = response['presets']['ref_date'] 
+			d.save()
+
+			if 'tags' in response['presets']:
+				for t in response['presets']['tags']:	
+					try:
+						dt = Document_Tag( document=d, tag_id=t['id'] )
+						dt.save()
+					except IntegrityError:
+						# relationship already exists
+						continue
+					except Exception, e:
+						# strange exception!
+						response['warnings'] = "Exception: %s" % e
+						continue
+		
 		response['uploads'].append( d.json() )
 
 	return render_to_json( response )
@@ -365,40 +447,99 @@ def document(request, document_id):
 #    ==================
 #
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
+def segments_clean( request, corpus_id ):
+	response = _json( request, enable_method=False )
+	
+	from distiller import start_routine
+
+	try:
+		c = Corpus.objects.get(pk=corpus_id)
+		routine = start_routine( type='CLEAN', corpus=c )
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	# call a sub process, and pass the related routine id
+	scriptpath = os.path.dirname(__file__) + "/metrics.py"
+
+	return _start_process([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'clean' ],
+		routine=routine,
+		response=response
+	)
+	
+
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def segments( request ):
 	response = _json( request )
+
 	return render_to_json( response )
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
-def segment_stems( request, document_id=None ):
+def segment_stems( request, corpus_id=None ):
 	response = _json( request )
 
 	# split order_by stuff
 	# order_by = ["tfidf DESC","tfidf ASC","distribution ASC", "distribution DESC"]
-
-
-	# where
-	where = [] # [("stemmed LIKE %s", contains ),("document_id",2) ]
-	order_by = [ "tfidf DESC, distribution DESC, aliases DESC"]
-
-	# build query
-	query = [ """
-		SELECT s.id, s.stemmed, s.content, ds.tfidf, count( distinct ds.document_id ) as distribution, count( distinct s.id ) as aliases FROM anta_segment s 
+	basic_query = """
+		SELECT 
+			s.stemmed as content, GROUP_CONCAT( s.content ) as sample, 
+			AVG( ds.tfidf ) as avg_tfidf, MAX( ds.tfidf ) as max_tfidf, MIN( ds.tfidf ) as min_tfidf,
+			AVG( ds.tf ) as avg_tf, MAX( ds.tf ) as max_tf, MIN( ds.tf ) as min_tf,
+			COUNT( distinct ds.document_id ) as distribution,
+			COUNT( distinct s.id ) as aliases FROM anta_segment s 
 			JOIN anta_document_segment ds ON s.id = ds.segment_id
-		""",
-		"WHERE " + " AND ".join( where ) if len( where ) else "",
-		"GROUP BY stemmed",
-		"ORDER BY " + ", ".join( order_by ) if len( order_by ) else "",
-		""" LIMIT %s,%s """
-	]
-	response["query"] = " ".join( query )
+			JOIN anta_document d ON d.id = ds.document_id
+		"""
 
-	binds = [ response['meta']['offset'], response['meta']['limit'] ]
+	where = []
+	binds = []
 
-	ss = Segment.objects.raw( " ".join( query ), binds )
+	if corpus_id is not None:
+		try:
+			c = Corpus.objects.get(pk=corpus_id)
+		except Exception, e:
+			return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+		where.append("d.corpus_id = %s")
+		binds.append(corpus_id)
 
-	response['results'] = [ s.json() for s in ss ]
-	
+
+
+	if 'order_by' in response['meta']:
+		order_by = response['meta']['order_by']
+	else:
+		order_by = [ "distribution DESC", "avg_tfidf DESC",  "aliases DESC"]
+
+	response['meta']['total'] = 0
+
+	from django.db import connection
+	try:
+		cursor = connection.cursor()
+		cursor.execute( " ".join([
+			"""SELECT count(*) FROM ( SELECT COUNT(*) FROM anta_segment s 
+				JOIN anta_document_segment ds ON s.id = ds.segment_id
+				JOIN anta_document d ON d.id = ds.document_id""",
+			"WHERE " + " AND ".join( where ) if len( where ) else "",
+			"GROUP BY stemmed )"
+		]), binds)
+		(number_of_rows,) =cursor.fetchone()
+		response['meta']['total'] = number_of_rows
+
+		# build query
+		query = [ basic_query,
+			"WHERE " + " AND ".join( where ) if len( where ) else "",
+			"GROUP BY stemmed",
+			"ORDER BY " + ", ".join( order_by ) if len( order_by ) else "",
+			""" LIMIT %s,%s """
+		]
+		response["query"] = " ".join( query )
+
+		binds.append( response['meta']['offset'] )
+		binds.append( response['meta']['limit'] )
+
+		ss = Stem.objects.raw( " ".join( query ), binds )
+
+		response['results'] = [ s.json() for s in ss ]
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
 	return render_to_json( response )
 
 def segment_stem( request, segment_id ):
@@ -411,7 +552,28 @@ def segment_stem( request, segment_id ):
 #    ==================
 #    ---- SPECIALS ----
 #    ==================
-#	 
+#	
+
+#
+#   Attach a corpus with the current user.
+#   Warning! No restriction applied: every user can own every corpus.
+#   @todo admin only, with a given corpus id and user_id
+#
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def attach_corpus( request, corpus_id):
+	response = _json( request, enable_method=False )
+	corpus = _get_or_die("Corpus", response=response, filters={'id':corpus_id})
+	
+	# save 'ownership'
+	_save_or_die( "Owners", response=response, filters={'corpus':corpus, 'user':request.user})
+		
+	response['corpus'] = corpus.json()
+	response['corpus'] = corpus.json()
+	response['user'] = request.user.json()
+
+	return render_to_json( response )
+	
+
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def use_corpus( request, corpus_id=None ):
 	response = _json( request, enable_method=False )
@@ -450,7 +612,7 @@ def use_corpus( request, corpus_id=None ):
 
 	return render_to_json( response )
 		
-
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def attach_free_tag( request, document_id ):
 	"""
 	This function requires name and type given as args
@@ -486,6 +648,7 @@ def attach_free_tag( request, document_id ):
 	response['results'] = [ d.json() ]
 	return render_to_json( response )
 
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def attach_tag( request, document_id, tag_id ):
 	response = _json( request, enable_method=False )
 	try:
@@ -500,9 +663,11 @@ def attach_tag( request, document_id, tag_id ):
 		return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
 
 	# load document
+
 	response['results'] = [ d.json() ]
 	return render_to_json( response )
 
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def detach_tag( request, document_id, tag_id ):
 	response = _json( request, enable_method=False )
 	try:
@@ -519,6 +684,7 @@ def detach_tag( request, document_id, tag_id ):
 	response['results'] = [ d.json() ]
 	return render_to_json( response )
 
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def tfidf( request, corpus_id ):
 	"""
 	START the classic tfidf extraction. 
@@ -549,8 +715,48 @@ def tfidf( request, corpus_id ):
 		return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
 	return render_to_json( response )
 
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def update_tfidf( request, corpus_id ):
+	response = _json( request, enable_method=False )
+	
+	from distiller import start_routine
+
+	try:
+		c = Corpus.objects.get(pk=corpus_id)
+		routine = start_routine( type='RELTF', corpus=c )
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	# call a sub process, and pass the related routine id
+	scriptpath = os.path.dirname(__file__) + "/metrics.py"
+
+	return _start_process([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'tf_tfidf' ],
+		routine=routine,
+		response=response
+	)
+
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def update_similarity( request, corpus_id ):
+	response = _json( request, enable_method=False )
+	
+	from distiller import start_routine
+
+	try:
+		c = Corpus.objects.get(pk=corpus_id)
+		routine = start_routine( type='RELSy', corpus=c )
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	# call a sub process, and pass the related routine id
+	scriptpath = os.path.dirname(__file__) + "/metrics.py"
+
+	return _start_process([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'similarity' ],
+		routine=routine,
+		response=response
+	)
 
 
+# !! DEP. @deprecated:
 def start_metrics( request, corpus_id):
 	from utils import pushdocs
 	from ampoule import decant
@@ -652,41 +858,59 @@ def relations_graph(request, corpus_id):
 	c =  _get_corpus( corpus_id )
 	if c is None:
 		return throw_error( response, "Corpus %s does not exist...," % corpus_id, code=API_EXCEPTION_DOESNOTEXIST )	
-	
+	response['corpus'] = c.json()
 
-	# understand filters, if any
+	# 0. BASIC filters for django queryset
 	filters = ["d1.corpus_id=%s", "d2.corpus_id=%s"]
 	ids = []
 
-	if len( response['meta']['filters'] ):
-		ids = [ str(d.id) for d in Document.objects.filter(corpus__id=corpus_id,**response['meta']['filters'])]
-		if len(ids) > 0:
-			filters.append( "d1.id IN ( %s )" % ",".join(ids) )
-			filters.append( "d2.id IN ( %s )"  % ",".join(ids) )
-		else:
-			response['meta']['total'] = 0;
-			response['nodes'] = {}
-			response['edges'] = {}
-			return render_to_json( response )
-		response['filtered'] = ids
+	# 1. handle filters via get
 
-	filters.append("t1.type='actor'")
-	filters.append( "t2.type='actor'")
-	
-	if len(ids):
-		actors = Document_Tag.objects.filter(tag__type='actor', document__corpus__id=corpus_id, document__id__in=ids)
+	if len( response['meta']['filters'] ):
+		try:
+			ids = [ str(d.id) for d in Document.objects.filter(corpus=c,**response['meta']['filters'])]
+		except Exception, e:
+			return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION )
 	else:
-		actors = Document_Tag.objects.filter(tag__type='actor', document__corpus__id=corpus_id)
-	# print nodes
+		ids = [ str(d.id) for d in Document.objects.filter(corpus=c)]
+
+	# debug only
+	response['documents_filtered'] = ids
+
+
+	# 2. validate length
+	if len(ids) == 0:
+		response['meta']['total'] = 0;
+		response['nodes'] = {}
+		response['edges'] = {}
+		return throw_error( response, error="Query does not return any values", code=API_EXCEPTION_EMPTY )
+	
+	
+	# 4. test: recalculate distances "on the fly". @todo: Document Patch needed
+
+
+	# 3. add some basic filters
+	filters.append( "d1.id IN ( %s )" % ",".join(ids) )
+	filters.append( "d2.id IN ( %s )"  % ",".join(ids) )
+	filters.append( "t1.type='actor'" ) # filter by tag type actor
+	filters.append( "t2.type='actor'" ) 
+	
+	# 3.5. filter edges?
+	try:
+		min_cosine_similarity = float( request.REQUEST.get('min-cosine-similarity', "0.0" ) )
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_FORMERRORS )
+
+	# 4. load actors as nodes
+	actors = Document_Tag.objects.filter(tag__type='actor', document__corpus__id=corpus_id, document__id__in=ids)
 	nodes = {}
 	for dt in actors:
-		
-		if dt.tag.id in nodes:
-			nodes[ dt.tag.id]['group'] = nodes[ dt.tag.id]['group'] + 1
+		if dt.tag.id in nodes: 
+			nodes[ dt.tag.id ]['size'] = nodes[ dt.tag.id ]['size'] + 1
 			continue
-
+		# create a new node with tag id
 		nodes[ dt.tag.id] = {
-			'group': 1,
+			'size': 1,
 			'name':dt.tag.name,
 			'id':dt.tag.id
 		}
@@ -698,12 +922,16 @@ def relations_graph(request, corpus_id):
 	#  "document__ref_date__gt": 20111011, 
     #  "document__ref_date__lt": 20121011
 	
+	# relations = Relation.objects.filter(source__corpus=c, target__corpus=c, source__id__in=ids, target__id__in=ids )
+
 	cursor = connection.cursor()
 	cursor.execute("""
 		    SELECT 
 		    t1.id as alpha_actor,  
 		    t2.id as omega_actor,
-		    AVG( y.cosine_similarity ) as average_cosine_similarity
+		    AVG( y.cosine_similarity ) as average_cosine_similarity,
+		    MIN( y.cosine_similarity ) as min_cosine_similarity,
+		    MAX( y.cosine_similarity ) as max_cosine_similarity
 		FROM `anta_distance` y
 		JOIN anta_document_tag dt1 ON y.alpha_id = dt1.document_id
 		JOIN anta_document_tag dt2 ON y.omega_id = dt2.document_id  
@@ -712,8 +940,10 @@ def relations_graph(request, corpus_id):
 		JOIN anta_document d1 ON y.alpha_id = d1.id
 		JOIN anta_document d2 on y.omega_id = d2.id
 		    WHERE 
-		    """ + " AND ".join( filters ) + """
-		GROUP BY alpha_actor, omega_actor
+		    """ + " AND ".join( filters ) +  """
+		
+		GROUP BY alpha_actor, omega_actor 
+			""" + ( " HAVING min_cosine_similarity > %s " % min_cosine_similarity if min_cosine_similarity > 0 else "" ) + """
 		ORDER BY average_cosine_similarity
 	""",[ corpus_id, corpus_id])
 
@@ -721,13 +951,13 @@ def relations_graph(request, corpus_id):
 		edges.append({
 			'value':row[2],
 			'source':row[1],
-			'target':row[0]
+			'target':row[0],
+			'color': '#660000'
 		})
-    # Data modifying operation - commit required
-	response['edges'] = edges
-	# load distances
 
 
+    # write nodes isnide view
+	response['edges'] = edges	
 	response['nodes'] = nodes
 
 	return render_to_json( response )
@@ -924,6 +1154,20 @@ def access_denied( request ):
 #    try except handling on the road
 #    Intended for api internal use only.
 #
+def _start_process( popen_args, routine, response ):
+	import subprocess, sys
+
+	response['routine'] = routine.json()
+
+	try:
+		subprocess.Popen(popen_args, stdout=None, stderr=None)
+	except Exception, e:
+		return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
+	
+	return render_to_json( response )
+
+
+
 def _delete_instance( request, response, instance, attachments=[] ):
 	
 	try:
@@ -940,6 +1184,52 @@ def _delete_instance( request, response, instance, attachments=[] ):
 		
 	return render_to_json( response );
 	
+def _get_instances( request, response, model_name, app_name="anta" ):
+	from django.db.models.loading import get_model
+	from django.db.models import Q
+	m = get_model(app_name,model_name)
+	
+	# get toal objects
+	response['meta']['total'] = m.objects.count()
+	
+	try:
+		# has OR clause (does not handle filters )
+		if response['meta']['queries'] is not None:
+			#queries = reduce(operator.or_, [Q(x) for x in response['meta']['queries']])
+			#response['results'] = [i.json() for i in m.objects.filter( queries, **response['meta']['filters']).order_by(*response['meta']['order_by'])[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+			
+			pass
+
+		response['results'] = [i.json() for i in m.objects.filter( **response['meta']['filters']).order_by(*response['meta']['order_by'])[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_EMPTY )
+		
+	return render_to_json( response )
+	#.objects.all()
+
+#
+#   Usage: corpus = get_or_die("Corpus", response, {'id':2})
+#
+def _get_or_die( model_name, response, app_name="anta", filters={}):
+	from django.db.models.loading import get_model
+	m = get_model(app_name,model_name)
+	try:
+		return m.objects.get( **filters ) 
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_EMPTY )
+
+#
+#   Usage: corpus = get_or_die("Corpus", response, {'id':2})
+#
+def _save_or_die( model_name, response, app_name="anta", filters={}):
+	from django.db.models.loading import get_model
+	m = get_model(app_name,model_name)
+	try:
+		return m( **filters ).save()
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_EMPTY )
+
+
 
 def _store_analysis( corpus, type=""):
 	try:
@@ -997,9 +1287,11 @@ def _get_relation( relation_id ):
 	except:
 		return None
 
+def _whosdaddy():
+	return inspect.stack()[2][3]
 
 def _json( request, enable_method=True ):
-	j =  {"status":"ok", 'meta':{ 'indent':False } }
+	j =  {"status":"ok", 'meta':{ 'indent':False, 'action':_whosdaddy() } }
 	if request.REQUEST.has_key('indent'):
 		j['meta']['indent'] = True
 
@@ -1019,10 +1311,30 @@ def _json( request, enable_method=True ):
 	if request.REQUEST.has_key('filters'):
 		try:
 			j['meta']['filters'] = json.loads( request.REQUEST.get('filters') )
-		except:
-			j['meta']['filters'] = []
+		except Exception, e:
+			j['meta']['warnings'] = "property 'filters' JSON Exception: %s" % e
+			j['meta']['filters'] = {}
 	else:
-		j['meta']['filters'] = []
+		j['meta']['filters'] = {}
+
+	if request.REQUEST.has_key('queries'):
+		try:
+			j['meta']['queries'] = json.loads( request.REQUEST.get('queries') )
+		except Exception, e:
+			j['meta']['warnings'] = "property 'queries' JSON Exception: %s" % e
+			j['meta']['queries'] = None
+	else:
+		j['meta']['queries'] = None
+
+
+	if request.REQUEST.has_key('order_by'):
+		try:
+			j['meta']['order_by'] = json.loads( request.REQUEST.get('order_by') )
+		except Exception, e:
+			j['meta']['warnings'] = "property 'order_by' JSON Exception: %s" % e
+			j['meta']['order_by'] = {}
+	else:
+		j['meta']['order_by'] = {}
 
 	# test against available methods, default with GET
 	if not j['meta']['method']  in API_AVAILABLE_METHODS:

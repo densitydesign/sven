@@ -188,7 +188,7 @@ rect.node, text.label {
 	margin-left:5px;
 }
 
-	
+	/*
 #tooltip {
 	position:absolute;
 	width:300px;
@@ -209,7 +209,7 @@ rect.node, text.label {
 	background:#c27c70;
 	height:0px;
 	}
-
+*/
 #info {
 	padding:20px;
 	border-bottom:0px solid #ddd;
@@ -220,10 +220,12 @@ rect.node, text.label {
 	color:#aaaaaa;
 	font-size:90%;
 	}
-	
+
+/*
 h3 {
 	margin: 5px 0 5px 0;
 	}
+*/
 	
 .actor {
 	color:#999999;
