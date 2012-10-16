@@ -58,6 +58,7 @@ query.getCorpora(function(response){
 	}
 	
 	corpusID = response.results[0].id;
+	//corpusID = args.corpus != 0 ? args.corpus:response.results[0].id;
 	
 	checkStatus();
 })
@@ -170,7 +171,8 @@ function getDocumentsList(){
 	filters["date__gte"] = $('#dp1').data('date') + "T00:00";
 	filters["date__lte"] = $('#dp2').data('date') + "T00:00";
 	filters["title__icontains"] = d3.select("#filterContains").property("value");
-	filters["tags__id__in"]
+	//filters["tags__id__in"]
+	console.log(d3.select(".filterActors").selectAll("label > input").property("checked"));
 	},args);
 }
 
