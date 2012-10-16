@@ -246,7 +246,7 @@ def corpus( request, id ):
 # from django.views.decorators.csrf import csrf_exempt
 # @csrf_exempt
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
-def documents(request):
+def documents(request, corpus_name=None):
 	response = _json( request )
 
 	# create documents
@@ -260,11 +260,14 @@ def documents(request):
 	
 	response['corpus'] = corpus.json()
 
+
 	# to create a document, 
 	if response['meta']['method'] == 'POST':
 		return create_document( request, response, corpus=corpus )
 
-	return _get_instances( request, response, model_name="Document" )
+	return JsonQ( request ).get_response( queryset=Document.objects.filter(corpus=corpus) )
+
+	# return _get_instances( request, response, model_name="Document" )
 
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
