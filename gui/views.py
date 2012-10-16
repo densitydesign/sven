@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from django.db.models import Q
 from django.http import HttpResponse, HttpRequest, HttpResponseRedirect
-from django.shortcuts import render_to_response, redirect
+from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login, logout, authenticate
@@ -101,3 +101,17 @@ def pdfviewer(request):
 	data['custom'] = CUSTOM_SETTINGS
 	c = RequestContext(request, data)
 	return render_to_response("gui/viewer.html", c)
+
+@login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
+def corpus_documents(request, corpus_name=None):
+	data = _shared_context( request, corpus_name, active="documents" )
+	return render_to_response("gui/corpus_documents.html", RequestContext(request, data) )
+
+
+def _shared_context( request, corpus_name, active="" ):
+	data = {}
+	data['corpus'] = get_object_or_404( Corpus, name=corpus_name, owner=request.user )
+	data['active'] = active
+	data['custom'] = CUSTOM_SETTINGS
+	return data
+
