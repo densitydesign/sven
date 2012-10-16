@@ -387,3 +387,19 @@ svenjs.Sven.prototype.exportEntities = function(id, successCallback){
     
 };
 
+/*get actors */
+svenjs.Sven.prototype.getActors = function(successCallback, args){
+		
+    var url = this.url + "/anta/api/tags/?indent=true&filters={%22type%22:%22actor%22}";
+	
+     $.ajax({
+        type: 'GET',
+        url: url,
+        data: args,
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+    
+};
+
