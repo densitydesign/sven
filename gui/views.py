@@ -108,10 +108,39 @@ def corpus_documents(request, corpus_name=None):
 	return render_to_response("gui/corpus_documents.html", RequestContext(request, data) )
 
 
-def _shared_context( request, corpus_name, active="" ):
+def _shared_context( request, corpus_name=None, active="" ):
 	data = {}
-	data['corpus'] = get_object_or_404( Corpus, name=corpus_name, owner=request.user )
+	data['corpus'] = Corpus( id=request.session.get("corpus_id", 0), name=request.session.get("corpus_name", "") )
 	data['active'] = active
 	data['custom'] = CUSTOM_SETTINGS
+
+	# load or switch corpus via corpus name
+	# data['corpus'] = None
+	
+	if corpus_name != request.session.get("corpus_name", 0):
+		# switch corpus
+		data['corpus'] = get_object_or_404( Corpus, name=corpus_name, owner=request.user )
+		request.session["corpus_id"] = data['corpus'].id
+		request.session["corpus_name"] = data['corpus'].name
+
+	elif request.session.get("corpus_id", 0) is 0:
+		# corpus_name is none, no session stored... load last corpus created
+		try:
+			# 
+			corpus = Corpus.objects.filter( owners__user = request.user ).order_by("-id")[0]
+			request.session["corpus_id"] = corpus.id
+			request.session["corpus_name"] = corpus.name
+			data['info'] = "session corpus created"
+		
+		except Exception, e:
+			response['warning'] = "Exception: %s" % e
+			request.session["corpus_id"] = 0
+			request.session["corpus_name"] = ""
+
+	
+	else:
+		data['info'] = "session corpus already stored"
+		
+
 	return data
 
