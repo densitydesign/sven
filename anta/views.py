@@ -47,6 +47,14 @@ def install( request ):
 
 
 #
+# status corpus. test.
+#
+@login_required( login_url=LOGIN_REQUESTED_URL )
+def status(request, corpus_name ):
+	data = _data( request )
+	return render_to_response('anta/status.html', RequestContext(request, data))
+
+#
 # upload files. test.
 #
 @login_required( login_url=LOGIN_REQUESTED_URL )

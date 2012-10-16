@@ -108,7 +108,9 @@ class Tag( models.Model ):
 	def json(self):
 		return {
 			'id'	: self.id,
-			'name'	: self.name
+			'name'	: self.name,
+			'type'	: self.type,
+			'num_documents':	self.num_documents if hasattr( self, 'num_documents') else 0
 		}	
 
 

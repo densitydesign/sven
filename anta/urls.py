@@ -23,6 +23,7 @@ urlpatterns = patterns('',
 	# url(r'^/set-relation/corpus/(.?)/', anta.api.set_relation, name="anta_api_set_relation"),
     
     url(r'^overview/corpus/(?P<corpus_name>[a-z0-9-]+)/$', 'sven.anta.views.overview', name='anta_overview'),
+    url(r'^status/corpus/(?P<corpus_name>[a-z0-9-]+)/$', 'sven.anta.views.status', name='anta_status'),
 	
     url(r'^document/(\d+)/$', 'sven.anta.views.document', name='anta_document'),
 	
@@ -52,6 +53,9 @@ urlpatterns = patterns('',
 	url(r'^api/use-corpus/(\d+)/$', 'sven.anta.api.use_corpus', name='anta_api_use_corpus' ),
 	url(r'^api/attach-corpus/(\d+)$', 'sven.anta.api.attach_corpus', name='anta_api_attach_corpus' ),
 	
+	# tags
+	url(r'^api/tags/$', 'sven.anta.api.tags', name='anta_api_tags' ),    
+	url(r'^api/tags/(?P<tag_id>\d+)/$', 'sven.anta.api.tag', name='anta_api_tag' ), 
 
 	# segments
 	url(r'^api/stems/$', 'sven.anta.api.segment_stems', name='anta_api_segment_stems' ), 

@@ -1,0 +1,46 @@
+{% extends "anta/boilerplate.html" %}
+{% load i18n %}
+{% load extras %}
+
+{% block custom_body %}
+<pre id="console"></pre>
+<script src="{{ custom.STATIC_URL }}/js/jquery.discontinue.js"></script>
+<script>
+	
+	$(window).ready(function(){
+		// listen to all events, cfr console
+		$.fn.discontinue.verbose( function( event, data ){
+			$("#console").empty().append( [ "\n", "[", event.namespace,"]", new Date(), event.type, data].join(" ") )
+			if (data.status == "ok" && data.objects.length > 0 ){
+				$("#console").append([
+					"\n -- ",
+					data.status,
+					data.objects[0].completion,
+					data.objects[0].type
+				].join(" "));
+
+			}
+			
+		});
+
+		// listen to success event
+		$.fn.discontinue.on( 'success.keepon.discontinue', function(event, data){
+			console.log(data);
+		});
+
+			// execute standard keepon
+		$().discontinue.keepon({
+			delay: 1500,
+			url: '{% url anta_api_pending_routine_corpus 1 %}?limit=1&order_by=["-id"]'
+		});
+
+
+
+	});
+	
+
+
+</script>
+{% endblock %}
+
+
