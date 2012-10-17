@@ -18,7 +18,7 @@ from django.contrib.auth.models import User
 from django.db.models import Count, Min, Max, Avg
 
 from sven.core.utils import _whosdaddy, render_to_json, throw_error, JsonQ
-
+import urllib
 
 #
 #    ========================
@@ -1243,7 +1243,8 @@ def _delete_instance( request, response, instance, attachments=[] ):
 	for f in attachments:
 		if f:
 			try:
-				os.remove(f);
+				#os.remove(f);
+				os.remove(urllib.unquote_plus(str(f)));
 			except Exception, e:
 				return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_EMPTY )
 		
