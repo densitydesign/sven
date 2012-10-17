@@ -43,7 +43,7 @@ def standard( corpus, routine ):
 	number_of_documents = Document.objects.filter(corpus=corpus ).count()
 
 	if number_of_documents == 0:
-		return close_routine( routine, error="No document found", status="ERR")
+		return close_routine( routine, error="standard routine: No document found", status="OK")
 
 	# 1. distiller.decant (tf computation )
 	try:
@@ -92,7 +92,7 @@ def tf_tfidf( corpus, routine ):
 	number_of_documents = Document.objects.filter(corpus=corpus ).count()
 
 	if number_of_documents == 0:
-		return close_routine( routine, error="No document found", status="ERR")
+		return close_routine( routine, error="tfidf routine: no document found", status="OK")
 
 	tf( corpus=corpus, routine=routine, completion_start=0.0, completion_score=0.4 )
 	
