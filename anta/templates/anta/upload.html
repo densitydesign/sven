@@ -22,7 +22,7 @@
 	<script>
 		$(function(){
 			$("#fileupload").fileupload({
-				url:'{% url anta_api_documents %}?corpus=1&language=FR&title=custom title&tags=[{"type":"actor","name":"ONG"},{"type":"actor","name":"ONG"}]',
+				url:'{% url anta_api_documents %}?corpus=1&language=FR&title=custom title&ref_date=2008-01-02 22:00&tags=[{"type":"actor","name":"ONG"},{"type":"actor","name":"ONG"}]',
 				dataType: 'json',
 				done: function(e, data){
 					console.log(e, data.result);

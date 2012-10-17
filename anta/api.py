@@ -377,6 +377,7 @@ def create_document( request, response, corpus ):
 			if response['presets']['ref_date'] is not None:
 				d.ref_date = response['presets']['ref_date'] 
 			d.save()
+			response['presets']['ref_date'] = response['presets']['ref_date'].isoformat() if response['presets']['ref_date'] is not None else  None
 
 			if 'tags' in response['presets']:
 				for t in response['presets']['tags']:	

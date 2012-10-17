@@ -192,25 +192,15 @@ def pdftotext( filename, output="" ):
 		comparison = filename + ".dif.txt"
 	
 	print "[transforming pdf]", filename
-	
-	
-	#try:
-	#	content = PDF( filename ).string
-	#	output = open( output, 'w' ) 
-	#	output.write( content.encode( "utf-8" ) )
-	#except:
-	#	return False
 		
 	try:
 		subprocess.check_call("pdftotext -enc UTF-8 " + filename.replace(" ","\\ ") +" " + output.replace(" ","\\ "), shell=True)
-	except:
-		return False
-	
+	except Exception,e:
+		return e.returncode == 1
+	#	print e.returncode
+	#return subprocess.check_call("pdftotext -enc UTF-8 " + filename.replace(" ","\\ ") +" " + output.replace(" ","\\ "), shell=True) == 1
 	return True
 	
-	# print subprocess.check_call("pdftotext -enc UTF-8 " + filename.replace(" ","\\ ") +" " + output.replace(" ","\\ "), shell=True)
-	
-
 def docxtotext( docx, output="" ):
 	# convert a .docx to a .txt utf8 or similar
 	docx = docx.replace("%20"," ")
