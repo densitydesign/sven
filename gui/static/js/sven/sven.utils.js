@@ -234,6 +234,17 @@
 							d3.select(this).data()[0].__selected__ = selectAllStatus;
 						})
 						
+						tr.each(function(d){
+							var e = {
+								row : d,
+								cell : d,
+								target : this
+							}
+							event.selected(e);
+						})
+						
+						
+						
 						datatable.update();
 					})
 					
