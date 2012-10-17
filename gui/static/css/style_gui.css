@@ -3,16 +3,17 @@
 }
 
 .sven-container {
-	
 	padding: 0px 50px;
 }
 
+
+h3 {
+	font-weight: normal;
+}
+
 #header {
-	
-	border-top: 4px solid #000;
 	margin-bottom:20px;
 	background-color: #eee;
-
 }
 
 #header .nav-tabs {
@@ -40,11 +41,18 @@
 }
 
 .maintitle {
-	padding:30px 0px;
+	padding:15px 0px;
 }
 
-.maintitle h1 {
-	text-shadow: 0px 1px white;
+.maintitle h2 {
+	font-family: "soleil",sans-serif;
+	font-style: normal;
+	font-weight: 800;
+}
+
+.maintitle small {
+	font-size: 12px;
+	font-weight: 400;
 }
 
 .right {
@@ -76,6 +84,10 @@
 	width:100%;
 	padding: 10px 0px;
 	border-bottom:1px solid #DDD;
+}
+
+.logout {
+	margin-top: 15px;
 }
 
 /* Documents list */
@@ -259,7 +271,20 @@ h3 {
 	}
 
 .tag {
-	display:inline-block;
+	display: inline-block;
+	background-color: #DDD;
+	text-shadow: none;
+	color: white;
+	padding: 3px 9px;
+	font-weight: normal;
+	line-height: 14px;
+	margin: 1px;
+}
+
+.btn-toolbar {
+	background: #F9F9F9;
+	padding: 10px;
+	
 }
 
 
@@ -281,29 +306,54 @@ h3 {
 }	
 
 
-.doc_info {
+.doc-actor, .doc-date, .doc-title {
+	padding:5px;
+	display:table;
+	-moz-user-select: none;
+  	-khtml-user-select: none;
+  	-webkit-user-select: none;
+  	user-select: none;
+	cursor:pointer;
+	text-overflow: ellipsis;
+}
+
+.doc-actor:hover, .doc-date:hover, .doc-title:hover {
+	background-color:#EEE;
+}
+
+.doc-info {
 	float:left;
-	height:100px;
+	min-height:100px;
+	border-bottom: 1px solid #DDD;
+	width: 100%;
 }
 
-.doc_title {
-	text-transform: capitalize;
+.doc-title {
+	font-size:20px;
+	overflow: hidden;
 }
 
-.doc_title h2 {
-	font-size: 15px;
-	margin-bottom: 5px;
+.doc-actor, .doc-date {
+	color: #888;
 }
 
-.doc_actors {
-	color: gray;
+.doc-date {
+	
 }
 
 .doc_preview {
 	background: #f1f1f1;
 	border: 1px solid #ddd;
-	margin-top: 35px;
+	margin-top: 15px;
 	float:left;
+}
+
+.section-info {
+	padding:10px 0px;
+	clear: both;
+}
+
+.modal {
 }
 
 
