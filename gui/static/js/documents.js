@@ -164,7 +164,7 @@ function getDocumentsList(){
 	//end datepicker
 	
 	//apply filters
-	d3.select("#filter").append("button")
+	d3.select("#filters").append("button")
 		.attr("class", "btn btn-small btn-success")
 		.text("Apply filters")
 		.on("click", function(){setFilters();})
@@ -207,22 +207,25 @@ function getUpdateDocumentsList(){
 			dataTable.on("selected", function(){
 		
 			
+				console.log(d3.select(".datatable-main").selectAll("tbody tr"))
+				var dt = d3.select(".datatable-main").selectAll("tbody tr").data()		
+				deleteList = dt.filter(function(t){ return t.__selected__; })//d3.selectAll(".datatable-selected > .datatable-check").data();
+			
+				if (deleteList.length > 0){
+				
+					d3.select("#delete")
+						.data([true])
+						.attr("class","btn btn-small tip")
+						.attr("title", "Delete ( " + deleteList.length + " ) documents")
+				
+				}else{
+					d3.select("#delete")
+						.data([false])
+						.attr("class","btn btn-small disabled")
+						.attr("title", "")
+				}
 			
 			
-			deleteList = d3.selectAll(".datatable-selected > .datatable-check").data();
-			console.log(deleteList.length);
-			if (deleteList.length > 0){
-				
-				d3.select("#delete")
-					.attr("style","display:inline")
-				
-				d3.select("#delete").text("delete (" + deleteList.length + ")")
-				
-			}else{
-				d3.select("#delete")
-					.attr("style","display:none")
-				
-			}
 		
 		})
 	
