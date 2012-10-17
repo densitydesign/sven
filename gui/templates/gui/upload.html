@@ -56,14 +56,15 @@
 					var title = d3.select(this).select(".titleInput").property("value");
 					var lang = d3.select(this).select(".langInput").property("value");
 					var date = d3.select(this).select(".dateInput").property("value");
-					date = date + "T00:00";
+					//date = date + "T00:00";
 					var actors = d3.select(this).select(".actorInput").property("value");
 					var actorsTag = [];
 					actors = actors.split(',');
 					for(i in actors){
 						actorsTag.push('{"type":"actor","name":"' + actors[i] +'"}');
 						};
-					d.url = "{% url anta_api_documents %}?corpus=" + corpusID + "&language=" + lang + "&title=" + title + "&ref_date=" + date + "&tags=[" + actorsTag +"]";
+					//d.url = "{% url anta_api_documents %}?corpus=" + corpusID + "&language=" + lang + "&title=" + title + "&ref_date=" + date + "&tags=[" + actorsTag +"]";
+					d.url = "{% url anta_api_documents %}?corpus=" + corpusID + "&language=" + lang + "&title=" + title + "&tags=[" + actorsTag +"]";
 					console.log(d.url);
 					d.submit();
 				})
@@ -76,6 +77,8 @@
 			dataType: 'json',
 			
 			done: function(e, data){				
+				
+				console.log(e, data.result, data);
 				
 				d3.select("#uploads .modal-upload")
 					.on("click", function(){})
@@ -103,11 +106,12 @@
 				var fileName = data.files[0].name;
 				var fileNameSplit = fileName.split('_', 4);
 				function fillInfo(){
+					
+					if (fileNameSplit.length == 4){
 					var date = fileNameSplit[2];
 					var y = date.slice(0,4);
 					var m = date.slice(4,6);
 					var d = date.slice(6,8);
-					if (fileNameSplit.length == 4){
 					docInfo.actor = fileNameSplit[0].split('-');
 					docInfo.lang = fileNameSplit[1];
 					docInfo.date = y + "-" + m + "-" + d;
@@ -122,7 +126,7 @@
 						};
 				fillInfo();
 				
-				var singleFile = d3.select("#uploads .modal-gallery")
+				var single = d3.select("#uploads .modal-gallery")
 					.append("div")
 					.data([data])
 					.attr("class","file-info")
@@ -131,11 +135,13 @@
 						
 						return d.files[0].name;
 					})
-					//.append("div")
-					//.attr("class","progress progress-striped active")
-					//	.append("div")
-					//	.attr("class","bar")
-					.append("form")
+					
+					single.append("div")
+					.attr("class","progress progress-striped active")
+					.append("div")
+					.attr("class","bar")
+					
+					var singleFile = single.append("form")
 					.attr("class", "form-horizontal contact-form")
 					//.attr("id", "contact-form")
 					.attr("action", "")
@@ -228,6 +234,7 @@
 
 			fail: function( e, data ){
 				
+				console.log(e, data);
 				d3.select("#uploads .modal-upload")
 					.on("click", function(){})
 				
@@ -246,6 +253,9 @@
 			},
 			
 			progress: function(e,data){
+			
+					
+						
 				d3.select(data.sven_target)
 					.select(".progress")
 					.style("display","inline")
