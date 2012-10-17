@@ -155,7 +155,7 @@ def clean( txtfile ):
 	# excuded_pattern = [^\w+ \,\:\;\-\–àçòèé&@°\*\?\!\"\'\n]
 	f = codecs.open( txtfile, encoding='utf-8', mode='r')
 	content = f.read()
-	content = content.replace( u"•","-" )
+	content = content.replace( u"•","; " )
 	content = re.sub( r"\-+", ", ", content )
 	content = re.sub("\|", "; ", content )
 	content = re.sub(r'[\_\”\"\']+', " ", content )
