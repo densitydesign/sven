@@ -1,5 +1,7 @@
 
-var query = new svenjs.Sven(""); 
+var query = new svenjs.Sven(""),
+	sDocumentId,
+	tDocumentId
 
 //add source document
 query.getDocument(id_document, function(response){
@@ -11,20 +13,24 @@ query.getDocument(id_document, function(response){
     	d3.select("#source_document").text(data.error + ", error: " + data.errorCode);
 		return
     }
+	
+	sDocumentId = data.results[0].id;
     
-	var text = response.text;
-	var date = response.results[0].date.split('T')[0];
-	var title = response.results[0].title;
-	var actors = response.results[0].actors;
-	var actorList = '';
+	var text = response.text,
+		date = response.results[0].date.split('T')[0],
+		title = response.results[0].title,
+		actors = response.results[0].actors,
+		tags = response.results[0].tags,
+		actorList = '';
+	
+		
 	for (actor in actors) {
 		actorList = actorList + actors[actor].name + " ";
-		}
-	d3.select(".actor").text(actorList);
-	var tags = response.results[0].tags;
-	//d3.select(".text").text(text);
-	d3.select(".title h3").text(title);
-	d3.select(".date").text(date);
+	}
+	
+	d3.select(".doc-date").text(date);
+	d3.select(".doc-title").text(title);
+	d3.select(".doc-actor").text(actorList);
     	
 		
 	/* Tags */
@@ -42,7 +48,6 @@ query.getDocument(id_document, function(response){
 
 $('#select-relations a:first').tab('show');
 $('a[data-toggle="tab"]').on('show', function (e) {
-	
 	d3.select(".addResult")
 	.style("display","none")
 })
@@ -184,19 +189,23 @@ query.getDocument(id_document, function(response){
     	return;
 	}
     
+	tDocumentId = data.results[0].id;
+	
     	var text = response.text;
     	var date = response.results[0].date.split('T')[0];
     	var title = response.results[0].title;
     	var actors = response.results[0].actors;
     	var actorList = '';
-    	for (actor in actors) {
+    	var tags = response.results[0].tags;
+    	
+		
+		for (actor in actors) {
     		actorList = actorList + actors[actor].name + " ";
     		}
-    	targetDocument.select(".actor").text(actorList);
-    	var tags = response.results[0].tags;
-    	//d3.select(".text").text(text);
-    	targetDocument.select(".title h3").text(title);
-    	targetDocument.select(".date").text(date);
+		
+		targetDocument.select(".doc-date").text(date);
+		targetDocument.select(".doc-title").text(title);
+		targetDocument.select(".doc-actor").text(actorList);
     	
 		/* Tags */
 		
@@ -232,7 +241,7 @@ query.getDocument(id_document, function(response){
 			query.getDocuments(function(data){
 				labels = []
 				mapped = {}
-				data.results.forEach(function(item,i){
+				data.objects.forEach(function(item,i){
 					mapped[item.title] = item.id
 					labels.push(item.title)
 				})
@@ -483,6 +492,59 @@ function updateRalation(id, args){
 				drawRelation();
 					
 				},args)
-		
 
 }
+// ref_date, title
+var documentId,
+	key;
+
+$('#editing').on('show', function (e, a) {
+
+	var trigger = d3.select(d3.event.target).attr("class");
+		value = d3.select(d3.event.target).text();
+		
+	if (trigger.search("doc-source") != -1)
+		documentId = sDocumentId;
+	else documentId = tDocumentId;
+		
+	d3.select("#editing-input").property("value",value)
+	
+	if (trigger.search("doc-title") != -1) {
+		key = "title"
+		return;
+	}
+	
+	if (trigger.search("doc-date") != -1) {
+		key = "ref_date"
+		return;
+	}
+	
+	if (trigger.search("doc-actor") != -1) {
+		console.log("actor", value)
+		return;
+	}
+	
+})
+
+
+d3.selectAll(".editable")
+	.on("click",function(d){		
+		$("#editing").modal("show")		
+	})
+
+d3.select("#editing-save")
+	.on("click",function(d){
+		
+		var args = {};
+		args[key] = d3.select("#editing-input").property("value")
+
+		query.updateDocument(documentId, function(response){
+			
+			console.log(response);
+			
+			$("#editing").modal("hide");
+			window.location.reload();
+			
+		}, args)
+		
+})

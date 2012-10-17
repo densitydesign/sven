@@ -1,55 +1,27 @@
 {% extends "gui/base.html" %}
 
 {% block js_head %}
-	<!--<script type="text/javascript" src="{{custom.STATIC_URL}}js/pdf.js"></script>-->
+	<!--<script type="text/javascript" src="{{custom.STATIC_URL}}js/pdf.js"></script>
 	<script type="text/javascript" src="{{custom.STATIC_URL}}js/bootstrap/bootstrap-button.js"></script>
 	<script type="text/javascript" src="{{custom.STATIC_URL}}js/bootstrap/bootstrap-typeahead.js"></script>
-	<script type="text/javascript" src="{{custom.STATIC_URL}}js/bootstrap/bootstrap-tab.js"></script>
+	<script type="text/javascript" src="{{custom.STATIC_URL}}js/bootstrap/bootstrap-tab.js"></script>-->
 {% endblock %}
 
 
 {% block content %}
 
+
 <div id="source_document">
-	<div class="doc_info">
-		<div class="date"></div>
-		<div class="title"><h3></h3></div>
-		<div class="actor"></div>
+	<div class="doc-info">
+		<span class="doc-date doc-source editable"></span>
+		<span class="doc-title doc-source editable"></span>
+		<span class="doc-actor doc-source"></span>
 	</div>
 	<div class="clear"></div>
-	<h3>Entities</h3>
+	<div class="section-info"><strong>Entities</strong></div>
 	<div class="tags"></div>
 	
 	<div class="doc_preview">
-		<!--
-		<div class="controls">
-			
-			<div class="btn-group">
-			<span class="btn btn-small btn-inverse">
-				<i class="pageUp"></i>
-			</span>
-			
-			<span class="btn btn-small btn-inverse">
-				<i class="pageDown"></i>
-			</span>
-			
-			<span class="btn btn-small btn-inverse">
-				<i class="zoomOut"></i>
-			</span>
-			
-			<span class="btn btn-small btn-inverse">
-				<i class="zoomIn"></i>
-			</span>
-			
-			</div>
-			
-			<div id="prev" class="pageUp btn-pdf" ></div>
-			<div id="next" class="pageDown btn-pdf"></div>
-			<div id="out" class="zoomOut btn-pdf"></div>
-			<div id="in" class="zoomIn btn-pdf"></div>
-		
-     	</div>
-     	-->
 		<div class="text">
 		
 			<div class="pdf-container">
@@ -64,7 +36,7 @@
 
 
 <div class="relations">
-	<h3>Relations</h3>
+	<div class="section-info"><strong>Relations</strong></div>
 	
 	<ul class="nav nav-tabs" id="select-relations">
 	  <li  class="active"><a href="#all-relations" data-toggle="tab">Show all</a></li>
@@ -123,13 +95,15 @@
 
 <div id="target_document">
 	
-	<div class="doc_info">
-		<div class="date"></div>
-		<div class="title"><h3></h3></div>
-		<div class="actor"></div>
+	<div class="doc-info">
+		<span class="doc-date doc-target editable"></span>
+		<span class="doc-title doc-target editable"></span>
+		<span class="doc-actor doc-target"></span>
 	</div>
+	
+	
 	<div class="clear"></div>
-	<h3>Entities</h3>
+	<div class="section-info"><strong>Entities</strong></div>
 	<div class="tags"></div>
 	
 	<div class="doc_preview">
@@ -172,6 +146,30 @@
 <div id="dialog-confirm" title="Delete relation?">
 	<p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 7px 0;"></span>These relation will be permanently deleted and cannot be recovered. Are you sure?</p>
 </div>
+
+
+
+
+<!-- Editing -->
+<div class="modal hide fade" id="editing" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Edit</h3>
+  </div>
+  <div class="modal-body">
+	  <label>Please provide a new value:</label>
+	  <input type="text" id="editing-input"></input>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+    <button class="btn btn-primary" id="editing-save">Save</button>
+  </div>
+</div>
+
+
+
+
+
 
 {% endblock %}
 

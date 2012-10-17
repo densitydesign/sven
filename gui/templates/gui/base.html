@@ -51,7 +51,8 @@
   <link rel="stylesheet" href="{{ custom.STATIC_URL }}css/style_gui.css" type="text/css"/>
   <link rel="stylesheet" href="{{ custom.STATIC_URL }}css/smoothness/jquery-ui-1.8.22.custom.css" type="text/css"/>
   
-  
+  <script type="text/javascript" src="//use.typekit.net/rhh4bfk.js"></script>
+  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
 	
   {% block css_1 %}
   {% endblock %}
@@ -68,13 +69,12 @@
    	   <div id="header" >
        	<div class="sven-container">
 			<div class="maintitle">
-			<h1>Sven</h1>
-			<small>alpha version</small>
+			<h2>SVEN <small>v 0.1</small></h2>
+			
 			{% if user.is_authenticated %}
-			<div class="logout" style="float:right">
-				You are logged in as: <strong>{{ user }}</strong>
+			<div class="logout pull-right">
+				<strong><i class="icon-user"></i> {{ user }}</strong>
 				<a href="{% url gui_logout %}" title="logout">Logout</a>
-				
 			</div>
 			{% endif %}
 			
@@ -84,10 +84,6 @@
 			  <li class="{% if active == 'timeline' %} active {% endif %}"><a href="/gui/timeline">Timeline</a></li>
 			  <li class="{% if active == 'dynamics' %} active {% endif %}"><a href="/gui/dynamics">Dynamics</a></li>
 			</ul>
-			
-			
-			
-			
 			
 			
 			
