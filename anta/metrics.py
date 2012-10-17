@@ -49,7 +49,7 @@ def standard( corpus, routine ):
 	try:
 		decant( corpus=corpus, routine=routine, settings=settings, ref_completion=0.5 )
 	except Exception, e:
-		return close_routine( routine, error="Exception: %s" % e, status="ERR")
+		return close_routine( routine, error="Ho trovato Wally 52, Exception: %s" % e, status="ERR")
 
 	# 2. get all languages in corpus
 	tf_tfidf( corpus=corpus, routine=routine )
@@ -146,7 +146,7 @@ def clean( corpus, routine ):
 				
 		
 	except Exception, e:
-		close_routine( routine, error="Exception: %s" % e, status="ERR")
+		close_routine( routine, error="Ho trovato Wally 149, Exception: %s" % e, status="ERR")
 		transaction.commit()
 	
 	close_routine( routine, error="", status="OK" )
@@ -228,10 +228,10 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 	#SELECT COUNT(*), stemmed FROM anta_segment GROUP BY stemmed 
 
 	# out some information
-	print "[info] column:",column
-	print "[info] corpus:",corpus.json()
-	print "[info] document in corpus:",number_of_documents
-	print "[info] stems in corpus (grouped by stemmed, language):",number_of_stems
+	#print "[info] column:",column
+	#print "[info] corpus:",corpus.json()
+	#print "[info] document in corpus:",number_of_documents
+	#print "[info] stems in corpus (grouped by stemmed, language):",number_of_stems
 
 	cursor = connection.cursor()
 
@@ -240,7 +240,7 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 
 	# 3. for each language, perform a tfidf
 	for i in Document.objects.filter(corpus=corpus ).values('language').annotate(num_document=Count('language')).distinct():
-		print "[info] language info: ",i
+		#print "[info] language info: ",i
 		
 		language = i['language']
 		# count tfidf group
@@ -265,7 +265,7 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 			WHERE d.corpus_id = %s AND s.language = %s
 			GROUP BY s.stemmed ORDER BY distribution DESC, stemmed ASC""", [ corpus.id, language ]
 		)
-		print "[info] query executed..."
+		#print "[info] query executed..."
 		
 		for row in dictfetchall(cursor):
 			# increment global runner (stats)
@@ -279,7 +279,7 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 				# print float(current_stem) / number_of_stems * 100.0, row[ column ], row['distribution'], df
 			except Exception, e:
 				print e
-				close_routine( routine, error="Exception: %s" % e, status="ERR")
+				close_routine( routine, error="Ho trovato Wally alla liena 281 di metrics.py, Exception: %s" % e, status="ERR")
 				transaction.commit()
 				return
 			for ds in dss:
@@ -292,12 +292,12 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 
 			if current_stem % 25 == 0:
 				completion = completion_start + (float(current_stem) / number_of_stems)*(completion_score-completion_start)
-				print "[info] query executed...",completion
+				#print "[info] query executed...",completion
 				log_routine( routine, completion = completion )
 				# save percentage and commit transaction
 				transaction.commit()
 	
-	print "[info] query completed!"
+	#print "[info] query completed!"
 				
 	if completion_score == 1.0:
 		close_routine( routine, error="", status="OK" )
@@ -364,7 +364,7 @@ def importcsv( routine, csvfile, column="stemmed" ):
 
 		except Exception, e:
 			#print	" segemnt id %s was not found!" % row['segment_id']
-			close_routine( routine, error="Exception: %s %s" % (e,row), status="ERR" )
+			close_routine( routine, error="Ho trovato Wally , Exception: %s %s" % (e,row), status="ERR" )
 			transaction.commit()
 			return
 
@@ -524,7 +524,7 @@ def main( argv):
 	try:	
 		routine = Routine.objects.get( pk=options.routine)
 	except Exception, e:
-		error( message="Exception: %s" % e, parser=parser )
+		error( message="Ho trovato Wally 572 Exception: %s" % e, parser=parser )
 	
 	# change routine status to CRE.. script is alive!
 	routine.status="CRE"
@@ -542,7 +542,7 @@ def main( argv):
 		try:
 			corpus = Corpus.objects.get( pk=options.corpus )
 		except Exception, e:
-			error_message = "Exception: %s" % e
+			error_message = "Ho trovato Wally 545 Exception: %s" % e
 
 	if options.func == "importcsv":
 		import unicodecsv,codecs
@@ -556,7 +556,7 @@ def main( argv):
 			#csvfile = unicodecsv.reader( content, encoding='utf-8')
 			
 		except Exception, e:
-			error_message = "Exception: %s" % e
+			error_message = "Ho trovato Wally 559, Exception: %s" % e
 	#
 	#     ==============================
 	#     ---- otuput error message ----
