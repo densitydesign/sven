@@ -130,7 +130,7 @@ svenjs.Sven.prototype.getDocument = function(id, successCallback, args){
 
 	var args = args || { };
 	args.corpus = args.corpus || 1;
-
+	//console.log(args);
     $.ajax({
         type: 'GET',
         url: url,

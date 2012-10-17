@@ -537,6 +537,7 @@ d3.select("#editing-save")
 		
 		var args = {};
 		args[key] = d3.select("#editing-input").property("value")
+		
 
 		query.updateDocument(documentId, function(response){
 			

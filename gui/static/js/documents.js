@@ -60,6 +60,7 @@ query.getCorpora(function(response){
 	
 	console.log(response)
 	corpusID = response.results[0].id;
+	//corpusID = args.corpus != 0 ? args.corpus:response.results[0].id;
 	
 	checkStatus();
 })

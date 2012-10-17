@@ -10,7 +10,6 @@ urlpatterns = patterns('',
 	url(r'logout/$', 'sven.gui.views.logout_view', name='gui_logout'),
 
 	url(r'documents/$', 'sven.gui.views.documents', name='gui_documents'),
-
 	#url(r'documents/(?P<corpus_name>[0-9a-z-]+)/$', 'sven.gui.views.corpus_documents', name='gui_corpus_documents'),
 	url(r'documents/(?P<id_document>\d+)/$', 'sven.gui.views.documents', name='gui_list'),
 	url(r'timeline/$', 'sven.gui.views.timeline', name='gui_timeline'),
