@@ -123,6 +123,7 @@ function getDocumentsList(){
 	var langList = d3.nest()
     .key(function(d) { return d.language; })
     .entries(data);
+
     
     d3.select(".filterLang").selectAll("label.checkbox")
 		.data(langList)
@@ -135,8 +136,8 @@ function getDocumentsList(){
 	
 	//datepicker
 	$('#alert').hide();
-	var startDate = new Date(2012,1,20);
-			var endDate = new Date(2012,1,25);
+	//var startDate = new Date(2000,0,1);
+			//var endDate = new Date(2012,1,25);
 			$('#dp1').datepicker()
 				.on('changeDate', function(ev){
 					if (ev.date.valueOf() > endDate.valueOf()){
@@ -163,18 +164,69 @@ function getDocumentsList(){
 	
 	//apply filters
 	d3.select("#filter").append("button")
-		.attr("class", "btn btn-mini btn-success")
+		.attr("class", "btn btn-small btn-success")
 		.text("Apply filters")
-		.on("click", function(){console.log($('#dp1').data('date'))})
+		.on("click", function(){setFilters();})
+		
+	d3.select("#filter").append("hr")
 	
+	function setFilters(){
 	var filters = {};
-	filters["date__gte"] = $('#dp1').data('date') + "T00:00";
-	filters["date__lte"] = $('#dp2').data('date') + "T00:00";
+	filters["ref_date__gte"] = $('#dp1').data('date') + " 00:00";
+	filters["ref_date__lte"] = $('#dp2').data('date') + " 00:00";
 	filters["title__icontains"] = d3.select("#filterContains").property("value");
-	filters["tags__id__in"]
+	filters["language__in"] = []
+	d3.select(".filterLang").selectAll("input:checked").each(function(d){filters["language__in"].push(d.key)});
+	if (filters["language__in"].length == 0){delete filters["language__in"]}
+	filters["tags__id__in"] = [];
+	d3.select(".filterActors").selectAll("input:checked").each(function(d){filters["tags__id__in"].push(d.id)});
+	if (filters["tags__id__in"].length == 0){delete filters["tags__id__in"]}
+	args['filters'] = JSON.stringify(filters);
+	console.log(args);
+	//getDocumentsList();
+	getUpdateDocumentsList();
+	}
 	},args);
 }
 
+function getUpdateDocumentsList(){
+	
+	query.getDocuments(function(response){
+
+	    var data = response.objects; 
+		var dataTable = sven.utils.datatable()
+			.data(d3.values(data))
+			.target("#documents-list")
+			.keys(function(d){ return ['id','date','title','actors','language']; })
+			.highlight(function(d){ return ['title']; })
+			.handle("actors", function(d){ return d.actors.map(function(v){return v.name;}).join(","); })
+			.handle("title", function(d){ return "<a href='/gui/documents/"+ d.id +"'>" + d.title + "</a>" })
+			.update()
+			
+			dataTable.on("selected", function(){
+		
+			
+			
+			
+			deleteList = d3.selectAll(".datatable-selected > .datatable-check").data();
+			console.log(deleteList.length);
+			if (deleteList.length > 0){
+				
+				d3.select("#delete")
+					.attr("style","display:inline")
+				
+				d3.select("#delete").text("delete (" + deleteList.length + ")")
+				
+			}else{
+				d3.select("#delete")
+					.attr("style","display:none")
+				
+			}
+		
+		})
+	
+			
+		},args)}
 
 // let's check if there is any analysis going
 

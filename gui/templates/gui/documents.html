@@ -1,7 +1,7 @@
 {% extends "gui/base.html" %}
 
 {% block css_1 %}
-	<!--<link rel="stylesheet" href="{{ custom.STATIC_URL }}css/datepicker.css" type="text/css"/>-->
+	<link rel="stylesheet" href="{{ custom.STATIC_URL }}css/datepicker.css" type="text/css"/>
 	<link rel="stylesheet" href="{{ custom.STATIC_URL }}css/jquery.fileupload-ui.css" type="text/css"/>
 {% endblock %}
 
@@ -11,7 +11,7 @@
     <script src="{{custom.STATIC_URL}}js/jquery/jquery.iframe-transport.js" type="text/javascript" ></script>
     <script src="{{custom.STATIC_URL}}js/jquery/jquery.fileupload.js" type="text/javascript" ></script>
     <script src="{{custom.STATIC_URL}}js/jquery/jquery.validate.min.js"></script>
-    <!--<script src="{{ custom.STATIC_URL }}js/bootstrap/bootstrap-datepicker.js"></script>-->
+    <script src="{{ custom.STATIC_URL }}js/bootstrap-datepicker.js"></script>
 	
 {% endblock %}
 
@@ -60,9 +60,13 @@
 		 
 		<div class="clear"></div>
 	</div>
-	<!--
 	<div id="filter" class="page-header">
 		<h4>Filters</h4>
+	<button type="button" class="btn" data-toggle="collapse" data-target="#filter">
+  Filters <span class="caret"></span>
+</button>
+	<div id="filter" class="collapse">
+<hr>
 		<div class="row-fluid">
 			<div class="span3">
 				<div class="well">
@@ -75,13 +79,13 @@
 			<table class="table">
 				<thead>
 					<tr>
-						<th><a href="#" class="btn small" id="dp1" data-date-format="yyyy-mm-dd" data-date="2012-02-20">Start date</a></th>
+						<th><a href="#" class="btn small" id="dp1" data-date-format="yyyy-mm-dd" data-date="2000-01-01">Start date</a></th>
 						<th><a href="#" class="btn small" id="dp2" data-date-format="yyyy-mm-dd" data-date="2012-02-25">End date</a></th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr>
-						<td id="startDate">2012-02-20</td>
+						<td id="startDate">2000-01-01</td>
 						<td id="endDate">2012-02-25</td>
 					</tr>
 				</tbody>
@@ -109,7 +113,7 @@
   				</div>
 			</div>
 		</div>
-	</div>-->
+	</div>
 </div>
 
 {% include "gui/upload.html" %}
