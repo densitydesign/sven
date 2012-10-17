@@ -146,6 +146,32 @@ svenjs.Sven.prototype.getDocument = function(id, successCallback, args){
     
 };
 
+
+/* get document */
+svenjs.Sven.prototype.updateDocument = function(id, successCallback, args){
+
+    var url = this.url + "/anta/api/documents/" + id + "/" + "?method=POST&indent=true";
+
+	var args = args || { };
+	args.corpus = args.corpus || 1;
+
+    $.ajax({
+        type: 'POST',
+        url: url,
+        data: args,
+        success: successCallback,
+        error: successCallback,
+        complete: function(){
+        	console.log(this.url);
+    		},
+        dataType: 'json'
+    });
+    
+    
+};
+
+
+
 /* delete document */
 svenjs.Sven.prototype.deleteDocument = function(id, successCallback){
 	

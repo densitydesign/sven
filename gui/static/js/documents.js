@@ -1,5 +1,6 @@
 var query = new svenjs.Sven("");  //svenjs.Sven("http://127.0.0.1:8000");  
 
+
 var corpusID;
 var deleteList;
 var deletedFile;
@@ -57,6 +58,7 @@ query.getCorpora(function(response){
 		return;
 	}
 	
+	console.log(response)
 	corpusID = response.results[0].id;
 	
 	checkStatus();
@@ -88,31 +90,30 @@ function getDocumentsList(){
 		var dataTable = sven.utils.datatable()
 			.data(d3.values(data))
 			.target("#documents-list")
-			.keys(function(d){ return ['id','date','title','actors','language']; })
+			.keys(function(d){ return ['id','title','date','actors','language']; })
 			.highlight(function(d){ return ['title']; })
 			.handle("actors", function(d){ return d.actors.map(function(v){return v.name;}).join(","); })
 			.handle("title", function(d){ return "<a href='/gui/documents/"+ d.id +"'>" + d.title + "</a>" })
 			.update()
 		
-		//d3.select("#checked").on("click", function(){console.log(d3.selectAll(".datatable-selected > .datatable-check").data())})
-		dataTable.on("selected", function(){
-		
+		dataTable.on("selected", function(d){
 			
 			
+			var dt = d3.select("#documents-list").selectAll("tbody tr").data()			
+			deleteList = dt.filter(function(t){ return t.__selected__; })//d3.selectAll(".datatable-selected > .datatable-check").data();
 			
-			deleteList = d3.selectAll(".datatable-selected > .datatable-check").data();
-			console.log(deleteList.length);
 			if (deleteList.length > 0){
 				
 				d3.select("#delete")
-					.attr("style","display:inline")
-				
-				d3.select("#delete").text("delete (" + deleteList.length + ")")
+					.data([true])
+					.attr("class","btn btn-small tip")
+					.attr("title", "Delete ( " + deleteList.length + " ) documents")
 				
 			}else{
 				d3.select("#delete")
-					.attr("style","display:none")
-				
+					.data([false])
+					.attr("class","btn btn-small disabled")
+					.attr("title", "")
 			}
 		
 		})
@@ -241,6 +242,10 @@ function checkStatus(){
       
 
  $('#delete').click(function(){
+	 
+	 if (!deleteList.length)
+	 	return;
+		
  		d3.select("#deleteAlert .modal-gallery")
 	 		.selectAll(".file-info")
 			.remove()
