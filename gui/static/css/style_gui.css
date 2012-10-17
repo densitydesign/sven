@@ -393,6 +393,33 @@ h3 {
 }
 
 
+.btn.disabled, .btn[disabled] {
+	opacity: .25;
+}
+
+#filters {
+}
+
+
+.breath {
+	margin-bottom: 20px;
+	border-bottom: 1px solid #DDD;
+	padding: 10px 0px;
+}
+
+#filters * {
+	font-size:13px;
+}
+
+.filter-block {
+	margin-bottom:30px;
+}
+
+.filter-title {
+	color: #888;
+	font-size: 12px;
+}
+
 
 /* Relations */
 

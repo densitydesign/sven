@@ -31,94 +31,69 @@
 </div> 
 
 
-<div id="documents-list">
-	
-	<div >
-		<h3>Documents</h3>
+<div class="row-fluid">
 		
+    <!-- Filters -->
+	<div class="span2" id="filters">
 		
-	<!--	
-		<p>
-		<button type="submit" class="btn btn-primary" id="upload-button">Upload new documents</button>
-		<button class="btn btn-danger btn-primary" id="delete" style="display:none">delete</button>
-		 <button class="btn btn-warning btn-mini" id="export" data-loading-text="Creating csv...">Export entities</button>
-		 <button class="btn btn-info btn-mini" id="import-button">Import entities</button>
-		
-		 </p>
-	 -->
-		<p>Here you have the list of all the available documents. Use the Upload button to add new documents from your computer.</p>
-		<div class="btn-toolbar">
-		  <div class="btn-group">
- 		    <a class="btn btn-small tip" rel="tooltip" title="Upload documents" href="#" id="upload-button"><i class="icon-file"></i></a>
-		    <a class="btn btn-small tip disabled" rel="tooltip" title="Delete documents" href="#" id="delete"><i class="icon-trash"></i><span></span></a>
-		  </div>
-		  <div class="btn-group">
- 		    <a class="btn btn-small tip" rel="tooltip" title="Export entities" href="#" id="export"><i class="icon-download"></i></a>
-		    <a class="btn btn-small tip" rel="tooltip" title="Import entities" href="#" id="import-button"><i class="icon-upload"></i></a>
-		  </div>
-		  
-		  <div class="btn-group">
-			 <a class="btn btn-small tip" rel="tooltip" title="Filters" href="#" data-toggle="collapse" data-target="#filter"><i class="icon-filter"></i></a>
-		    </div>
+		<p class="breath"><strong>Filters</strong></p>
+	  
+	  	<!-- Title -->
+		<div class="filter-block">
+			<p class="filter-title">By title</p>
+			<input class="input-medium" id="filterContains" type="text" placeholder="Type here...">
 		</div>
-		
-		
-		
-		 
-		<div class="clear"></div>
-	</div>
-
-	
-	<div id="filter" class="collapse">
-<hr>
-		<div class="row-fluid">
-			<div class="span3">
-				<div class="well">
-            <h5>Date constrains:</h5> 
-				<hr> 
-            
+	  
+		<!-- Dates -->
+		<div class="filter-block">
+			<p class="filter-title">By date</p>
 			<div class="alert alert-error" id="alert">
 				<strong></strong>
-			  </div>
-			<table class="table">
-				<thead>
-					<tr>
-						<th><a href="#" class="btn small" id="dp1" data-date-format="yyyy-mm-dd" data-date="2000-01-01">Start date</a></th>
-						<th><a href="#" class="btn small" id="dp2" data-date-format="yyyy-mm-dd" data-date="2012-02-25">End date</a></th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr>
-						<td id="startDate">2000-01-01</td>
-						<td id="endDate">2012-02-25</td>
-					</tr>
-				</tbody>
-			</table>
-          </div>
 			</div>
-			<div class="span3">
-				<div class="well">
-				<h5>Title contains:</h5> 
-				<hr> 
- 				<input id="filterContains" type="text" placeholder="Type word...">
-				</div>
+			<div>
+				<a href="#" class="small" id="dp1" data-date-format="yyyy-mm-dd" data-date="2000-01-01"><i class="icon-calendar"></i> Start date</a>
+				<p id="startDate">2000-01-01</p>
 			</div>
-			<div class="span3">
-			
-				<div class="well filterActors">
-				<h5>Select author(s):</h5> 
-				<hr>
-  				</div>
-			</div>
-			<div class="span3">
-				<div class="well filterLang">
-				<h5>Select language(s):</h5> 
-				<hr>
-  				</div>
+			<div>
+				<a href="#" class="small" id="dp2" data-date-format="yyyy-mm-dd" data-date="2012-02-25"><i class="icon-calendar"></i> End date</a>
+				<p id="endDate">2012-02-25</p>
 			</div>
 		</div>
-	</div>
-</div>
+	  
+		<!-- Actors -->
+	  	<div class="filterActors filter-block">
+	  		<p class="filter-title">By actors</p>
+	  	</div>
+
+		<!-- Language -->		
+		<div class="filterLang filter-block">
+	  		<p class="filter-title">By language</p>		
+		</div>
+	  
+    </div>
+    <div class="span10">
+		
+		<p class="breath"><strong>Documents</strong></p>
+		
+		<div class="btn-toolbar">
+		  <div class="btn-group">
+		    <a class="btn btn-small tip" rel="tooltip" title="Upload new documents" href="#!" id="upload-button"><i class="icon-file"></i></a>
+		    <a class="btn btn-small tip disabled" rel="tooltip" title="Delete documents" href="#!" id="delete"><i class="icon-trash"></i><span></span></a>
+		  </div>
+		  <div class="btn-group pull-right">
+		    <a class="btn btn-small tip" rel="tooltip" title="Export entities as .csv" href="#!" id="export"><i class="icon-download"></i></a>
+		    <a class="btn btn-small tip" rel="tooltip" title="Import entities from .csv" href="#!" id="import-button"><i class="icon-upload"></i></a>
+		  </div>
+		  
+		</div>
+		
+     <div id="documents-list"></div>
+    </div>
+  </div>
+
+
+
+
 
 {% include "gui/upload.html" %}
 {% include "gui/import.html" %}
