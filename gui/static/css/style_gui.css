@@ -314,6 +314,7 @@ h3 {
   	-webkit-user-select: none;
   	user-select: none;
 	cursor:pointer;
+	text-overflow: ellipsis;
 }
 
 .doc-actor:hover, .doc-date:hover, .doc-title:hover {
@@ -322,7 +323,7 @@ h3 {
 
 .doc-info {
 	float:left;
-	height:100px;
+	min-height:100px;
 	border-bottom: 1px solid #DDD;
 	width: 100%;
 }

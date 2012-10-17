@@ -98,8 +98,8 @@ function getDocumentsList(){
 		
 		dataTable.on("selected", function(d){
 			
-			
-			var dt = d3.select("#documents-list").selectAll("tbody tr").data()			
+			console.log(d3.select(".datatable-main").selectAll("tbody tr"))
+			var dt = d3.select(".datatable-main").selectAll("tbody tr").data()		
 			deleteList = dt.filter(function(t){ return t.__selected__; })//d3.selectAll(".datatable-selected > .datatable-check").data();
 			
 			if (deleteList.length > 0){
