@@ -351,6 +351,7 @@ def create_document( request, response, corpus ):
 		# filename
 		filename = path + f.name 
 
+		# file exists. 
 		# get permission to store the document. If it exists, will force override!
 		try:
 			destination = open( filename , 'wb+')
@@ -360,7 +361,8 @@ def create_document( request, response, corpus ):
 		# save file
 		for chunk in f.chunks():
 			destination.write(chunk)
-			destination.close()
+		
+		destination.close()
 
 		# save document
 		try:
