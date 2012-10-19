@@ -1,9 +1,24 @@
 var query = new svenjs.Sven("");  //svenjs.Sven("http://127.0.0.1:8000");  
 
 
-var corpusID;
 var deleteList;
 var deletedFile;
+
+// TODO:DA SISTEMARE ERRORI SULLA RISPOSTA....
+		d3.select("#create-corpus")
+			.on("click", function(){
+
+				var corpusData = {}
+				corpusData['name'] = d3.select("#corpus-name").property("value")
+				console.log(corpusData)
+				query.addCorpus(function(r){
+					
+					window.location.reload();
+					
+				}, corpusData)
+				
+			})
+			
 
 /* Check if any corpuses exist */
 
@@ -36,30 +51,17 @@ query.getCorpora(function(response){
 		d3.select("#documents-list")
 			.style("display","none")
 				
-		d3.select("#documents-corpus")
-			.style("display","block")
+		//d3.select("#documents-corpus")
+		//	.style("display","block")
 			
 		
-		// TODO:DA SISTEMARE ERRORI SULLA RISPOSTA....
-		d3.select("#create-corpus")
-			.on("click", function(){
-
-				var corpusData = {}
-				corpusData['name'] = d3.select("#corpus-name").property("value")
-				console.log(corpusData)
-				query.addCorpus(function(r){
-					
-					window.location.reload();
-					
-				}, corpusData)
-				
-			})
-			
+		
 		return;
 	}
 	
 	console.log(response)
-	corpusID = response.results[0].id;
+	//corpusID = response.results[0].id;
+	//console.log(corpusID);
 	//corpusID = args.corpus != 0 ? args.corpus:response.results[0].id;
 	
 	checkStatus();
@@ -84,7 +86,8 @@ query.getCorpora(function(response){
 
 function getDocumentsList(){
 	//var args = {};
-	args['corpus'] = corpusID;
+	//console.log(corpusID);
+	console.log(args['corpus']);
 	query.getDocuments(function(response){
 
 	    var data = response.objects; 
@@ -244,7 +247,7 @@ function checkStatus(){
 		var status = true;
 		
 		response.objects.forEach(function(d){
-			if (d.status != "OK")
+			if (d.status != "OK" && d.status !="CLO")
 				status = false;			
 		})
 				

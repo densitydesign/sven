@@ -23,10 +23,7 @@
 <div id="documents-corpus">
 	
 	<p>Ok, it seems you have still to create a corpus for your documents. A corpus is like a collection of documents: all the analysis will be performed inside the documents of the corpus. You can easily create a new corpus entering a corpus name below and pressing the Create button.</p>
-	
-	  <input type="text" id="corpus-name" placeholder="Corpus name">
-	  <br/>
-	  <button class="btn btn-primary" id="create-corpus">Create</button>
+
 	  
 </div> 
 
@@ -35,7 +32,9 @@
 		
     <!-- Filters -->
 	<div class="span2" id="filters">
-		
+		<p class="breath"><strong>Corpora</strong></p>
+		  <input type="text" id="corpus-name" placeholder="Corpus name">
+	  <button class="btn btn-primary" id="create-corpus">Create</button>
 		<p class="breath"><strong>Filters</strong></p>
 	  
 	  	<!-- Title -->
@@ -106,6 +105,8 @@
 <script>
     var args = {};
  	$(".tip").tooltip();
+	var corpusID = {{corpus.id}}; 
+	args.corpus = corpusID;
 </script>
 
 <script src="{{ custom.STATIC_URL }}js/documents.js" type="text/javascript"></script>

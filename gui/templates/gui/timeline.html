@@ -32,7 +32,8 @@
 <script>
     var args = {};
 	var staticUrl = "{{custom.STATIC_URL}}";
-//    var linkSvg = "{{ custom.STATIC_URL }}/css/images/link2.svg";
+	var corpusID = {{corpus.id}}; 
+	args.corpus = corpusID;
 </script>
 
 <script src="{{ custom.STATIC_URL }}js/time.js" type="text/javascript"></script>
