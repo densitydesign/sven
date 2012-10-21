@@ -18,8 +18,10 @@ from django.contrib.auth.models import User
 from django.db.models import Count, Min, Max, Avg
 
 from sven.core.utils import _whosdaddy, render_to_json, throw_error, JsonQ
-import urllib
+import urllib,logging
 
+
+logger = logging.getLogger(__name__)
 #
 #    ========================
 #    ---- JSON API CONST ----
@@ -47,12 +49,7 @@ API_EXCEPTION_EMPTY			=	'Empty'
 
 def index(request):
 	response = _json( request )
-
-	
-
-	#user = User.objects.create_user('daniele', 'lennon@thebeatles.com', 'danielepassword')
-	#user.is_staff = True
-	#user.save()
+	logger.error('Something went wrong!')
 	return render_to_json( response )
 
 
