@@ -37,6 +37,8 @@ urlpatterns = patterns('',
 	url(r'^api/login-requested/$', 'sven.anta.api.login_requested', name='anta_api_login_requested' ),
 	url(r'^api/dummy-gummy/$', 'sven.anta.api.dummy_gummy', name='anta_api_dummy_gummy' ),
 	url(r'^api/logout/$', 'sven.anta.api.logout_view', name='anta_api_logout_view' ),
+	url(r'^api/log-tail/$', 'sven.anta.api.log_tail', name='anta_api_log_tail' ),
+	
 
 	# documents
 	url(r'^api/documents/$', 'sven.anta.api.documents', name='anta_api_documents' ),    

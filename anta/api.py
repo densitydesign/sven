@@ -1176,7 +1176,22 @@ def segments_import( request, corpus_id ):
 #    ---- OTHER STUFFS ----
 #    ======================
 #
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def log_tail( request ):
+	response = _json( request )
+	import subprocess, sys
 
+	response['file'] = log_file = settings.LOGGING['handlers']['file']['filename']
+	
+	try:
+		response['out'] = subprocess.check_output(["tail", log_file])
+	except Exception, e:
+		return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
+	
+
+	return render_to_json( response )
+	
+	
 	
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
