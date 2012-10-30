@@ -1192,6 +1192,7 @@ def log_tail( request ):
 	try:
 		response['out'] = subprocess.check_output(["tail", log_file])
 	except Exception, e:
+		response['out'] = check_output(["tail", log_file])
 		return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
 	
 
@@ -1255,6 +1256,27 @@ def _start_process( popen_args, routine, response ):
 	
 	return render_to_json( response )
 
+
+def check_output(*popenargs, **kwargs):
+	import subprocess
+	r"""Run command with arguments and return its output as a byte string.
+
+	Backported from Python 2.7 as it's implemented as pure python on stdlib.
+
+	>>> check_output(['/usr/bin/python', '--version'])
+	Python 2.6.2
+	"""
+	process = subprocess.Popen(stdout=subprocess.PIPE, *popenargs, **kwargs)
+	output, unused_err = process.communicate()
+	retcode = process.poll()
+	if retcode:
+		cmd = kwargs.get("args")
+		if cmd is None:
+			cmd = popenargs[0]
+		error = subprocess.CalledProcessError(retcode, cmd)
+		error.output = output
+		raise error
+	return output
 
 
 def _delete_instance( request, response, instance, attachments=[] ):
