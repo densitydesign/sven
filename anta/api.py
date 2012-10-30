@@ -273,21 +273,27 @@ def create_document( request, response, corpus ):
 
 
 	path = settings.MEDIA_ROOT + corpus.name + "/"
-	
+	logger.info( "start upload on path %s" % path)
+
 	# uncomment to debug
 	response['path'] = path
 	
 	if not os.path.exists( path ):
+		logger.error( "path %s does not exist!" % path)
 		return throw_error(response, code=API_EXCEPTION_DOESNOTEXIST, error="path %s does not exits!" % path )
 
 	# check preloaded vars
 	if request.REQUEST.get('language', None) is not None:
+		logger.info( "'language' REQUEST param found, proceed to metadata validation")
+			
 		form = UpdateDocumentForm( request.REQUEST )
 		if form.is_valid():
 			response['presets'] = {}
 			response['presets']['language'] = form.cleaned_data['language']
 			response['presets']['ref_date'] = form.cleaned_data['ref_date']
 			response['presets']['title'] = form.cleaned_data['title']
+			logger.info( "document metadata found, ref_date: %s" % response['presets']['ref_date'] )
+		
 		else:
 			return throw_error(response, code=API_EXCEPTION_FORMERRORS, error=form.errors)
 
@@ -392,7 +398,7 @@ def create_document( request, response, corpus ):
 						continue
 		
 		response['uploads'].append( d.json() )
-
+	logger.info("upload completed")
 	return render_to_json( response )
 	
 
@@ -1181,7 +1187,7 @@ def log_tail( request ):
 	response = _json( request )
 	import subprocess, sys
 
-	response['file'] = log_file = settings.LOGGING['handlers']['file']['filename']
+	log_file = settings.LOGGING['handlers']['anta']['filename']
 	
 	try:
 		response['out'] = subprocess.check_output(["tail", log_file])
@@ -1190,9 +1196,12 @@ def log_tail( request ):
 	
 
 	return render_to_json( response )
-	
-	
-	
+
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def log_test(request):
+	response = _json( request )
+	logger.info("Welcome to ANTA logger. Everything seems to work fine.")
+	return log_tail( request )
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def dummy_gummy( request ):
