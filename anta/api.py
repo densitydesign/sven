@@ -1192,8 +1192,10 @@ def log_tail( request ):
 	try:
 		response['out'] = subprocess.check_output(["tail", log_file])
 	except Exception, e:
-		response['out'] = check_output(["tail", log_file])
-		return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
+		try:
+			response['out'] = check_output(["tail", log_file])
+		except Exception, e:
+			return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
 	
 
 	return render_to_json( response )
