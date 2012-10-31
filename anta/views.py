@@ -44,7 +44,13 @@ def install( request ):
 	data = _data( request )
 	return render_to_response('anta/install.html', RequestContext(request, data))
 
-
+#
+# console of anta.log file
+#
+@login_required( login_url=LOGIN_REQUESTED_URL )
+def console( request ):
+	data = _data( request )
+	return render_to_response('anta/console.html', RequestContext(request, data))
 
 #
 # status corpus. test.

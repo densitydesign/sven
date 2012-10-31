@@ -14,3 +14,5 @@ sven.db
 anta/static/js/tooltipsy.min.js
 
 *.db
+
+*.log

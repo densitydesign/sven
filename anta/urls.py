@@ -24,6 +24,7 @@ urlpatterns = patterns('',
     
     url(r'^overview/corpus/(?P<corpus_name>[a-z0-9-]+)/$', 'sven.anta.views.overview', name='anta_overview'),
     url(r'^status/corpus/(?P<corpus_name>[a-z0-9-]+)/$', 'sven.anta.views.status', name='anta_status'),
+	url(r'^console/$', 'sven.anta.views.console', name='anta_console'),
 	
     url(r'^document/(\d+)/$', 'sven.anta.views.document', name='anta_document'),
 	
@@ -37,6 +38,8 @@ urlpatterns = patterns('',
 	url(r'^api/login-requested/$', 'sven.anta.api.login_requested', name='anta_api_login_requested' ),
 	url(r'^api/dummy-gummy/$', 'sven.anta.api.dummy_gummy', name='anta_api_dummy_gummy' ),
 	url(r'^api/logout/$', 'sven.anta.api.logout_view', name='anta_api_logout_view' ),
+	url(r'^api/log-tail/$', 'sven.anta.api.log_tail', name='anta_api_log_tail' ),
+	url(r'^api/log-test/$', 'sven.anta.api.log_test', name='anta_api_log_test' ),
 
 	# documents
 	url(r'^api/documents/$', 'sven.anta.api.documents', name='anta_api_documents' ),    
