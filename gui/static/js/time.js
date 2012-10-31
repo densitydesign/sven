@@ -25,6 +25,7 @@ query.getDocuments(function(response){
 	query.getRelations(function(response){
 
 		var links = response.results;
+		
 		if (!links) return;
 
 		timeline = sven.viz.timeline()

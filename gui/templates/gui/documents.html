@@ -33,14 +33,21 @@
     <!-- Filters -->
 	<div class="span2" id="filters">
 		<p class="breath"><strong>Corpora</strong></p>
-		  <input type="text" id="corpus-name" placeholder="Corpus name">
-	  <button class="btn btn-primary" id="create-corpus">Create</button>
+		<div class="filter-block">
+		<p class="filter-title">Create corpus</p>
+	<div class="input-append">
+  <input class="span8" id="corpus-name" placeholder="Corpus name" type="text">
+  <button class="btn btn-primary" type="button" id="create-corpus">Create</button>
+</div>
+	  </div>
+	  <div class="corpus-list filter-block">
+	  </div>
 		<p class="breath"><strong>Filters</strong></p>
 	  
 	  	<!-- Title -->
 		<div class="filter-block">
 			<p class="filter-title">By title</p>
-			<input class="input-medium" id="filterContains" type="text" placeholder="Type here...">
+			<input class="span8" id="filterContains" type="text" placeholder="Type here...">
 		</div>
 	  
 		<!-- Dates -->

@@ -128,8 +128,8 @@ svenjs.Sven.prototype.getDocument = function(id, successCallback, args){
     //var url = this.url + "/sketch/query/" + this.database + "/" + collection + "/" + command + "/";
     var url = this.url + "/anta/api/documents/" + id + "/" + "?indent=true";
 
-	var args = args || { };
-	args.corpus = args.corpus || 1;
+	//var args = args || { };
+	//args.corpus = args.corpus || 1;
 	//console.log(args);
     $.ajax({
         type: 'GET',
@@ -429,3 +429,17 @@ svenjs.Sven.prototype.getActors = function(successCallback, args){
     
 };
 
+/* switch corpus */
+svenjs.Sven.prototype.switchCorpus = function(id, successCallback){
+		
+    var url = this.url + "/anta/api/use-corpus/" + id;
+
+    $.ajax({
+        type: 'GET',
+        url: url,
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+    
+};

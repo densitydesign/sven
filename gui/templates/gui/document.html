@@ -178,6 +178,8 @@
 <script src="{{ custom.STATIC_URL }}js/viewer.js" type="text/javascript"></script>
 <script>
     var args = {};
+	var corpusID = {{corpus.id}}; 
+	args.corpus = corpusID;
     var id_document = {{ id_document }};
     $("#source_document .text").width($("#source_document").width());
     $("#source_document .text").height(600);

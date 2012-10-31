@@ -10,11 +10,10 @@ var deletedFile;
 
 				var corpusData = {}
 				corpusData['name'] = d3.select("#corpus-name").property("value")
-				console.log(corpusData)
 				query.addCorpus(function(r){
-					
-					window.location.reload();
-					
+
+					var id= r.created.id;
+					switchCorpus(id);
 				}, corpusData)
 				
 			})
@@ -23,6 +22,8 @@ var deletedFile;
 /* Check if any corpuses exist */
 
 query.getCorpora(function(response){
+	
+	
 	
 	/* Error */
 	if ( response.status != "ok" ){
@@ -35,7 +36,29 @@ query.getCorpora(function(response){
 			.append("p")
 			.html("Sorry, but something wrong happened:" + response.errors)
 		return;
-	}
+	}else{
+		var corpora = response.results;
+		d3.select(".corpus-list").append("p")
+			.attr("class", "filter-title")
+			.text("Change corpus")
+		
+		d3.select(".corpus-list")
+			.append("select")
+			.attr("class", "span8")
+			.selectAll("option")
+			.data(corpora)
+			.enter()
+			.append("option")
+			.text(function(d){return d.name})
+			.attr("value", function(d){return d.id})
+			.attr("selected", function(d){if(d.id == args['corpus']){return "selected"}})
+		
+		$(".corpus-list select").change(function(){
+			var id = $(this+":selected").attr("value")
+			switchCorpus(id);
+			})
+			
+		}
 	
 	/* No corpus */
 	if ( !response.results.length ){
@@ -59,10 +82,6 @@ query.getCorpora(function(response){
 		return;
 	}
 	
-	console.log(response)
-	//corpusID = response.results[0].id;
-	//console.log(corpusID);
-	//corpusID = args.corpus != 0 ? args.corpus:response.results[0].id;
 	
 	checkStatus();
 })
@@ -84,10 +103,17 @@ query.getCorpora(function(response){
 		
 		});
 
+function switchCorpus(id){
+	query.switchCorpus(id, function(response){
+		
+		window.location.reload()
+		
+		
+		})
+	}
+
 function getDocumentsList(){
-	//var args = {};
-	//console.log(corpusID);
-	console.log(args['corpus']);
+
 	query.getDocuments(function(response){
 
 	    var data = response.objects; 
@@ -240,7 +266,7 @@ function getUpdateDocumentsList(){
 
 function checkStatus(){
 	
-	query.status(corpusID,function(response){
+	query.status(args['corpus'],function(response){
 		
 		getDocumentsList();
 		
@@ -292,7 +318,7 @@ function checkStatus(){
       .click(function () {
         var btn = $(this);
         btn.button('loading');
-        query.exportEntities(corpusID, function(response){
+        query.exportEntities(args['corpus'], function(response){
         	window.location = response;
         	btn.button('reset');
         	});
@@ -371,7 +397,7 @@ function checkStatus(){
 				return;
 			var args = {}
 			//args['limit'] = uploadedFiles.length;
-			query.startAnalysis(corpusID, function(response){
+			query.startAnalysis(args['corpus'], function(response){
 				
 				console.log(response);
 				window.location.reload()

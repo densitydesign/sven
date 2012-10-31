@@ -226,7 +226,7 @@ query.getDocument(id_document, function(response){
    		$("#target_document .text").height(600);
    		document.getElementById('iframe2').src = "../../../gui/viewer/?id=" + pdfUrl_target;
 	
-	},args);
+	});
 };
 	
 	
@@ -246,7 +246,7 @@ query.getDocument(id_document, function(response){
 					labels.push(item.title)
 				})
 				process(labels);
-			});
+			},args);
 		},
 		updater : function(item) {
 			
@@ -313,7 +313,7 @@ query.getDocument(id_document, function(response){
 					
 					return;
 				}
-				console.log("andata bene cazzo")
+				
 				d3.select(".addResult")
 					.style("display","block")
 					.attr("class","addResult alert alert-success")

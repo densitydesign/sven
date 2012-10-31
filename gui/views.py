@@ -92,6 +92,7 @@ def dynamics(request):
 	data = {}
 	data['active'] = "dynamics"
 	data['custom'] = CUSTOM_SETTINGS
+	data['corpus'] = {"id":request.session.get("corpus_id", 0), "name":request.session.get("corpus_name", "") }
 	c = RequestContext(request, data)
 	return render_to_response("gui/dynamics.html", c)
 	
