@@ -6,6 +6,7 @@ var query = new svenjs.Sven(""),
 //add source document
 query.getDocument(id_document, function(response){
 
+	console.log(response);
     var data = response,
 		status = data.status
     
@@ -17,6 +18,7 @@ query.getDocument(id_document, function(response){
 	sDocumentId = data.results[0].id;
     
 	var text = response.text,
+		mime = response.results[0].mime_type,	
 		date = response.results[0].date.split('T')[0],
 		title = response.results[0].title,
 		actors = response.results[0].actors,
