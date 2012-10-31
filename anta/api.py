@@ -262,7 +262,7 @@ def documents(request, corpus_name=None):
 	if response['meta']['method'] == 'POST':
 		return create_document( request, response, corpus=corpus )
 
-	return JsonQ( request ).get_response( queryset=Document.objects.filter(corpus=corpus) )
+	return JsonQ( request ).get_response( queryset=Document.objects.distinct().filter(corpus=corpus) )
 
 	# return _get_instances( request, response, model_name="Document" )
 
