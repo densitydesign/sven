@@ -49,7 +49,7 @@ API_EXCEPTION_EMPTY			=	'Empty'
 
 def index(request):
 	response = _json( request )
-	logger.error('Something went wrong!')
+	logger.warning('Something went wrong!')
 	return render_to_json( response )
 
 
