@@ -296,6 +296,7 @@ def create_document( request, response, corpus ):
 		
 		else:
 			return throw_error(response, code=API_EXCEPTION_FORMERRORS, error=form.errors)
+	return throw_error( response, code="test", error="None")
 
 	if request.REQUEST.get('tags', None) is not None:
 		if 'presets' not in response:
@@ -771,8 +772,10 @@ def tfidf( request, corpus_id ):
 		c = Corpus.objects.get(pk=corpus_id)
 	except Exception, e:
 		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
-
-	routine = start_routine( type='TFIDF', corpus=c )
+	try:
+		routine = start_routine( type='TFIDF', corpus=c )
+	except Exception, e:
+		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION )
 	if routine is None:
 		throw_error( response, error="A very strange error", code=API_EXCEPTION_EMPTY)
 
