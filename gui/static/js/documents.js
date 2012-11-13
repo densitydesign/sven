@@ -3,6 +3,9 @@ var query = new svenjs.Sven("");  //svenjs.Sven("http://127.0.0.1:8000");
 
 var deleteList;
 var deletedFile;
+var nextLimit;
+var nextOffset;
+var total;
 
 // TODO:DA SISTEMARE ERRORI SULLA RISPOSTA....
 		d3.select("#create-corpus")
@@ -116,6 +119,11 @@ function getDocumentsList(){
 
 	query.getDocuments(function(response){
 
+		nextLimit = response.meta.next.limit;
+		nextOffset = response.meta.next.offset;
+		total = response.meta.total_count;
+		args['limit'] = nextLimit;
+		args['offset'] = nextOffset;
 	    var data = response.objects; 
 		var dataTable = sven.utils.datatable()
 			.data(d3.values(data))
@@ -148,7 +156,33 @@ function getDocumentsList(){
 		
 		})
 	
+	//load more
+	
+	d3.select("#docs").append("button")
+	 .attr("id", "loadMore")
+	 .attr("type", "button")
+	 .attr("data-loading-text", "Loading...")
+	 .attr("class", function(){if(total > nextOffset){return "btn btn-primary"}else{return "btn disabled"}})
+	 .text("Load More...")
+	 .on("click", function(){
+	 		console.log(args);
+	 		query.getDocuments(function(response){
 
+		nextLimit = response.meta.next.limit;
+		nextOffset = response.meta.next.offset;
+		total = response.meta.total_count;
+	    var data = response.objects; 
+		var oldData = dataTable.data();
+		args['limit'] = nextLimit;
+		args['offset'] = nextOffset;
+		dataTable.data(oldData.concat(d3.values(data))).update();
+		d3.select("#loadMore")
+			 .attr("class", function(){if(total > nextOffset){return "btn btn-primary"}else{return "btn disabled"}})
+		
+		},args);
+	 		
+	 	});
+	 
 		
 	var langList = d3.nest()
     .key(function(d) { return d.language; })
@@ -166,8 +200,22 @@ function getDocumentsList(){
 	
 	//datepicker
 	$('#alert').hide();
+	
+	var dateList = d3.nest()
+    .key(function(d) { return d.date; })
+    .entries(data);
+    
+    console.log(d3.min(dateList.map(function(d){return d.key})), d3.max(dateList.map(function(d){return d.key})));
+	var minDate = d3.min(dateList.map(function(d){return d.key}));
+	var maxDate = d3.max(dateList.map(function(d){return d.key}));
+	
+	d3.select("#dp1").attr("data-date", minDate.split("T")[0]);
+	d3.select("#dp2").attr("data-date", maxDate.split("T")[0]);
+	d3.select("#startDate").text(minDate.split("T")[0]);
+	d3.select("#endDate").text(maxDate.split("T")[0]);
+	
 	//var startDate = new Date(2000,0,1);
-			//var endDate = new Date(2012,1,25);
+	//var endDate = new Date(2012,1,25);
 			$('#dp1').datepicker()
 				.on('changeDate', function(ev){
 					if (ev.date.valueOf() > endDate.valueOf()){
@@ -201,6 +249,8 @@ function getDocumentsList(){
 	d3.select("#filter").append("hr")
 	
 	function setFilters(){
+	args['limit'] = 0;
+	args['offset'] = 50;
 	var filters = {};
 	filters["ref_date__gte"] = $('#dp1').data('date') + " 00:00";
 	filters["ref_date__lte"] = $('#dp2').data('date') + " 00:00";
@@ -212,7 +262,7 @@ function getDocumentsList(){
 	d3.select(".filterActors").selectAll("input:checked").each(function(d){filters["tags__id__in"].push(d.id)});
 	if (filters["tags__id__in"].length == 0){delete filters["tags__id__in"]}
 	args['filters'] = JSON.stringify(filters);
-	console.log(args);
+	
 	//getDocumentsList();
 	getUpdateDocumentsList();
 	}
@@ -224,6 +274,15 @@ function getUpdateDocumentsList(){
 	query.getDocuments(function(response){
 
 	    var data = response.objects; 
+	    
+	    nextLimit = response.meta.next.limit;
+		nextOffset = response.meta.next.offset;
+		total = response.meta.total_count;
+		args['limit'] = nextLimit;
+		args['offset'] = nextOffset;
+		
+		d3.select("#loadMore").attr("class", function(){if(total > nextOffset){return "btn btn-primary"}else{return "btn disabled"}})
+		
 		var dataTable = sven.utils.datatable()
 			.data(d3.values(data))
 			.target("#documents-list")

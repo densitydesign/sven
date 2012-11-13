@@ -39,7 +39,6 @@
 	/* getting the first corpus...*/
 	api.getCorpora(function(response){
 		
-		corpusID = response.results[0].id;
 
 		
 		
@@ -48,7 +47,7 @@
 				dataType: 'json',
 			add: function(e, data){
 				
-				data.url = "/anta/api/segments/import/corpus/" + corpusID + "/";
+				data.url = "/anta/api/segments/import/corpus/" + args['corpus'] + "/";
 				
 				d3.select("#import .modal-gallery")
 					.append("div")
@@ -147,7 +146,7 @@
 			
 			
 			if(importedFile){
-			api.updateAnalysis(corpusID, function(response){
+			api.updateAnalysis(args['corpus'], function(response){
 				
 				console.log(response);
 				window.location.reload()

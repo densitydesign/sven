@@ -17,8 +17,7 @@ query.getDocument(id_document, function(response){
 	
 	sDocumentId = data.results[0].id;
     
-	var text = response.text,
-		mime = response.results[0].mime_type,	
+	var mime = response.results[0].mime_type,	
 		date = response.results[0].date.split('T')[0],
 		title = response.results[0].title,
 		actors = response.results[0].actors,
@@ -45,8 +44,21 @@ query.getDocument(id_document, function(response){
 			.text(function(d){return d.name;})
 			console.log(pdfURL_source)
 	//pdfViewer(pdfURL_source, 'source', 'pdf-container');
+	
+	var text = response.text
+	if (mime == 'application/pdf'){
+	var p_text = d3.select("#source_document .pdf-container p");
+	if (p_text){
+		p_text.remove();
+		}
+		$('#iframe1').show();
 	document.getElementById('iframe1').src = "../../../gui/viewer/?id=" + pdfURL_source;
-});
+	}
+	else{
+		$('#iframe1').hide();
+		d3.select("#source_document .pdf-container").append("p").text(text);
+		}
+},{'with-text':'true'});
 
 $('#select-relations a:first').tab('show');
 $('a[data-toggle="tab"]').on('show', function (e) {
@@ -199,7 +211,7 @@ query.getDocument(id_document, function(response){
     	var actors = response.results[0].actors;
     	var actorList = '';
     	var tags = response.results[0].tags;
-    	
+    	var mime = response.results[0].mime_type;
 		
 		for (actor in actors) {
     		actorList = actorList + actors[actor].name + " ";
@@ -226,9 +238,22 @@ query.getDocument(id_document, function(response){
 		$("#target_document").css({visibility:"visible"});
 		$("#target_document .text").width($("#target_document").width());
    		$("#target_document .text").height(600);
-   		document.getElementById('iframe2').src = "../../../gui/viewer/?id=" + pdfUrl_target;
+   		
+   		if (mime == 'application/pdf'){
+   		var p_text = d3.select("#target_document .pdf-container p");
+	if (p_text){
+		p_text.remove();
+		}
+		$('#iframe2').show();
+	document.getElementById('iframe2').src = "../../../gui/viewer/?id=" + pdfUrl_target;
+	}
+	else{
+		$('#iframe2').hide();
+		d3.select("#target_document .pdf-container").append("p").text(text);
+		}
+
 	
-	});
+	},{'with-text':'true'});
 };
 	
 	
