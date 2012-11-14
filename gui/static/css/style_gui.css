@@ -362,7 +362,7 @@ h3 {
 .pdf-container {
 	height:600px;
 	background:#F3F3F4;
-	text-align: center;
+	overflow:auto;
 	}
 /*
 .pageUp::before {
@@ -407,10 +407,11 @@ h3 {
 	padding: 10px 0px;
 }
 
+/*
 #filters * {
 	font-size:13px;
 }
-
+*/
 .filter-block {
 	margin-bottom:30px;
 }

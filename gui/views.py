@@ -65,6 +65,7 @@ def documents(request, id_document=None):
 	data = {}
 	data['custom'] = CUSTOM_SETTINGS
 	data['active'] = "documents"
+	data['corpus'] = {"id":request.session.get("corpus_id", 0), "name":request.session.get("corpus_name", "") }
 	#print document(request, id_document)
 	if id_document != None:
 		data['id_document'] = id_document
@@ -80,6 +81,7 @@ def timeline(request):
 	data = {}
 	data['active'] = "timeline"
 	data['custom'] = CUSTOM_SETTINGS
+	data['corpus'] = {"id":request.session.get("corpus_id", 0), "name":request.session.get("corpus_name", "") }
 	c = RequestContext(request, data)
 	return render_to_response("gui/timeline.html", c)
 	
@@ -90,6 +92,7 @@ def dynamics(request):
 	data = {}
 	data['active'] = "dynamics"
 	data['custom'] = CUSTOM_SETTINGS
+	data['corpus'] = {"id":request.session.get("corpus_id", 0), "name":request.session.get("corpus_name", "") }
 	c = RequestContext(request, data)
 	return render_to_response("gui/dynamics.html", c)
 	

@@ -1,12 +1,11 @@
 var query = new svenjs.Sven("");
 
-var corpusID;
 
-query.getCorpora(function(response){
+//query.getCorpora(function(response){
 	
-	corpusID = response.results[0].id;
+	
 
-	query.graph(corpusID,function(response){
+	query.graph(args['corpus'],function(response){
 	
 		if (response.status == "ko") return;
 	
@@ -40,10 +39,10 @@ query.getCorpora(function(response){
 	});
 
 
-	query.streamgraph(corpusID,function(response){
+	query.streamgraph(args['corpus'],function(response){
 	
 		console.log(response);
 	
 	});
 
-})
+//})

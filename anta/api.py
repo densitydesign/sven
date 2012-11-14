@@ -437,7 +437,7 @@ def document(request, document_id):
 			return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS )
 
 	# load text only if it's required
-	if 'with-text' in response['meta']:
+	if request.REQUEST.has_key('with-text'):
 
 		text = textify( d, settings.MEDIA_ROOT )
 		

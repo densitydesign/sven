@@ -36,7 +36,7 @@ query.getDocuments(function(response){
 				
 	},{filters:{}});
 	
-});
+},args);
 
 
 d3.select("#toggle-button").on("click", function(){
