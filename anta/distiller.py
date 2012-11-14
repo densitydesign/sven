@@ -135,13 +135,13 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 	# current document (new)
 	documents =  Document.objects.filter(corpus__id=corpus.id, status='NEW')
 
-	if analysis.document is None:
-		documents = Document.objects.filter(corpus__id=corpus.id)
-		analysis.document = documents[0]
-	else:
-		documents = Document.objects.filter(corpus__id=corpus.id, id__gt=analysis.document.id)
-		if documents.count() == 0:
-			documents = Document.objects.filter(corpus__id=corpus.id)
+	# if analysis.document is None:
+	#	documents = Document.objects.filter(corpus__id=corpus.id)
+	#	analysis.document = documents[0]
+	#else:
+	#	documents = Document.objects.filter(corpus__id=corpus.id, id__gt=analysis.document.id)
+	#	if documents.count() == 0:
+	#		documents = Document.objects.filter(corpus__id=corpus.id)
 
 	# pending status for current analysis
 	analysis.status = "PN"
@@ -154,7 +154,7 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 		i = i + 1
 		d.status='IN'
 		d.save()
-		
+
 		# update analysis with current document
 		analysis.document = d
 		analysis.save()
