@@ -12,9 +12,11 @@ from pattern.search import search as p_search
 import pattern.nl #     import parse as nlparse, split as nlsplit, Sentence as nlSentence, Text as nlText
 import pattern.en  #   import parse as enparse, Sentence as enSentence, Text as enText
 
-import codecs, re
+import codecs, re, logging
 from datetime import datetime
 from optparse import OptionParser
+
+logger = logging.getLogger("sven.anta.metrics")
 
 #
 #    ===================
@@ -108,9 +110,8 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 	from sven.anta.utils import textify
 	# path = settings.MEDIA_ROOT + options.corpus
 	# print NL_STOPWORDS
-	
+	logger.info( "starting pattern analysis on corpus: '%s' [%s]" % ( corpus.name, corpus.id ) )
 	# get document corpus
-	print "[info] starting pattern analysis on corpus:",corpus.id, corpus.name
 	
 	log_routine( routine, entry="[info] starting pattern analysis on corpus: %s" % corpus.id )
 	
@@ -157,14 +158,15 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 		log_routine( routine, completion=ref_completion * i / total_count )
 
 		# a = Analysis( document=d, )
-		print "[info] document mimetype:",d.mime_type
+		logger.info("%s / %s trying to convert document '%s' [%s], mimetype %s" % ( i, total_count, d.title, d.id, d.mime_type) )
 
 		textified =  textify( d, settings.MEDIA_ROOT )
 		
 		if textified == False:
 			analysis.status="ERR"
 			analysis.save()
-			raise Exception("error in textify function")
+			logger.error("%s / %s FAILED converting document '%s' [%s], mimetype %s" % ( i, total_count, d.title, d.id, d.mime_type) )
+			continue
 		
 		textified = textified.replace("%20"," ")
 		analysis.completion = 0.0
@@ -179,9 +181,9 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 		else:
 			stopwords = []
 
-		print "[info] document language:",d.language
-		print "[info] analysis started on doc ", d.id,"'", d.title,"'", d.language.lower(), "file:",textified
 		
+		logger.info("%s / %s NP extraction started over document '%s' [%s], language: '%s', file: '%s'" % ( i, total_count, d.title, d.id, d.language, textified) )
+
 		#start distill anaysis, exclude given stopwors
 		distilled = distill( filename=textified, language=d.language.lower(), stopwords=stopwords )
 		
@@ -278,6 +280,7 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 
 
 def evaporate( document, stopwords, keywords ):
+
 	"""
 	Return a dictionary: {'keywords':keywords, 'stopwords': stopwords, 'segments':[], 'concepts':{} }
 	1. tf based keywords, 
@@ -310,9 +313,7 @@ def evaporate( document, stopwords, keywords ):
 	results = {'keywords':keywords, 'stopwords': stopwords, 'segments':[], 'concepts':{} }
 	
 	for matches in document:
-		print
 		for match in matches:
-			print "----",match.string, match.words
 			# true if the segment-mathc contains at least one salient word (not in stopword)
 			contains_concept = False
 			
@@ -320,8 +321,8 @@ def evaporate( document, stopwords, keywords ):
 			salient_words = []
 			
 			for word in match.words:
-				print word.lemma
-				print
+				#print word.lemma
+				#print
 				if len( word.lemma ) < 2 :
 					continue
 				
@@ -345,8 +346,12 @@ def evaporate( document, stopwords, keywords ):
 			# determine tf of the segment! only if it contains some concept
 			if contains_concept:
 				results['segments'].append( [match.string, sorted(set(salient_words)), 1] )
-				
+	
+			
+
 	num_segments = len(results['segments'])
+
+	logger.info( "NP found: %s" %  num_segments )
 	
 	for i in range( num_segments ):
 		for j in range( i + 1 ):
@@ -359,7 +364,6 @@ def evaporate( document, stopwords, keywords ):
 				
 				# [test] print equal list of lemma
 				# print i,j,results['segments'][i][0],results['segments'][j][0], results['segments'][i][2],results['segments'][j][2]
-	
 	# assign segment tf number of occurences of a word / number of words in document for each segment
 	for i in range( num_segments ):
 		# tf normalisation
@@ -367,10 +371,11 @@ def evaporate( document, stopwords, keywords ):
 	
 	
 	#print match.string, [ m.start() for m in re.finditer( match.string.lower(), content.lower() ) ]
-	print results['segments'][:6]
+	# print results['segments'][:6]
+	logger.info( "NP sample: %s" %  results['segments'][:6] )
 	# number of segments in document
-	print "[info] segments in document:",num_segments	
-			
+	
+
 	return results
 
 	

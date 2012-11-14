@@ -1,4 +1,4 @@
-import os,sys,mimetypes, math, csv, codecs
+import os,sys,mimetypes, math, csv, codecs, logging
 from datetime import datetime
 
 
@@ -23,6 +23,10 @@ from django.db.models import Count, Avg, Max, Min
 from django.db import connection, transaction
 from pattern.vector import Document as pvDocument, Corpus as pvCorpus
 
+# use directly the logger name
+logger = logging.getLogger("sven.anta.metrics")
+
+
 """
 select all stemmed list
 
@@ -41,15 +45,18 @@ SELECT s.content as sample_content, GROUP_CONCAT(s.content) as concat_content, s
 def standard( corpus, routine ):
 	
 	number_of_documents = Document.objects.filter(corpus=corpus ).count()
+	logger.info("opening standard routine, corpus: '%s' [%s], %s documents" % ( corpus.name, corpus.id, number_of_documents) )
 
 	if number_of_documents == 0:
+		logger.error("routine closed, not enough documents")
 		return close_routine( routine, error="standard routine: No document found", status="OK")
 
 	# 1. distiller.decant (tf computation )
 	try:
 		decant( corpus=corpus, routine=routine, settings=settings, ref_completion=0.5 )
 	except Exception, e:
-		return close_routine( routine, error="Ho trovato Wally 52, Exception: %s" % e, status="ERR")
+		logger.error("Exception: %s" % e)
+		return close_routine( routine, error="Exception: %s" % e, status="ERR")
 
 	# 2. get all languages in corpus
 	tf_tfidf( corpus=corpus, routine=routine )
@@ -91,22 +98,33 @@ def entities_alchemy( corpus, routine ):
 def tf_tfidf( corpus, routine ):
 	number_of_documents = Document.objects.filter(corpus=corpus ).count()
 
+
+
 	if number_of_documents == 0:
 		return close_routine( routine, error="tfidf routine: no document found", status="OK")
 
+	logger.info("starting TF computation on corpus '%s' [%s], %s documents" % (corpus.name, corpus.id, number_of_documents))
 	tf( corpus=corpus, routine=routine, completion_start=0.0, completion_score=0.4 )
-	
+	logger.info("TF computation done")
 	if routine.status == "ERR":
+		logger.error("TF computation failed on corpus '%s' [%s]" % (corpus.name, corpus.id))
 		return
-
+	logger.info("TF computation done on corpus '%s' [%s]" % (corpus.name, corpus.id ))
+	logger.info("starting TFIDF computation on corpus '%s' [%s], %s documents" % (corpus.name, corpus.id, number_of_documents))
+	
 	tfidf( corpus=corpus, routine=routine, completion_start=0.4, completion_score=0.4 )
 
 	if routine.status == "ERR":
+		logger.error("TFIDF computation failed on corpus '%s' [%s]" % (corpus.name, corpus.id))
 		return
 
+	logger.info("TFIDF computation done on corpus '%s' [%s]" % (corpus.name, corpus.id ))
+	logger.info("starting SIMILARITY computation on corpus '%s' [%s], %s documents" % (corpus.name, corpus.id, number_of_documents ))
+	
 	similarity( corpus=corpus, routine=routine, completion_start=0.8, completion_score=0.2  )
 
-
+	logger.info("SIMILARITY computation done on corpus '%s' [%s]" % (corpus.name, corpus.id ))
+	
 	close_routine( routine, error="", status="OK" )
 
 #
@@ -169,9 +187,10 @@ def tf( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 
 	# get percentage info:
 	number_of_documents_segments = Document_Segment.objects.count()
-	print "number_of_documents_segments: %s" % number_of_documents_segments
+	logger.info( "number_of_documents_segments: %s" % number_of_documents_segments )
 
 	if number_of_documents_segments == 0:
+		logger.error( "TF Not enought segments in your corpus. Try 'standard' routine first..." )
 		close_routine( routine, error="Not enought segments in your corpus. Try 'standard' routine first...", status="ERR")
 		transaction.commit()
 		return
@@ -179,9 +198,12 @@ def tf( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 	current_segment = 0
 
 	for d in Document.objects.filter(corpus=corpus):
-		print "document: %s" % d
+		# print "document: %s" % d
 		number_of_stems_per_document = Document_Segment.objects.filter( document=d ).values('segment__stemmed').distinct().count()
-		print "number_of_stems_per_document: %s" % number_of_stems_per_document
+		# print "number_of_stems_per_document: %s" % number_of_stems_per_document
+
+		logger.info( "document '%s' [%s], number of 'pseudo-stems': %s" % (d.title, d.id, number_of_stems_per_document) )
+		
 
 		for ds in Document_Segment.objects.filter( document=d ):
 			# count alliases( segment with same stemmed version )
@@ -189,16 +211,21 @@ def tf( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 			ds.tf = float(number_of_aliases) / number_of_stems_per_document
 			ds.save()
 			if number_of_aliases > 1: # print just some lines
-				print  ds.segment.content, ds.segment.stemmed, number_of_aliases, ds.tf
+				pass
+				# print  ds.segment.content, ds.segment.stemmed, number_of_aliases, ds.tf
 			if current_segment % 25 == 0:
+				logger.info( "document '%s' [%s], completion: %s" % (d.title, d.id, ( float(current_segment) / number_of_documents_segments ) ) )
+		
 				log_routine( routine, completion = completion_start +  ( float(current_segment) / number_of_documents_segments ) * (completion_score-completion_start) )
 				transaction.commit()
 	
 
 			current_segment = current_segment + 1
-			
+		logger.info( "document '%s' [%s] completed!" % (d.title, d.id ) )
+		
 
 	if completion_score == 1.0:
+		logger.info( "closing routine, task completed" )
 		close_routine( routine, error="", status="OK" )
 	transaction.commit()
 	
@@ -219,6 +246,8 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 	# 1. get number of document
 	number_of_documents = Document.objects.filter(corpus=corpus ).count()
 	
+	logger.info("ye")
+
 	# 2. get all languages in corpus
 	number_of_languages = Document.objects.values('language').distinct().count()
 
@@ -486,8 +515,6 @@ def similarity( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 		close_routine( routine, error="", status="OK" )
 	transaction.commit()
 
-
-
 	
 def main( argv):
 	usage = "usage: %prog -f function [ standard|importcsv [-o column] [-x csvfile] ]"
@@ -516,6 +543,8 @@ def main( argv):
 
 	( options, argv ) = parser.parse_args()
 	
+
+
 	if options.func is None:
 		error( message="Use -f to specify the desired function.", parser=parser )
 	
