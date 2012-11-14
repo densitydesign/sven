@@ -15,6 +15,8 @@ CREATION_CHOICES = (
 DOCUMENT_STATUS_CHOICES = (
 	(u'IN', u'included'),
     (u'OUT', u'excluded'),
+    (u'ERR', u'ERR'),
+    (u'NEW', u'NEW')
 )
 
 GRAPH_CHOICES = (
@@ -171,7 +173,8 @@ class Document( models.Model ):
 			'relations_count': Relation.objects.filter(source__id=self.id).count(),
 			'relations_as_target_count': Relation.objects.filter(target=self).count(),
 			'corpus': self.corpus.json(),
-			'segments': [ s.json() for s in self.segments() ]
+			'segments': [ s.json() for s in self.segments() ],
+			'status': self.status
 		}
 
 class Document_Tag( models.Model):

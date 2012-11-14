@@ -290,14 +290,13 @@ def create_document( request, response, corpus ):
 		if form.is_valid():
 			response['presets'] = {}
 			response['presets']['language'] = form.cleaned_data['language']
-			response['presets']['ref_date'] = form.cleaned_data['ref_date']
+			preset_ref_date = form.cleaned_data['ref_date']
 			response['presets']['title'] = form.cleaned_data['title']
-			logger.info( "document metadata found, ref_date: %s" % response['presets']['ref_date'] )
+			logger.info( "document metadata found, ref_date: %s" % preset_ref_date )
 		
 		else:
 			return throw_error(response, code=API_EXCEPTION_FORMERRORS, error=form.errors)
-	return throw_error( response, code="test", error="None")
-
+	
 	if request.REQUEST.get('tags', None) is not None:
 		if 'presets' not in response:
 			response['presets'] = {}
@@ -380,10 +379,10 @@ def create_document( request, response, corpus ):
 				d.language = response['presets']['language'] 
 			if response['presets']['title'] is not None:
 				d.title = response['presets']['title'] 
-			if response['presets']['ref_date'] is not None:
-				d.ref_date = response['presets']['ref_date'] 
+			if preset_ref_date is not None:
+				d.ref_date = preset_ref_date
 			d.save()
-			response['presets']['ref_date'] = response['presets']['ref_date'].isoformat() if response['presets']['ref_date'] is not None else  None
+			response['presets']['ref_date'] = preset_ref_date.isoformat() if preset_ref_date is not None else  None
 
 			if 'tags' in response['presets']:
 				for t in response['presets']['tags']:	

@@ -132,7 +132,9 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 	total_count = Document.objects.filter(corpus=corpus).count()
 
 
-	# current document
+	# current document (new)
+	documents =  Document.objects.filter(corpus__id=corpus.id, status='NEW')
+
 	if analysis.document is None:
 		documents = Document.objects.filter(corpus__id=corpus.id)
 		analysis.document = documents[0]
@@ -150,7 +152,7 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 	# cycle through documents
 	for d in documents:
 		i = i + 1
-
+		d.status='IN'
 		# update analysis with current document
 		analysis.document = d
 		analysis.save()
@@ -160,10 +162,20 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 		# a = Analysis( document=d, )
 		logger.info("%s / %s trying to convert document '%s' [%s], mimetype %s" % ( i, total_count, d.title, d.id, d.mime_type) )
 
-		textified =  textify( d, settings.MEDIA_ROOT )
-		
+		try:
+			textified =  textify( d, settings.MEDIA_ROOT )
+		except Exception, e:
+			analysis.status="ERR"
+			d.status = 'ERR'
+			d.save()
+			analysis.save()
+			logger.error("%s / %s FAILED converting document '%s' [%s], mimetype %s with Exception: %s" % ( i, total_count, d.title, d.id, d.mime_type, e) )
+			continue
+
 		if textified == False:
 			analysis.status="ERR"
+			d.status = 'ERR'
+			d.save()
 			analysis.save()
 			logger.error("%s / %s FAILED converting document '%s' [%s], mimetype %s" % ( i, total_count, d.title, d.id, d.mime_type) )
 			continue
@@ -185,8 +197,14 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 		logger.info("%s / %s NP extraction started over document '%s' [%s], language: '%s', file: '%s'" % ( i, total_count, d.title, d.id, d.language, textified) )
 
 		#start distill anaysis, exclude given stopwors
-		distilled = distill( filename=textified, language=d.language.lower(), stopwords=stopwords )
-		
+		try:
+			distilled = distill( filename=textified, language=d.language.lower(), stopwords=stopwords )
+		except Exception, e:
+			d.status = 'ERR'
+			logger.error("%s / %s FAILED distill document '%s' [%s], mimetype %s with Exception: %s" % ( i, total_count, d.title, d.id, d.mime_type, e) )
+			d.save()
+			continue
+
 		analysis.completion = .1
 		analysis.save()
 

@@ -77,7 +77,7 @@ def store_document( filename, corpus ):
 
 	except:
 		# file do not exist, ty to uppload it
-		d = Document( url=os.path.basename(filename), mime_type=mime_type, ref_date=date, corpus=corpus, status='IN', language=language, title=title )
+		d = Document( url=os.path.basename(filename), mime_type=mime_type, ref_date=date, corpus=corpus, status='NEW', language=language, title=title )
 		d.save()
 		print "[sync] file added:", d.id
 	
