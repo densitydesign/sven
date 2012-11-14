@@ -1,13 +1,32 @@
 var query = new svenjs.Sven("");  //svenjs.Sven("http://127.0.0.1:8000");  
 
 
-var corpusID;
 var deleteList;
 var deletedFile;
+var nextLimit;
+var nextOffset;
+var total;
+
+// TODO:DA SISTEMARE ERRORI SULLA RISPOSTA....
+		d3.select("#create-corpus")
+			.on("click", function(){
+
+				var corpusData = {}
+				corpusData['name'] = d3.select("#corpus-name").property("value")
+				query.addCorpus(function(r){
+
+					var id= r.created.id;
+					switchCorpus(id);
+				}, corpusData)
+				
+			})
+			
 
 /* Check if any corpuses exist */
 
 query.getCorpora(function(response){
+	
+	
 	
 	/* Error */
 	if ( response.status != "ok" ){
@@ -20,7 +39,29 @@ query.getCorpora(function(response){
 			.append("p")
 			.html("Sorry, but something wrong happened:" + response.errors)
 		return;
-	}
+	}else{
+		var corpora = response.results;
+		d3.select(".corpus-list").append("p")
+			.attr("class", "filter-title")
+			.text("Change corpus")
+		
+		d3.select(".corpus-list")
+			.append("select")
+			.attr("class", "span8")
+			.selectAll("option")
+			.data(corpora)
+			.enter()
+			.append("option")
+			.text(function(d){return d.name})
+			.attr("value", function(d){return d.id})
+			.attr("selected", function(d){if(d.id == args['corpus']){return "selected"}})
+		
+		$(".corpus-list select").change(function(){
+			var id = $(this+":selected").attr("value")
+			switchCorpus(id);
+			})
+			
+		}
 	
 	/* No corpus */
 	if ( !response.results.length ){
@@ -36,31 +77,14 @@ query.getCorpora(function(response){
 		d3.select("#documents-list")
 			.style("display","none")
 				
-		d3.select("#documents-corpus")
-			.style("display","block")
+		//d3.select("#documents-corpus")
+		//	.style("display","block")
 			
 		
-		// TODO:DA SISTEMARE ERRORI SULLA RISPOSTA....
-		d3.select("#create-corpus")
-			.on("click", function(){
-
-				var corpusData = {}
-				corpusData['name'] = d3.select("#corpus-name").property("value")
-				console.log(corpusData)
-				query.addCorpus(function(r){
-					
-					window.location.reload();
-					
-				}, corpusData)
-				
-			})
-			
+		
 		return;
 	}
 	
-	console.log(response)
-	corpusID = response.results[0].id;
-	//corpusID = args.corpus != 0 ? args.corpus:response.results[0].id;
 	
 	checkStatus();
 })
@@ -82,11 +106,24 @@ query.getCorpora(function(response){
 		
 		});
 
+function switchCorpus(id){
+	query.switchCorpus(id, function(response){
+		
+		window.location.reload()
+		
+		
+		})
+	}
+
 function getDocumentsList(){
-	//var args = {};
-	args['corpus'] = corpusID;
+
 	query.getDocuments(function(response){
 
+		nextLimit = response.meta.next.limit;
+		nextOffset = response.meta.next.offset;
+		total = response.meta.total_count;
+		args['limit'] = nextLimit;
+		args['offset'] = nextOffset;
 	    var data = response.objects; 
 		var dataTable = sven.utils.datatable()
 			.data(d3.values(data))
@@ -119,7 +156,34 @@ function getDocumentsList(){
 		
 		})
 	
+	//load more
+	
+	d3.select("#docs").append("button")
+	 .attr("id", "loadMore")
+	 .attr("type", "button")
+	 .attr("data-loading-text", "Loading...")
+	 .attr('disabled', function(){if(total > nextOffset){$('#loadMore').removeAttr('disabled')}else{return "disabled"}})
+	 .attr("class", function(){if(total > nextOffset){return "btn btn-primary"}else{return "btn disabled"}})
+	 .text("Load More...")
+	 .on("click", function(){
+	 		console.log(args);
+	 		query.getDocuments(function(response){
 
+		nextLimit = response.meta.next.limit;
+		nextOffset = response.meta.next.offset;
+		total = response.meta.total_count;
+	    var data = response.objects; 
+		var oldData = dataTable.data();
+		args['limit'] = nextLimit;
+		args['offset'] = nextOffset;
+		dataTable.data(oldData.concat(d3.values(data))).update();
+		d3.select("#loadMore")
+			 .attr("class", function(){if(total > nextOffset){return "btn btn-primary"}else{return "btn disabled"}})
+			 .attr('disabled', function(){if(total > nextOffset){$('#loadMore').removeAttr('disabled') }else{return "disabled"}})
+		},args);
+	 		
+	 	});
+	 
 		
 	var langList = d3.nest()
     .key(function(d) { return d.language; })
@@ -137,8 +201,22 @@ function getDocumentsList(){
 	
 	//datepicker
 	$('#alert').hide();
+	
+	var dateList = d3.nest()
+    .key(function(d) { return d.date; })
+    .entries(data);
+    
+    console.log(d3.min(dateList.map(function(d){return d.key})), d3.max(dateList.map(function(d){return d.key})));
+	var minDate = d3.min(dateList.map(function(d){return d.key}));
+	var maxDate = d3.max(dateList.map(function(d){return d.key}));
+	
+	d3.select("#dp1").attr("data-date", minDate.split("T")[0]);
+	d3.select("#dp2").attr("data-date", maxDate.split("T")[0]);
+	d3.select("#startDate").text(minDate.split("T")[0]);
+	d3.select("#endDate").text(maxDate.split("T")[0]);
+	
 	//var startDate = new Date(2000,0,1);
-			//var endDate = new Date(2012,1,25);
+	//var endDate = new Date(2012,1,25);
 			$('#dp1').datepicker()
 				.on('changeDate', function(ev){
 					if (ev.date.valueOf() > endDate.valueOf()){
@@ -172,6 +250,8 @@ function getDocumentsList(){
 	d3.select("#filter").append("hr")
 	
 	function setFilters(){
+	args['limit'] = 0;
+	args['offset'] = 50;
 	var filters = {};
 	filters["ref_date__gte"] = $('#dp1').data('date') + " 00:00";
 	filters["ref_date__lte"] = $('#dp2').data('date') + " 00:00";
@@ -183,7 +263,7 @@ function getDocumentsList(){
 	d3.select(".filterActors").selectAll("input:checked").each(function(d){filters["tags__id__in"].push(d.id)});
 	if (filters["tags__id__in"].length == 0){delete filters["tags__id__in"]}
 	args['filters'] = JSON.stringify(filters);
-	console.log(args);
+	
 	//getDocumentsList();
 	getUpdateDocumentsList();
 	}
@@ -195,6 +275,15 @@ function getUpdateDocumentsList(){
 	query.getDocuments(function(response){
 
 	    var data = response.objects; 
+	    
+	    nextLimit = response.meta.next.limit;
+		nextOffset = response.meta.next.offset;
+		total = response.meta.total_count;
+		args['limit'] = nextLimit;
+		args['offset'] = nextOffset;
+		
+		d3.select("#loadMore").attr("class", function(){if(total > nextOffset){return "btn btn-primary"}else{return "btn disabled"}})
+		
 		var dataTable = sven.utils.datatable()
 			.data(d3.values(data))
 			.target("#documents-list")
@@ -237,14 +326,14 @@ function getUpdateDocumentsList(){
 
 function checkStatus(){
 	
-	query.status(corpusID,function(response){
+	query.status(args['corpus'],function(response){
 		
 		getDocumentsList();
 		
 		var status = true;
 		
 		response.objects.forEach(function(d){
-			if (d.status != "OK")
+			if (d.status != "OK" && d.status !="CLO")
 				status = false;			
 		})
 				
@@ -289,7 +378,7 @@ function checkStatus(){
       .click(function () {
         var btn = $(this);
         btn.button('loading');
-        query.exportEntities(corpusID, function(response){
+        query.exportEntities(args['corpus'], function(response){
         	window.location = response;
         	btn.button('reset');
         	});
@@ -368,7 +457,7 @@ function checkStatus(){
 				return;
 			var args = {}
 			//args['limit'] = uploadedFiles.length;
-			query.startAnalysis(corpusID, function(response){
+			query.startAnalysis(args['corpus'], function(response){
 				
 				console.log(response);
 				window.location.reload()

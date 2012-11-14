@@ -32,16 +32,12 @@
  
  <script>
 	
-	var corpusID,
-		uploadedFiles = [];
+	var uploadedFiles = [];
 	
 	
 	api = new svenjs.Sven("");
 	
-	/* getting the first corpus... */
-	api.getCorpora(function(response){
-		corpusID = response.results[0].id;
-	})
+
 	
 	
 	$(function(){
@@ -56,7 +52,7 @@
 					var title = d3.select(this).select(".titleInput").property("value");
 					var lang = d3.select(this).select(".langInput").property("value");
 					var date = d3.select(this).select(".dateInput").property("value");
-					//date = date + "T00:00";
+					date = date + " 00:00";
 					var actors = d3.select(this).select(".actorInput").property("value");
 					var actorsTag = [];
 					actors = actors.split(',');
@@ -64,7 +60,7 @@
 						actorsTag.push('{"type":"actor","name":"' + actors[i] +'"}');
 						};
 					//d.url = "{% url anta_api_documents %}?corpus=" + corpusID + "&language=" + lang + "&title=" + title + "&ref_date=" + date + "&tags=[" + actorsTag +"]";
-					d.url = "{% url anta_api_documents %}?corpus=" + corpusID + "&language=" + lang + "&title=" + title + "&tags=[" + actorsTag +"]";
+					d.url = "{% url anta_api_documents %}?corpus=" + args['corpus'] + "&language=" + lang + "&title=" + title + "&ref_date="+ date + "&tags=[" + actorsTag +"]";
 					console.log(d.url);
 					d.submit();
 				})
@@ -300,9 +296,9 @@
 			
 			if (!uploadedFiles.length)
 				return;
-			var args = {}
+			//var args = {}
 			args['limit'] = uploadedFiles.length;
-			api.startAnalysis(corpusID, function(response){
+			api.startAnalysis(args['corpus'], function(response){
 				
 				console.log(response);
 				window.location.reload()
