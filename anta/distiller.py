@@ -153,6 +153,8 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 	for d in documents:
 		i = i + 1
 		d.status='IN'
+		d.save()
+		
 		# update analysis with current document
 		analysis.document = d
 		analysis.save()
