@@ -429,6 +429,22 @@ svenjs.Sven.prototype.getActors = function(successCallback, args){
     
 };
 
+/*update actors */
+svenjs.Sven.prototype.updateActors = function(id, successCallback, args){
+		
+    var url = this.url + "/anta/api/attach-free-tag/document/" + id +"/?indent=true";
+	
+     $.ajax({
+        type: 'GET',
+        url: url,
+        data: args,
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+    
+};
+
 /* switch corpus */
 svenjs.Sven.prototype.switchCorpus = function(id, successCallback){
 		

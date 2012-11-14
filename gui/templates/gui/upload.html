@@ -52,7 +52,7 @@
 					var title = d3.select(this).select(".titleInput").property("value");
 					var lang = d3.select(this).select(".langInput").property("value");
 					var date = d3.select(this).select(".dateInput").property("value");
-					//date = date + "T00:00";
+					date = date + " 00:00";
 					var actors = d3.select(this).select(".actorInput").property("value");
 					var actorsTag = [];
 					actors = actors.split(',');
@@ -60,7 +60,7 @@
 						actorsTag.push('{"type":"actor","name":"' + actors[i] +'"}');
 						};
 					//d.url = "{% url anta_api_documents %}?corpus=" + corpusID + "&language=" + lang + "&title=" + title + "&ref_date=" + date + "&tags=[" + actorsTag +"]";
-					d.url = "{% url anta_api_documents %}?corpus=" + args['corpus'] + "&language=" + lang + "&title=" + title + "&tags=[" + actorsTag +"]";
+					d.url = "{% url anta_api_documents %}?corpus=" + args['corpus'] + "&language=" + lang + "&title=" + title + "&ref_date="+ date + "&tags=[" + actorsTag +"]";
 					console.log(d.url);
 					d.submit();
 				})

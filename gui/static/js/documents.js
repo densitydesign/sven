@@ -162,6 +162,7 @@ function getDocumentsList(){
 	 .attr("id", "loadMore")
 	 .attr("type", "button")
 	 .attr("data-loading-text", "Loading...")
+	 .attr('disabled', function(){if(total > nextOffset){$('#loadMore').removeAttr('disabled')}else{return "disabled"}})
 	 .attr("class", function(){if(total > nextOffset){return "btn btn-primary"}else{return "btn disabled"}})
 	 .text("Load More...")
 	 .on("click", function(){
@@ -178,7 +179,7 @@ function getDocumentsList(){
 		dataTable.data(oldData.concat(d3.values(data))).update();
 		d3.select("#loadMore")
 			 .attr("class", function(){if(total > nextOffset){return "btn btn-primary"}else{return "btn disabled"}})
-		
+			 .attr('disabled', function(){if(total > nextOffset){$('#loadMore').removeAttr('disabled') }else{return "disabled"}})
 		},args);
 	 		
 	 	});
