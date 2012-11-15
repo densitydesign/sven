@@ -80,7 +80,8 @@ def relations( request ):
 	
 	if request.REQUEST.has_key( 'corpus' ):
 		try:
-			response['corpus'] = corpus = Corpus.objects.get(id=request.REQUEST.get('corpus',0)).json()
+			corpus = Corpus.objects.get(id=request.REQUEST.get('corpus',0))
+			response['corpus'] = corpus.json()
 		except:
 			return throw_error( response, error="aje, corpus does not exist...")
 		response['meta']['total'] = Relation.objects.filter( source__corpus__name=corpus, target__corpus__name=corpus).count()		

@@ -1,4 +1,5 @@
-
+var sActor,
+	tActor;
 var query = new svenjs.Sven(""),
 	sDocumentId,
 	tDocumentId
@@ -24,6 +25,7 @@ query.getDocument(id_document, function(response){
 		tags = response.results[0].tags,
 		actorList = '';
 	
+	sActor = actors;
 		
 	for (actor in actors) {
 		actorList = actorList + actors[actor].name + " ";
@@ -212,6 +214,8 @@ query.getDocument(id_document, function(response){
     	var actorList = '';
     	var tags = response.results[0].tags;
     	var mime = response.results[0].mime_type;
+		
+		tActor = actors;
 		
 		for (actor in actors) {
     		actorList = actorList + actors[actor].name + " ";
@@ -523,12 +527,13 @@ function updateRalation(id, args){
 }
 // ref_date, title
 var documentId,
+	trigger,
 	key;
 
 $('#editing').on('show', function (e, a) {
 
-	var trigger = d3.select(d3.event.target).attr("class");
-		value = d3.select(d3.event.target).text();
+	trigger = d3.select(d3.event.target).attr("class");
+	value = d3.select(d3.event.target).text();
 		
 	if (trigger.search("doc-source") != -1)
 		documentId = sDocumentId;
@@ -547,6 +552,24 @@ $('#editing').on('show', function (e, a) {
 	}
 	
 	if (trigger.search("doc-actor") != -1) {
+		
+		d3.select("#editing .modal-body label").text("Enter new actors (eg: actor1,actor2)")
+		
+		d3.select("#editing .modal-body").append("div")
+			.attr("class", "btn-toolbar")
+			.selectAll("div")
+			.data(sActor)
+			.enter()
+			.append("div")
+			.attr("class", "btn-group")
+			.append("button")
+			.attr("class","btn btn-small btn-info")
+			.text(function(d){console.log(d); return d.name + " "})
+			.on("click", function(d){$(this).hide()})
+			.append("i")
+			.attr("class","icon-remove-sign icon-white")
+
+  
 		console.log("actor", value)
 		return;
 	}
@@ -555,13 +578,17 @@ $('#editing').on('show', function (e, a) {
 
 
 d3.selectAll(".editable")
-	.on("click",function(d){		
+	.on("click",function(d){	
 		$("#editing").modal("show")		
 	})
 
 d3.select("#editing-save")
 	.on("click",function(d){
-		
+	
+		if (trigger.search("doc-actor") != -1) {
+			
+		}
+		else{
 		var args = {};
 		args[key] = d3.select("#editing-input").property("value")
 		
@@ -574,5 +601,6 @@ d3.select("#editing-save")
 			window.location.reload();
 			
 		}, args)
+		}
 		
 })

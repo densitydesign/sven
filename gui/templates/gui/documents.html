@@ -12,6 +12,7 @@
     <script src="{{custom.STATIC_URL}}js/jquery/jquery.fileupload.js" type="text/javascript" ></script>
     <script src="{{custom.STATIC_URL}}js/jquery/jquery.validate.min.js"></script>
     <script src="{{ custom.STATIC_URL }}js/bootstrap-datepicker.js"></script>
+    <script src="{{ custom.STATIC_URL }}js/jquery.discontinue.js"></script>
 	
 {% endblock %}
 
@@ -114,6 +115,33 @@
  	$(".tip").tooltip();
 	var corpusID = {{corpus.id}}; 
 	args.corpus = corpusID;
+	
+		$(window).ready(function(){
+
+		// listen to success event
+		$.fn.discontinue.on( 'success.keepon.discontinue', function(event, data){
+			console.log(data);
+			var progress = data.objects[0].completion * 100;
+			if(data.objects[0].status == "OK"){
+				d3.select("#sven-alert .bar").style("width", progress + "%")
+				$.fn.discontinue.commands.keepon_stop = true
+				$("#sven-alert").empty();
+				}
+			else{
+			d3.select("#sven-alert .bar").style("width", progress + "%")
+				}
+		});
+
+			// execute standard keepon
+		$().discontinue.keepon({
+			delay: 1500,
+			url: '{% url anta_api_pending_routine_corpus corpus.id %}?limit=1&order_by=["-id"]'
+		});
+
+
+
+	});
+	
 </script>
 
 <script src="{{ custom.STATIC_URL }}js/documents.js" type="text/javascript"></script>
