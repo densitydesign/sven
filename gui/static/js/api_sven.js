@@ -429,8 +429,8 @@ svenjs.Sven.prototype.getActors = function(successCallback, args){
     
 };
 
-/*update actors */
-svenjs.Sven.prototype.updateActors = function(id, successCallback, args){
+/*add tag to document*/
+svenjs.Sven.prototype.addTag = function(id, successCallback, args){
 		
     var url = this.url + "/anta/api/attach-free-tag/document/" + id +"/?indent=true";
 	
@@ -438,6 +438,21 @@ svenjs.Sven.prototype.updateActors = function(id, successCallback, args){
         type: 'GET',
         url: url,
         data: args,
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+    
+};
+
+/*detach tag from document*/
+svenjs.Sven.prototype.detachTag = function(docId, tagId, successCallback){
+		
+    var url = this.url + "/anta/api/detach-tag/document/" + docId +"/tag/" + tagId + "/?indent=true";
+
+     $.ajax({
+        type: 'GET',
+        url: url,
         success: successCallback,
         error: successCallback,
         dataType: 'json'
