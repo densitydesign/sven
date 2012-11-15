@@ -60,7 +60,8 @@
 						actorsTag.push('{"type":"actor","name":"' + actors[i] +'"}');
 						};
 					//d.url = "{% url anta_api_documents %}?corpus=" + corpusID + "&language=" + lang + "&title=" + title + "&ref_date=" + date + "&tags=[" + actorsTag +"]";
-					d.url = "{% url anta_api_documents %}?corpus=" + args['corpus'] + "&language=" + lang + "&title=" + title + "&ref_date="+ date + "&tags=[" + actorsTag +"]";
+				    d.url = "{% url anta_api_documents %}?corpus=" + args['corpus'] + "&language=" + lang + "&title=" + title + "&ref_date="+ date + "&tags=[" + actorsTag +"]";
+					//d.url = "{% url anta_api_documents %}?corpus=" + args['corpus'] + "&language=" + lang + "&title=" + title + "&tags=[" + actorsTag +"]";
 					console.log(d.url);
 					d.submit();
 				})
