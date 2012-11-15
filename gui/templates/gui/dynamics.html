@@ -1,13 +1,68 @@
 {% extends "gui/base.html" %}
 
+{% block css_1 %}
+	<link rel="stylesheet" href="{{ custom.STATIC_URL }}css/datepicker.css" type="text/css"/>
+
+{% endblock %}
+
+{% block js_head %}
+
+    <script src="{{ custom.STATIC_URL }}js/bootstrap-datepicker.js"></script>
+    
+	
+{% endblock %}
+
 {% block content %}
 
 
 
+<div class="row-fluid">
+	<div class="span2" id="filters">
 
-<div id="graph">
+		<p class="breath"><strong>Filters</strong></p>
+	  
+	  
+		<!-- Dates -->
+		<div class="filter-block">
+			<p class="filter-title">By date</p>
+			<div class="alert alert-error" id="alert">
+				<strong></strong>
+			</div>
+			<div>
+				<a href="#" class="small" id="dp1" data-date-format="yyyy-mm-dd" data-date="2000-01-01"><i class="icon-calendar"></i> Start date</a>
+				<p id="startDate">2000-01-01</p>
+			</div>
+			<div>
+				<a href="#" class="small" id="dp2" data-date-format="yyyy-mm-dd" data-date="2012-02-25"><i class="icon-calendar"></i> End date</a>
+				<p id="endDate">2012-02-25</p>
+			</div>
+		</div>
+	  
+		<!-- Actors -->
+	  	<div class="filterActors filter-block">
+	  		<p class="filter-title">By actors</p>
+	  	</div>
+		
+		<!-- Cosine similarity -->
+	  	<div class="filterSimilarity filter-block">
+	  		<p class="filter-title">Set min similarity</p>
+	  		<div id="slider-range-min"></div>
+	  	</div>
+		
+		<!-- Language -->		
+		<div class="filterLang filter-block">
+	  		<p class="filter-title">By language</p>		
+		</div>
+	  
+	
+	</div>
+	
+	
+	 <div class="span10">
+		<div id="graph">
+		</div>
+	</div>
 </div>
-
 
 
 
