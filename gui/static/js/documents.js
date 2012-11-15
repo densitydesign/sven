@@ -210,11 +210,13 @@ function getDocumentsList(){
 	var minDate = d3.min(dateList.map(function(d){return d.key}));
 	var maxDate = d3.max(dateList.map(function(d){return d.key}));
 	
+
+	if(dateList.length > 0){
 	d3.select("#dp1").attr("data-date", minDate.split("T")[0]);
 	d3.select("#dp2").attr("data-date", maxDate.split("T")[0]);
 	d3.select("#startDate").text(minDate.split("T")[0]);
 	d3.select("#endDate").text(maxDate.split("T")[0]);
-	
+	}
 	//var startDate = new Date(2000,0,1);
 	//var endDate = new Date(2012,1,25);
 			$('#dp1').datepicker()

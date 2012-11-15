@@ -34,7 +34,7 @@ query.getDocuments(function(response){
 			.target("#timeline")
 			.update()
 				
-	},{filters:{}});
+	},args);
 	
 },args);
 
