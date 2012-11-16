@@ -4,10 +4,29 @@
 
 {% block content %}
 
+<div class="row-fluid">
+	<div class="span2" id="filters">
 
-<div id="legend" class="dropdown">
+		<p class="breath"><strong>Filters</strong></p>
 
-</div>
+	  
+		<!-- Actors -->
+	  	<div class="filterActors filter-block">
+	  		<p class="filter-title">By actors</p>
+	  	</div>
+
+		
+		<!-- Language -->		
+		<div class="filterLang filter-block">
+	  		<p class="filter-title">By language</p>		
+		</div>
+	  
+	
+	</div>
+	
+	
+	 <div class="span10">
+
 <a class="btn pull-right" title="Show/hide relationships" style="margin-right:10px" id="toggle-button" href="#!"><i id="toggle-icon" class="icon-eye-close"></i></a>
 <div id="timeline">
 	
@@ -22,7 +41,8 @@
 
 </div> 
 </div>
-
+	</div>
+</div>
 
 
 {% endblock %}
