@@ -52,12 +52,13 @@ def index(request):
 	logger.warning('Something went wrong!')
 	return render_to_json( response )
 
-
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def get_corpora(request):
 	response = _json( request )
 	response['objects']	= [ c.json() for c in Corpus.objects.all() ]
 	return render_to_json( response )
 
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def get_corpus(request, corpus_id ):
 	response = _json( request )
 	
@@ -78,14 +79,14 @@ def relations( request ):
 	if response['meta']['method'] == 'POST':
 		return create_relation( request, response )
 	
-	if request.REQUEST.has_key( 'corpus' ):
+	if 'corpus' in request.REQUEST:
 		try:
-			corpus = Corpus.objects.get(id=request.REQUEST.get('corpus',0))
-			response['corpus'] = corpus.json()
-		except:
-			return throw_error( response, error="aje, corpus does not exist...")
-		response['meta']['total'] = Relation.objects.filter( source__corpus__name=corpus, target__corpus__name=corpus).count()		
-		response['results'] = [r.json() for r in Relation.objects.filter( source__corpus__name=corpus, target__corpus__name=corpus) [response['meta']['offset']:response['meta']['limit'] ]  ]
+			corpus = Corpus.objects.get(id=request.REQUEST.get('corpus'))
+			response['corpus'] = corpus.json()	
+		except Exception, e:
+			return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+		response['meta']['total'] = Relation.objects.filter( source__corpus__name=corpus, target__corpus__name=corpus).filter( **response['meta']['filters']).count()		
+		response['results'] = [r.json() for r in Relation.objects.filter( source__corpus__name=corpus, target__corpus__name=corpus).filter( **response['meta']['filters']) [response['meta']['offset']:response['meta']['limit'] ]  ]
 		return render_to_json( response )
 	
 	return _get_instances( request, response, model_name="Relation" )
