@@ -933,10 +933,10 @@
 			       
 				   
 			     }).graphProperties({
-			       minNodeSize: 2,
+			       minNodeSize: 4,
 			       maxNodeSize: 10,
 			       minEdgeSize: 1,
-			       maxEdgeSize: 10
+			       maxEdgeSize: 20
 			     }).mouseProperties({
 			       maxRatio: 4
 			     }).configProperties({
