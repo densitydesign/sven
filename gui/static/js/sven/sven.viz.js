@@ -13,7 +13,7 @@
 			line = d3.svg.line()
 				.interpolate('bundle')
 				.tension(1),
-			interval = sven.time.timeline().limit(62), // two months as default
+			interval = sven.time.timeline().limit(31), // two months as default
 			event = d3.dispatch(
 				"change"
 			),
@@ -473,7 +473,7 @@
 
 			blocks = sven.viz.blocks()
 				.target("#blocks")
-				.interval(sven.time.timeline().limit(62)),
+				.interval(sven.time.timeline().limit(31)),
 			
 			event = d3.dispatch(
 				"change"
