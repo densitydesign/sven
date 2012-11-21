@@ -1,6 +1,9 @@
 var query = new svenjs.Sven("");  
 var show = true;
 var timeline;
+var relArgs = {};
+
+relArgs['corpus'] = args['corpus'];
 
 	query.getActors(function(response){
 		console.log(response);
@@ -39,7 +42,15 @@ query.getDocuments(function(response){
 	var langList = d3.nest()
     .key(function(d) { return d.language; })
     .entries(data);
-
+	
+	var docIdList = d3.nest()
+    .key(function(d) { return d.id; })
+    .entries(data)
+    .map(function(d){return d.key});
+    
+	var relFilters = {};
+	relFilters["source__in"] = docIdList;
+	relArgs["filters"] = JSON.stringify(relFilters);
     
     d3.select(".filterLang").selectAll("label.checkbox")
 		.data(langList)
@@ -71,6 +82,7 @@ query.getDocuments(function(response){
 	updateTimeline();
 	}
 	
+
 	//TODO: check for limits and offset: we need ALL the relations here!
 	query.getRelations(function(response){
 
@@ -83,7 +95,7 @@ query.getDocuments(function(response){
 			.target("#timeline")
 			.update()
 				
-	},args);
+	},relArgs);
 	
 },args);
 
@@ -125,6 +137,15 @@ function updateTimeline(){
 		return a.date > b.date ? 1 : a.date == b.date ? 0 : -1;
 	})
 
+		
+	var docIdList = d3.nest()
+    .key(function(d) { return d.id; })
+    .entries(data)
+    .map(function(d){return d.key});
+    
+	var relFilters = {};
+	relFilters["source__in"] = docIdList;
+	relArgs["filters"] = JSON.stringify(relFilters);
 	
 	//TODO: check for limits and offset: we need ALL the relations here!
 	query.getRelations(function(response){
@@ -141,7 +162,7 @@ function updateTimeline(){
 			.target("#timeline")
 			.update()
 				
-	},args);
+	},relArgs);
 	
 },args);
 	
