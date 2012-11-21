@@ -164,7 +164,7 @@ query.getDocuments(function(response){
 			weight = d3.scale.linear().domain([min,max]).range([1,10])
 	
 		edges.forEach(function(d){
-			graph.addEdge(d.source,d.target,{ weight : weight(d.value), size: weight(d.value) })
+			graph.addEdge(d.source,d.target,{ weight : weight(d.value), size: weight(d.value), color: "#f5f5f5" })
 		})
 
 	});
@@ -208,7 +208,7 @@ function updateGraph(){
 			weight = d3.scale.linear().domain([min,max]).range([1,10])
 	
 		edges.forEach(function(d){
-			graph.addEdge(d.source,d.target,{ weight : weight(d.value), size: weight(d.value) })
+			graph.addEdge(d.source,d.target,{ weight : weight(d.value), size: weight(d.value), color: "#f5f5f5" })
 		})
 		
 		
