@@ -13,7 +13,7 @@
 			line = d3.svg.line()
 				.interpolate('bundle')
 				.tension(1),
-			interval = sven.time.timeline().limit(62), // two months as default
+			interval = sven.time.timeline().limit(31), // two months as default
 			event = d3.dispatch(
 				"change"
 			),
@@ -473,7 +473,7 @@
 
 			blocks = sven.viz.blocks()
 				.target("#blocks")
-				.interval(sven.time.timeline().limit(62)),
+				.interval(sven.time.timeline().limit(31)),
 			
 			event = d3.dispatch(
 				"change"
@@ -973,22 +973,50 @@
 				
 				sig.iterEdges(function(e){
 					if(_nodes.indexOf(e.source)>=0 || _nodes.indexOf(e.target)>=0){
+						
+						
+						 if(!e.attr['grey']){
+          e.attr['true_color'] = e.color;
+          e.color = sig.getNodes(e.source).color;
+          e.attr['grey'] = 1;
+        }
+      }else{
+        e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
+        e.attr['grey'] = 0;
+        
 						_neighbors[e.source] = 1;
 						_neighbors[e.target] = 1;
 					}
 				}).iterNodes(function(n){
+					/*
 					if(!_neighbors[n.id]){
 						n.hidden = 1;
 					}else{
 						n.hidden = 0;
 					}
+					*/
+					if(!_neighbors[n.id]){
+        if(!n.attr['grey']){
+          n.attr['true_color'] = n.color;
+          //n.color = "#f5f5f5";
+          n.attr['grey'] = 1;
+        }
+      }else{
+        n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
+        n.attr['grey'] = 0;
+      }
 				})//.draw(2,2,2);
 			
 			}).bind('outnodes',function(){
 				sig.iterEdges(function(e){
-					e.hidden = 0;
+					//e.hidden = 0;
+					e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
+				
+      e.attr['grey'] = 0;
 				}).iterNodes(function(n){
-					n.hidden = 0;
+					//n.hidden = 0;
+					n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
+      n.attr['grey'] = 0;
 				})//.draw(2,2,2);
 			});
 			

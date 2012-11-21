@@ -168,7 +168,7 @@ function getDocumentsList(){
 	 .on("click", function(){
 	 		console.log(args);
 	 		query.getDocuments(function(response){
-
+		
 		nextLimit = response.meta.next.limit;
 		nextOffset = response.meta.next.offset;
 		total = response.meta.total_count;
@@ -177,9 +177,11 @@ function getDocumentsList(){
 		args['limit'] = nextLimit;
 		args['offset'] = nextOffset;
 		dataTable.data(oldData.concat(d3.values(data))).update();
+		
 		d3.select("#loadMore")
 			 .attr("class", function(){if(total > nextOffset){return "btn btn-primary"}else{return "btn disabled"}})
 			 .attr('disabled', function(){if(total > nextOffset){$('#loadMore').removeAttr('disabled') }else{return "disabled"}})
+		
 		},args);
 	 		
 	 	});

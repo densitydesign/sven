@@ -547,6 +547,7 @@ $('#editing').on('show', function (e, a) {
 	
 	if (trigger.search("doc-title") != -1) {
 		
+		d3.select("#editing .modal-body .btn-toolbar").remove();
 		d3.select("#editing .modal-body label").text("Please provide a new value:");
 		key = "title";
 		d3.select("#editing-input").property("value",value);
@@ -555,6 +556,7 @@ $('#editing').on('show', function (e, a) {
 	
 	if (trigger.search("doc-date") != -1) {
 	
+		d3.select("#editing .modal-body .btn-toolbar").remove();
 		d3.select("#editing .modal-body label").text("Please provide a new value:");
 		key = "ref_date";
 		d3.select("#editing-input").property("value",value);
@@ -567,6 +569,7 @@ $('#editing').on('show', function (e, a) {
 		
 		d3.select("#editing .modal-body label").text("Enter new actors (eg: actor1,actor2)")
 		
+		d3.select("#editing .modal-body .btn-toolbar").remove();
 		d3.select("#editing .modal-body").append("div")
 			.attr("class", "btn-toolbar")
 			.selectAll("div")
