@@ -52,6 +52,7 @@
 					var title = d3.select(this).select(".titleInput").property("value");
 					var lang = d3.select(this).select(".langInput").property("value");
 					var date = d3.select(this).select(".dateInput").property("value");
+					date.replace("/","-");
 					date = date + " 00:00";
 					var actors = d3.select(this).select(".actorInput").property("value");
 					var actorsTag = [];
@@ -192,7 +193,7 @@
 	      },
 	      dateInput: {
 	        required: true,
-	        date: true
+	        dateISO: true
 	      },
 	      actorInput: {
 	        minlength: 1,
@@ -255,7 +256,7 @@
 						
 				d3.select(data.sven_target)
 					.select(".progress")
-					.style("display","inline")
+					.style("display","block")
 				
 				d3.select(data.sven_target)
 					.select(".bar")
