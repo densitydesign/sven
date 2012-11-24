@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from django.db.models import Q
 from django.http import HttpResponse, HttpRequest, HttpResponseRedirect
-from django.shortcuts import render_to_response, redirect
+from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login, logout, authenticate
@@ -69,11 +69,23 @@ def documents(request, id_document=None):
 	#print document(request, id_document)
 	if id_document != None:
 		data['id_document'] = id_document
-		c = RequestContext(request, data)
-		return render_to_response("gui/document.html", c)
-	else:
-		c = RequestContext(request, data)
-		return render_to_response("gui/documents.html", c)
+		return render_to_response("gui/document.html", RequestContext(request, data))
+	
+	return render_to_response("gui/documents.html", RequestContext(request, data))
+
+# Single relation handler
+# push documents template with source / target already displayed
+# @param id_relation
+@login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
+def relations(request, id_relation ):
+	data = {}
+	data['custom'] = CUSTOM_SETTINGS
+	data['active'] = "documents"
+	data['corpus'] = {"id":request.session.get("corpus_id", 0), "name":request.session.get("corpus_name", "") }
+	
+	data['relation'] = r = get_object_or_404( Relation, id=id_relation )
+	data['id_document'] = r.source.id
+	return render_to_response("gui/document.html", RequestContext(request, data))
 
 # Timeline
 @login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
