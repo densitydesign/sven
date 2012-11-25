@@ -30,7 +30,9 @@ class TagForm( forms.ModelForm ):
 #    ---- API FORMS ----
 #    ===================
 #
-
+#class ApiQQueryForm( forms.form ):
+#	offset	= forms.IntegerField( min_value=0, required=False, initial=0 )
+	
 class ApiMetaForm( forms.Form ):
 	offset	= forms.IntegerField( min_value=0, required=False, initial=0 )
 	limit	= forms.IntegerField( min_value=1, max_value=100, required=False, initial=25 )
@@ -38,11 +40,15 @@ class ApiMetaForm( forms.Form ):
 class ApiDocumentsFilter( forms.Form ):
 	start_date = forms.DateField()
 	end_date = forms.DateField(initial=datetime.today)
+
+class ApiQueryForm( forms.Form ):
+	q	= forms.CharField( max_length=64, min_length=3, required=True )
 	
+
 class ApiRelationForm( ModelForm ):	
 	class Meta:
 		model = Relation	
 
 class ApiCorpusForm(ModelForm):	
 	class Meta:
-		model = Corpus	
+		model = Corpus

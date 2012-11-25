@@ -13,11 +13,12 @@ from django.db import IntegrityError
 import os, json, datetime, operator, inspect
 
 from sven.anta.utils import *
-from sven.anta.forms import *
+from sven.anta.forms import ApiQueryForm,LoginForm, UpdateDocumentForm, TagForm, ApiMetaForm, ApiDocumentsFilter, ApiRelationForm, ApiCorpusForm
 from django.contrib.auth.models import User
 from django.db.models import Count, Min, Max, Avg
 
 from sven.core.utils import _whosdaddy, render_to_json, throw_error, JsonQ
+from sven.core.misc import Epoxy, grep
 import urllib,logging
 
 
@@ -246,126 +247,149 @@ def corpus( request, id ):
 # @csrf_exempt
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def documents(request, corpus_name=None):
-	response = _json( request )
+	response = Epoxy( request )
 
-	# create documents
-	if not request.REQUEST.has_key( 'corpus' ):
-		return throw_error( response, error="corpus param is empty", code=API_EXCEPTION_INCOMPLETE)
-	
 	try:
-		corpus = Corpus.objects.get(id=request.REQUEST.get('corpus'))
-	except Exception, e:
-		return throw_error( response, error="Exception: %s " % e, code=API_EXCEPTION_DOESNOTEXIST )
+		corpus = response.add('corpus', Corpus.objects.get( id=request.REQUEST.get('corpus') ), jsonify=True)
+	except Corpus.DoesNotExist, e:
+		return response.throw_error( error="%s" % e, code=API_EXCEPTION_DOESNOTEXIST ).json()
 	
-	response['corpus'] = corpus.json()
-
-
-	# to create a document, 
-	if response['meta']['method'] == 'POST':
+	if response.method == 'POST':
 		return create_document( request, response, corpus=corpus )
 
-	return JsonQ( request ).get_response( queryset=Document.objects.distinct().filter(corpus=corpus) )
+	# search query
+	if 'q' in request.REQUEST:
+		form = ApiQueryForm( request.REQUEST )
 
-	# return _get_instances( request, response, model_name="Document" )
+		if not form.is_valid():
+			response.warning('query', form.errors )
+		else:
+			response.meta('query', request.REQUEST.get('q') )
 
+		import glob
+		
+
+		corpus_path = os.path.join( settings.MEDIA_ROOT , corpus.name , "*.txt")
+		matches = []
+		grepper = re.compile( form.cleaned_data['q'] )
+		for i in glob.glob( corpus_path ):
+			if grep( grepper, file(i)):
+				matches.append( i )
+		
+		response.add('matches', matches )
+		
+
+		response.add('path', os.path.join( settings.MEDIA_ROOT , corpus.name) )
+		
+		# apply grep as filter... :D
+		# find . -type f -name "*.txt" -exec grep -zoc "class" {} +
+		#args = ["find", os.path.join( settings.MEDIA_ROOT , corpus.name),"-type","f","-name","*.txt","-exec","grep", "-Ezoc" ,form.cleaned_data['q'],  "{}","+"]
+		#response.add('script', " ".join( args ) )
+		#try:
+		#response.add('out', subprocess.check_output( args, stdin=subprocess.PIPE ))
+		#except CalledProcessError, e:
+		# error in argument list
+		# except Exception, e:
+			# python < 2.6 @todo handle exception Curella's way
+		#	try:
+		#		response.add('out', check_output(["tail", log_file]) )
+		#	except Exception, e:
+		#		return response.throw_error(error="Exception: %s" % e, code=API_EXCEPTION).json()
+	
+
+
+
+	return response.queryset( Document.objects.filter(corpus=corpus) ).json()
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def create_document( request, response, corpus ):
 
+	# request files. cfr upload.html template with blueimp file upload
+	if not request.FILES.has_key('files[]'):
+		return response.throw_error( error="request.FILES['files[]'] was not found", code=API_EXCEPTION_INCOMPLETE ).json()
+	
 
-
-	path = settings.MEDIA_ROOT + corpus.name + "/"
+	path = os.path.join( settings.MEDIA_ROOT, corpus.name )
 	logger.info( "start upload on path %s" % path)
 
 	# uncomment to debug
-	response['path'] = path
+	response.add('path', path)
 	
 	if not os.path.exists( path ):
 		logger.error( "path %s does not exist!" % path)
-		return throw_error(response, code=API_EXCEPTION_DOESNOTEXIST, error="path %s does not exits!" % path )
+		return response.throw_error( code=API_EXCEPTION_DOESNOTEXIST, error="path %s does not exits!" % path ).json()
+
+	
 
 	# check preloaded vars
+	presets = None
+
 	if request.REQUEST.get('language', None) is not None:
 		logger.info( "'language' REQUEST param found, proceed to metadata validation")
 			
 		form = UpdateDocumentForm( request.REQUEST )
 		if form.is_valid():
-			response['presets'] = {}
-			response['presets']['language'] = form.cleaned_data['language']
-			preset_ref_date = form.cleaned_data['ref_date']
-			response['presets']['title'] = form.cleaned_data['title']
-			logger.info( "document metadata found, ref_date: %s" % preset_ref_date )
+			presets = {}
+			presets['language'] = form.cleaned_data['language']
+			presets['ref_date'] = form.cleaned_data['ref_date']
+			presets['title']	= form.cleaned_data['title']
+
+			logger.info( "document metadata found, ref_date: %s" % presets['ref_date'] )
 		
 		else:
-			return throw_error(response, code=API_EXCEPTION_FORMERRORS, error=form.errors)
+			return response.throw_error( code=API_EXCEPTION_FORMERRORS, error=form.errors ).json()
 	
+	
+	# get tags
 	if request.REQUEST.get('tags', None) is not None:
-		if 'presets' not in response:
-			response['presets'] = {}
+		if presets is None:
+			presets = {}
 		try:
-			response['presets']['tags'] = json.loads( request.REQUEST.get('tags') )
-		except Exception, e:
-			return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION )
+			presets['tags'] = json.loads( request.REQUEST.get('tags') )
+		except ValueError, e:
+			return response.throw_error( "Exception: %s" % e, code=API_EXCEPTION ).json()
 
-		for tag in response['presets']['tags']:
+		for tag in presets['tags']:
 			form = TagForm( tag )
+			
 			if form.is_valid():
-				response['message'] = 'form is valid!!!'
 				t = form.save()
+			
 			elif "__all__" in form.errors:
 				try:
-					t = Tag.objects.get(name=tag['name'],type=tag['type'] )
+					t = Tag.objects.get( name=tag['name'], type=tag['type'] )
 				except Exception, e:
-					return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION )
+					return response.throw_error( "Exception: %s" % e, code=API_EXCEPTION ).json()
 			else:
-				return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS )
+				return response.throw_error( error=form.errors, code=API_EXCEPTION_FORMERRORS ).json()
 			tag['id'] = t.id
-			
-		# test new tag form
-
-		#form = TagForm( request.REQUEST )
-		#if form.is_valid():
-		#	t = form.save()
-		#elif "__all__" in form.errors:
-		#	try:
-		#		t = Tag.objects.get(name=request.REQUEST.get('name',None),type=request.REQUEST.get('type', None) )
-		#	except Exception, e:
-		#		return throw_error( response, "Exception: %s" % e, code=API_EXCEPTION_DUPLICATED )
-		#else:
-		#	return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS )
-
-		# save relationship
-		#try:
-		#	dt = Document_Tag( document=d, tag=t )
-		#	dt.save()
-		#except:
-		#	return throw_error( response, error="Relationship document tag already existing", code=API_EXCEPTION_DUPLICATED )
+	
+	# append presets to response ( data, language, title and tags as django has understand them )
+	response.add( 'presets', presets )
 
 
+	# return response.json()	
 
-	response['uploads'] = []
+	# response['uploads'] = []
 
-	# request files. cfr upload.html template with blueimp file upload
-	if not request.FILES.has_key('files[]'):
-		return throw_error( response, error="request.FILES['files[]'] was not found", code=API_EXCEPTION_INCOMPLETE)
 	for f in request.FILES.getlist('files[]'):
 		# store locally and save happily
 		if f.size == 0:
-			return throw_error(response, error="uploaded file is empty", code=API_EXCEPTION_EMPTY)
+			return response.throw_error( error="uploaded file is empty", code=API_EXCEPTION_EMPTY )
 		
 		# filename
-		filename = path + f.name 
+		filename = os.path.join( path, f.name )
 
 		# file exists. 
 		# get permission to store the document. If it exists, will force override!
 		try:
 			destination = open( filename , 'wb+')
 		except Exception, e:
-			return throw_error( response, error="Exception: %s " % e, code=API_EXCEPTION_EMPTY)
+			return response.throw_error( error="Exception: %s " % e, code=API_EXCEPTION_EMPTY).json()
 		
 		# save file
 		for chunk in f.chunks():
-			destination.write(chunk)
+			destination.write( chunk )
 		
 		destination.close()
 
@@ -373,21 +397,20 @@ def create_document( request, response, corpus ):
 		try:
 			d = store_document( filename=filename, corpus=corpus )
 		except Exception, e:
-			return throw_error( response, error="Exception: %s " % e, code=API_EXCEPTION_EMPTY)
+			return response.throw_error( error="Exception: %s " % e, code=API_EXCEPTION_EMPTY )
 
-		# update with document form fileds above :D. Validation is already done.
-		if 'presets' in response:
-			if response['presets']['language'] is not None:
-				d.language = response['presets']['language'] 
-			if response['presets']['title'] is not None:
-				d.title = response['presets']['title'] 
-			if preset_ref_date is not None:
-				d.ref_date = preset_ref_date
+		# update with document form fileds above :D. Validation has already been done.
+		if presets is not None:
+			if presets['language'] is not None:
+				d.language = presets['language'] 
+			if presets['title'] is not None:
+				d.title = presets['title'] 
+			if presets['ref_date'] is not None:
+				d.ref_date = presets['ref_date']
 			d.save()
-			response['presets']['ref_date'] = preset_ref_date.isoformat() if preset_ref_date is not None else  None
-
-			if 'tags' in response['presets']:
-				for t in response['presets']['tags']:	
+			
+			if 'tags' in presets:
+				for t in presets['tags']:	
 					try:
 						dt = Document_Tag( document=d, tag_id=t['id'] )
 						dt.save()
@@ -396,12 +419,12 @@ def create_document( request, response, corpus ):
 						continue
 					except Exception, e:
 						# strange exception!
-						response['warnings'] = "Exception: %s" % e
+						response.warning('document_tag',"Exception: %s" % e )
 						continue
 		
-		response['uploads'].append( d.json() )
-	logger.info("upload completed")
-	return render_to_json( response )
+		response.add('upload', d, jsonify=True )
+		logger.info("upload completed")
+	return response.json()
 	
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
