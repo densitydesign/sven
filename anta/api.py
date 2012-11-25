@@ -272,15 +272,22 @@ def documents(request, corpus_name=None):
 		corpus_path = os.path.join( settings.MEDIA_ROOT , corpus.name , "*.txt")
 		matches = []
 		grepper = re.compile( form.cleaned_data['q'] )
+		#dual_name = re.compile()
+
 		for i in glob.glob( corpus_path ):
 			if grep( grepper, file(i)):
-				matches.append( i )
+				if re.search( r'\..{3}\.txt$', i ):
+					matches.append( os.path.basename( i )[:-4] )
+				else:
+					matches.append( os.path.basename( i ) )
 		
+				
 		response.add('matches', matches )
 		
 
 		response.add('path', os.path.join( settings.MEDIA_ROOT , corpus.name) )
-		
+
+		return response.queryset( Document.objects.filter(corpus=corpus, url__in=matches) ).json()
 		# apply grep as filter... :D
 		# find . -type f -name "*.txt" -exec grep -zoc "class" {} +
 		#args = ["find", os.path.join( settings.MEDIA_ROOT , corpus.name),"-type","f","-name","*.txt","-exec","grep", "-Ezoc" ,form.cleaned_data['q'],  "{}","+"]
