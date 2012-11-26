@@ -305,7 +305,11 @@ h3 {
 	visibility:hidden;
 }	
 
-
+.sheet {
+	margin: 20px;
+	padding: 15px;
+	background: white;	
+	}
 .doc-actor, .doc-date, .doc-title {
 	padding:5px;
 	display:table;
@@ -507,3 +511,4 @@ h3 {
 		width:100%;
 		height:600px;
 	}
+
