@@ -22,7 +22,7 @@ query.getDocument(id_document, function(response){
 		date = response.results[0].date.split('T')[0],
 		title = response.results[0].title,
 		actors = response.results[0].actors,
-		tags = response.results[0].tags,
+		tags = response.results[0].segments,
 		actorList = '';
 	
 	sActor = actors;
@@ -43,13 +43,13 @@ query.getDocument(id_document, function(response){
 		.data(tags)
 		.enter().append("span")
 			.attr("class", "tag badge badge-info")
-			.text(function(d){return d.name;})
+			.text(function(d){return d.stemmed;})
 			console.log(pdfURL_source)
 	//pdfViewer(pdfURL_source, 'source', 'pdf-container');
 	
 	var text = response.text
 	if (mime == 'application/pdf'){
-	var p_text = d3.select("#source_document .pdf-container p");
+	var p_text = d3.select("#source_document .pdf-container .sheet");
 	if (p_text){
 		p_text.remove();
 		}
@@ -58,7 +58,7 @@ query.getDocument(id_document, function(response){
 	}
 	else{
 		$('#iframe1').hide();
-		d3.select("#source_document .pdf-container").append("p").text(text);
+		d3.select("#source_document .pdf-container").append("div").attr("class", "sheet").append("p").text(text);
 		}
 },{'with-text':'true'});
 
@@ -212,7 +212,7 @@ query.getDocument(id_document, function(response){
     	var title = response.results[0].title;
     	var actors = response.results[0].actors;
     	var actorList = '';
-    	var tags = response.results[0].tags;
+    	var tags = response.results[0].segments;
     	var mime = response.results[0].mime_type;
 		
 		tActor = actors;
@@ -235,7 +235,7 @@ query.getDocument(id_document, function(response){
 			.data(tags)
 			.enter().append("span")
 				.attr("class", "tag badge badge-info")
-				.text(function(d){return d.name;})
+				.text(function(d){return d.stemmed;})
 		
     	
 		//pdfViewer(pdfUrl_target, 'target', 'pdf-container');
@@ -244,7 +244,7 @@ query.getDocument(id_document, function(response){
    		$("#target_document .text").height(600);
    		
    		if (mime == 'application/pdf'){
-   		var p_text = d3.select("#target_document .pdf-container p");
+   		var p_text = d3.select("#target_document .pdf-container .sheet");
 	if (p_text){
 		p_text.remove();
 		}
@@ -253,7 +253,7 @@ query.getDocument(id_document, function(response){
 	}
 	else{
 		$('#iframe2').hide();
-		d3.select("#target_document .pdf-container").append("p").text(text);
+		d3.select("#target_document .pdf-container").append("div").append("class", "sheet").append("p").text(text);
 		}
 
 	
@@ -269,6 +269,9 @@ query.getDocument(id_document, function(response){
 	
 	$('#search-document').typeahead({
 		source: function(q,process){
+			filters = {}
+			filters['title__icontains'] = q;
+			args['filters'] = JSON.stringify(filters);
 			query.getDocuments(function(data){
 				labels = []
 				mapped = {}

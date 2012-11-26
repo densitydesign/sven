@@ -416,7 +416,7 @@ svenjs.Sven.prototype.exportEntities = function(id, successCallback){
 /*get actors */
 svenjs.Sven.prototype.getActors = function(successCallback, args){
 		
-    var url = this.url + "/anta/api/tags/?indent=true&filters={%22type%22:%22actor%22}";
+    var url = this.url + "/anta/api/tags/?indent=true&filters={%22type%22:%22actor%22}&order_by=name";
 	
      $.ajax({
         type: 'GET',

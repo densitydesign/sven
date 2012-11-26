@@ -254,8 +254,8 @@ function getDocumentsList(){
 	d3.select("#filter").append("hr")
 	
 	function setFilters(){
-	args['limit'] = 0;
-	args['offset'] = 50;
+	args['limit'] = 50;
+	args['offset'] = 0;
 	var filters = {};
 	filters["ref_date__gte"] = $('#dp1').data('date') + " 00:00";
 	filters["ref_date__lte"] = $('#dp2').data('date') + " 00:00";
