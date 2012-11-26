@@ -223,7 +223,7 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 				try:
 					t.save()
 				except:
-					print "[warning] unable to save as tag:", candidate
+					# print "[warning] unable to save as tag:", candidate
 					continue
 		 	
 		 	# set tag documnt relation
@@ -249,8 +249,10 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 				s = Segment( content=segment[0][:128], stemmed=re.sub("\s+", ' ', " ".join(segment[1])[:128] ), language=d.language )
 				try:
 					s.save()
-				except:
-					print "[warning] unable to save segment:", segment[0][:128]
+				except Exception, e:
+					#logger.warning("%s / %s FAILED distill document '%s' [%s], mimetype %s with Exception: %s" % ( i, total_count, d.title, d.id, d.mime_type, e) )
+			
+					#print "[warning] unable to save segment:", segment[0][:128]
 					continue
 			try:
 				sd = Document_Segment.objects.get( document=d, segment=s )
@@ -258,8 +260,8 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 				sd = Document_Segment( document=d, segment=s, tf=segment[2] )
 				sd.save()
 				# relationship exist
-			if first:
-				print "[info] sample 'segment' saved:", s.id, s.content, ", stem:", s.stemmed ,", tf:", sd.tf
+			#if first:
+				#print "[info] sample 'segment' saved:", s.id, s.content, ", stem:", s.stemmed ,", tf:", sd.tf
 				
 			
 			# save concept and attach
@@ -276,7 +278,7 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 
 						c.save()
 					except Exception, e:
-						print "[warning] unable to save concept: %s, exception: %s" % (k, e)
+						#print "[warning] unable to save concept: %s, exception: %s" % (k, e)
 						continue
 				try:
 					sc = Segment_Concept.objects.get( segment=s, concept=c )
@@ -284,16 +286,16 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 					sc = Segment_Concept( segment=s, concept=c )
 					sc.save()	
 					
-				if first:
-					print "[info] sample 'concept' saved:",c.id, c.content
+				#if first:
+				#	print "[info] sample 'concept' saved:",c.id, c.content
 
 			first = False
 			
 		
 		
-		print "[info] analysis ended on doc", d.id,"'", d.title,"'"
+		#print "[info] analysis ended on doc", d.id,"'", d.title,"'"
 	
-	print "[info] analysis completed on corpus:", corpus.id
+	#print "[info] analysis completed on corpus:", corpus.id
 	analysis.status = "OK"
 	analysis.end_date = datetime.utcnow()
 	analysis.save()
