@@ -2,12 +2,14 @@ var query = new svenjs.Sven("");
 var show = true;
 var timeline;
 var relArgs = {};
+var prevFilters = $.cookie('sven_filters');
 
 relArgs['corpus'] = args['corpus'];
 
-	query.getActors(function(response){
+query.getActors(function(response){
 		console.log(response);
 		var actorList = response.objects;
+		/*
 		d3.select(".filterActors").selectAll("label.checkbox")
 		.data(actorList)
 		.enter()
@@ -16,6 +18,20 @@ relArgs['corpus'] = args['corpus'];
 		.text(function(d){return d.name;})
 		.append("input")
 		.attr("type", "checkbox")
+		*/
+		d3.select(".filterActorsSelect").append("select").attr("multiple", "multiple").attr("id","selectActors").selectAll("option")
+		.data(actorList)
+		.enter()
+		.append("option")
+		.attr("value", function(d){return d.id;})
+		.text(function(d){return d.name;})
+		
+		$("#selectActors").select2({
+                placeholder: "Select actors",
+                allowClear: true,
+                width:"element",
+                closeOnSelect:false
+            });
 		
 		
 		});
@@ -68,19 +84,7 @@ query.getDocuments(function(response){
 		.on("click", function(){setFilters();})
 		
 	
-	function setFilters(){
-	//args['limit'] = 0;
-	//args['offset'] = 50;
-	var filters = {};
-	filters["language__in"] = []
-	d3.select(".filterLang").selectAll("input:checked").each(function(d){filters["language__in"].push(d.key)});
-	if (filters["language__in"].length == 0){delete filters["language__in"]}
-	filters["tags__id__in"] = [];
-	d3.select(".filterActors").selectAll("input:checked").each(function(d){filters["tags__id__in"].push(d.id)});
-	if (filters["tags__id__in"].length == 0){delete filters["tags__id__in"]}
-	args['filters'] = JSON.stringify(filters);
-	updateTimeline();
-	}
+//set filters
 	
 
 	//TODO: check for limits and offset: we need ALL the relations here!
@@ -116,6 +120,20 @@ d3.select("#toggle-button").on("click", function(){
 });
 
 
+function setFilters(){
+	//args['limit'] = 0;
+	//args['offset'] = 50;
+	var filters = {};
+	filters["language__in"] = []
+	d3.select(".filterLang").selectAll("input:checked").each(function(d){filters["language__in"].push(d.key)});
+	if (filters["language__in"].length == 0){delete filters["language__in"]}
+	filters["tags__id__in"] = $("#selectActors").select2("val");
+	//d3.select(".filterActors").selectAll("input:checked").each(function(d){filters["tags__id__in"].push(d.id)});
+	if (filters["tags__id__in"].length == 0){delete filters["tags__id__in"]}
+	args['filters'] = JSON.stringify(filters);
+	updateTimeline();
+	}
+	
 function updateTimeline(){
 	
 	query.getDocuments(function(response){

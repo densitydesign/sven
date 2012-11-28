@@ -5,6 +5,8 @@ var graph;
 	query.getActors(function(response){
 		console.log(response);
 		var actorList = response.objects;
+		
+		/*
 		d3.select(".filterActors").selectAll("label.checkbox")
 		.data(actorList)
 		.enter()
@@ -13,7 +15,21 @@ var graph;
 		.text(function(d){return d.name;})
 		.append("input")
 		.attr("type", "checkbox")
+		*/
 		
+		d3.select(".filterActorsSelect").append("select").attr("multiple", "multiple").attr("id","selectActors").selectAll("option")
+		.data(actorList)
+		.enter()
+		.append("option")
+		.attr("value", function(d){return d.id;})
+		.text(function(d){return d.name;})
+		
+		$("#selectActors").select2({
+                placeholder: "Select actors",
+                allowClear: true,
+                width:"element",
+                closeOnSelect:false
+            });
 		
 		});
 
@@ -105,8 +121,8 @@ query.getDocuments(function(response){
 	filters["language__in"] = []
 	d3.select(".filterLang").selectAll("input:checked").each(function(d){filters["language__in"].push(d.key)});
 	if (filters["language__in"].length == 0){delete filters["language__in"]}
-	filters["tags__id__in"] = [];
-	d3.select(".filterActors").selectAll("input:checked").each(function(d){filters["tags__id__in"].push(d.id)});
+	filters["tags__id__in"] = $("#selectActors").select2("val");
+	//d3.select(".filterActors").selectAll("input:checked").each(function(d){filters["tags__id__in"].push(d.id)});
 	if (filters["tags__id__in"].length == 0){delete filters["tags__id__in"]}
 	args['filters'] = JSON.stringify(filters);
 	updateGraph();

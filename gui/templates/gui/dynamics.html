@@ -2,12 +2,14 @@
 
 {% block css_1 %}
 	<link rel="stylesheet" href="{{ custom.STATIC_URL }}css/datepicker.css" type="text/css"/>
+	<link href="{{ custom.STATIC_URL }}css/select2/select2.css" rel="stylesheet"/>
 
 {% endblock %}
 
 {% block js_head %}
 
     <script src="{{ custom.STATIC_URL }}js/bootstrap-datepicker.js"></script>
+    <script src="{{ custom.STATIC_URL }}js/select2/select2.js"></script>
     
 	
 {% endblock %}
@@ -20,7 +22,12 @@
 	<div class="span2" id="filters">
 
 		<p class="breath"><strong>Filters</strong></p>
-	  
+
+		<!-- Cosine similarity -->
+	  	<div class="filterSimilarity filter-block">
+	  		<p class="filter-title">Set min similarity</p>
+	  		<div id="slider-range-min"></div>
+	  	</div>
 	  
 		<!-- Dates -->
 		<div class="filter-block">
@@ -39,15 +46,10 @@
 		</div>
 	  
 		<!-- Actors -->
-	  	<div class="filterActors filter-block">
+	  	<div class="filterActorsSelect filter-block">
 	  		<p class="filter-title">By actors</p>
 	  	</div>
 		
-		<!-- Cosine similarity -->
-	  	<div class="filterSimilarity filter-block">
-	  		<p class="filter-title">Set min similarity</p>
-	  		<div id="slider-range-min"></div>
-	  	</div>
 		
 		<!-- Language -->		
 		<div class="filterLang filter-block">

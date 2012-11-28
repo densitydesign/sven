@@ -183,6 +183,14 @@
 	var corpusID = {{corpus.id}}; 
 	args.corpus = corpusID;
     var id_document = {{ id_document }};
+
+    {% if relation %}
+    	var id_relation = {{ relation.id }};
+    {% else %}
+    	var id_relation = null;
+    {% endif %}
+    	
+    console.log(id_document, id_relation);
     $("#source_document .text").width($("#source_document").width());
     $("#source_document .text").height(600);
     $(window).resize(function() {

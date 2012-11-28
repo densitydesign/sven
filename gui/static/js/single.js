@@ -68,6 +68,18 @@ $('a[data-toggle="tab"]').on('show', function (e) {
 	.style("display","none")
 })
 
+/* display target doc if is relation view */
+
+if (id_relation){
+query.getRelation(id_relation, function(response){
+	
+	var data = response.results[0];
+	pdfUrl_target = '../../../anta/api/documents/download/' + data.target;
+    addTargetDocument(data.target);
+	
+	})
+}
+
 /* Relations */
  query.getRelations(function(response){
 
@@ -85,10 +97,13 @@ $('a[data-toggle="tab"]').on('show', function (e) {
  						.text(function(d){ var testo = this;
     						query.getDocument(d.target, function(response){
     								d.relation_target = response.results[0].title
-    								d3.select(testo).html('<div class="btn-link">' + d.relation_target + '</div>').on("click", function(){
-    									pdfUrl_target = '../../../anta/api/documents/download/' + d.target;
-    									addTargetDocument(d.target);
-    									});
+    								//d3.select(testo).html('<div class="btn-link">' + d.relation_target + '</div>').on("click", function(){
+    								//	pdfUrl_target = '../../../anta/api/documents/download/' + d.target;
+    								//	addTargetDocument(d.target);
+    								//});
+    								console.log(d);
+    								d3.select(testo).html('<a href="/gui/relations/'+ d.id +'">' + d.relation_target + '</a>')
+    									
     							})
     						});
 						
