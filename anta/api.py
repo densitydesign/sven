@@ -490,12 +490,14 @@ def document(request, document_id):
 #
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def tags( request ):
-	response = _json( request )
-	_load_corpus( request, response )
+	response = Epoxy( request )
+	try:
+		corpus = Corpus.objects.get( pk=request.REQUEST.get('corpus'))
+	except Corpus.DoesNotExist,e:
+		return response.throw_error(error="%s"%e,code=API_EXCEPTION_DOESNOTEXIST).json()
 
-	# pre filtered according to corpus id
-	queryset = Tag.objects.annotate(num_documents=Count("document__id", distinct=True)).filter( document__corpus__id=response['corpus']['id'])
-	return JsonQ( request ).get_response( queryset=queryset )
+	return response.queryset(  Tag.objects.annotate(num_documents=Count("document__id", distinct=True)).filter( document__corpus=corpus ) ).json()
+	
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def tag( request, tag_id ):

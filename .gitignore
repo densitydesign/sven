@@ -4,17 +4,16 @@
 settings.py
 # manage.py
 sven.wsgi
+
 media/*
 env/*
 *.pyc
+*~
+core/*~
+anta/*~
 .DS_Store
-
 sven.db
-
 anta/static/js/tooltipsy.min.js
-
 *.db
-
 *.log
-
 *.db-journal
