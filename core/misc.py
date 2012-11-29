@@ -123,14 +123,14 @@ class Epoxy:
 
 		if self.method == 'GET' and 'filters' in self.request.REQUEST:
 			try:
-				self.filters = json.loads( self.request.REQUEST.get('filters') )
+				self.filters  = self.response['meta']['filters'] = json.loads( self.request.REQUEST.get('filters') )
 			except ValueError, e:
 				self.warning( 'filters', "Exception: %s" % e )
 
 		# order by
 		if self.method == 'GET' and 'order_by' in self.request.REQUEST:
 			try:
-				self.order_by = j['meta']['order_by'] = json.loads( self.request.REQUEST.get('order_by') ) # json array
+				self.order_by = self.response['meta']['order_by'] = json.loads( self.request.REQUEST.get('order_by') ) # json array
 			except ValueError, e:
 				self.warning( 'order_by', "Exception: %s" % e )
 
