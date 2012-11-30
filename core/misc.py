@@ -56,7 +56,7 @@ def grep( grepper, file_obj ):
 #
 class OffsetLimitForm( Form ):
 	offset	= IntegerField( min_value=0, required=False, initial=0 )
-	limit	= IntegerField( min_value=1, max_value=100, required=False, initial=25 )
+	limit	= IntegerField( min_value=-1, max_value=100, required=False, initial=25 )
 
 
 #
@@ -98,7 +98,7 @@ class Epoxy:
 		self.order_by = []
 		self.process()
 
-	def warning( key, message ):
+	def warning( self, key, message ):
 		if 'warnings' not in self.response['meta']:
 			self.response['meta']['warnings'] = {}
 		self.response['meta']['warnings'][ key ] = message
@@ -113,7 +113,7 @@ class Epoxy:
 			if 'method' in self.request.REQUEST: # simulation
 				method = self.request.REQUEST.get('method') 
 				if method not in API_AVAILABLE_METHODS:
-					self.warnings( 'order_by', "Method: %s is not available " % self.request.REQUEST.get('method') )
+					self.warning( 'order_by', "Method: %s is not available " % self.request.REQUEST.get('method') )
 				else:
 					self.response['meta']['method'] = method
 					self.method = method
@@ -123,16 +123,16 @@ class Epoxy:
 
 		if self.method == 'GET' and 'filters' in self.request.REQUEST:
 			try:
-				self.filters = json.loads( self.request.REQUEST.get('filters') )
-			except Exception, e:
-				self.warnings( 'filters', "Exception: %s" % e )
+				self.filters  = self.response['meta']['filters'] = json.loads( self.request.REQUEST.get('filters') )
+			except ValueError, e:
+				self.warning( 'filters', "Exception: %s" % e )
 
 		# order by
 		if self.method == 'GET' and 'order_by' in self.request.REQUEST:
 			try:
-				self.order_by = j['meta']['order_by'] = json.loads( self.request.REQUEST.get('order_by') ) # json array
-			except Exception, e:
-				self.warnings( 'order_by', "Exception: %s" % e )
+				self.order_by = self.response['meta']['order_by'] = json.loads( self.request.REQUEST.get('order_by') ) # json array
+			except ValueError, e:
+				self.warning( 'order_by', "Exception: %s" % e )
 
 		# limit / offset 
 		if self.method=='GET' and ( 'offset' in self.request.REQUEST or 'limit' in self.request.REQUEST ) :
@@ -141,13 +141,13 @@ class Epoxy:
 				self.offset = form.cleaned_data['offset'] if form.cleaned_data['offset'] else self.offset 
 				self.limit	= form.cleaned_data['limit'] if form.cleaned_data['limit'] else self.limit 
 			else:
-				self.warnings( 'offsets', form.errors )
+				self.warning( 'offsets', form.errors )
 			
 
 			# next / previous
 			if self.offset > 0:
 				self.response['meta']['previous'] = {
-					'offset': max( self.offset - self.limit, 0 ),
+					'offset': max( self.offset - self.limit, 0 ) if self.limit != -1 else 0,
 					'limit': self.limit
 				}
 		
@@ -183,7 +183,10 @@ class Epoxy:
 			qs = queryset.filer()
 			
 		# apply limits
-		qs = qs[ self.offset : self.offset + self.limit ]
+		if self.limit == -1:
+			qs = qs[ self.offset : ]
+		else:
+			qs = qs[ self.offset : self.offset + self.limit ]
 
 		if model_name is not None:
 			self.response['meta']['model'] = model_name # @todo: guess from queryset/rawqueryset ?

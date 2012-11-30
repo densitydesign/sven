@@ -490,12 +490,14 @@ def document(request, document_id):
 #
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def tags( request ):
-	response = _json( request )
-	_load_corpus( request, response )
+	response = Epoxy( request )
+	try:
+		corpus = Corpus.objects.get( pk=request.REQUEST.get('corpus'))
+	except Corpus.DoesNotExist,e:
+		return response.throw_error(error="%s"%e,code=API_EXCEPTION_DOESNOTEXIST).json()
 
-	# pre filtered according to corpus id
-	queryset = Tag.objects.annotate(num_documents=Count("document__id", distinct=True)).filter( document__corpus__id=response['corpus']['id'])
-	return JsonQ( request ).get_response( queryset=queryset )
+	return response.queryset(  Tag.objects.annotate(num_documents=Count("document__id", distinct=True)).filter( document__corpus=corpus ) ).json()
+	
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def tag( request, tag_id ):
@@ -969,7 +971,7 @@ def relations_graph(request, corpus_id):
 	filters = ["d1.corpus_id=%s", "d2.corpus_id=%s"]
 	ids = []
 
-	# 1. handle filters via get
+	# 1. handle filters via get,just documents id
 
 	if len( response['meta']['filters'] ):
 		try:
@@ -1009,15 +1011,18 @@ def relations_graph(request, corpus_id):
 	# 4. load actors as nodes
 	actors = Document_Tag.objects.filter(tag__type='actor', document__corpus__id=corpus_id, document__id__in=ids)
 	nodes = {}
+	candidates = {}
 	for dt in actors:
-		if dt.tag.id in nodes: 
-			nodes[ dt.tag.id ]['size'] = nodes[ dt.tag.id ]['size'] + 1
-			continue
+		#if dt.tag.id in nodes: 
+		#	nodes[ dt.tag.id ]['size'] = nodes[ dt.tag.id ]['size'] + 1
+		#	candidates[ dt.tag.id ]['docs'].append( dt.document.id )
+		#	continue
 		# create a new node with tag id
-		nodes[ dt.tag.id] = {
-			'size': 1,
+		candidates[ dt.tag.id] = {
+			'size': 0,
 			'name':dt.tag.name,
-			'id':dt.tag.id
+			'id':dt.tag.id#,
+		#	'docs':[  dt.document.id ]
 		}
 
 	# load relations and distances
@@ -1035,6 +1040,8 @@ def relations_graph(request, corpus_id):
 		    t1.id as alpha_actor,  
 		    t2.id as omega_actor,
 		    AVG( y.cosine_similarity ) as average_cosine_similarity,
+		    dt1.document_id as alpha_id,
+		    dt2.document_id as omega_id,
 		    MIN( y.cosine_similarity ) as min_cosine_similarity,
 		    MAX( y.cosine_similarity ) as max_cosine_similarity
 		FROM `anta_distance` y
@@ -1051,17 +1058,35 @@ def relations_graph(request, corpus_id):
 			""" + ( " HAVING min_cosine_similarity > %s " % min_cosine_similarity if min_cosine_similarity > 0 else "" ) + """
 		ORDER BY average_cosine_similarity
 	""",[ corpus_id, corpus_id])
+	linked_nodes = {}
 
 	for row in cursor.fetchall():
+		target = row[1]
+		source = row[0]
+		if target in  linked_nodes:
+			
+			linked_nodes[ target ].append( row[ 4 ] )
+		else:
+			linked_nodes[ target ] = []
+
+		if source in  linked_nodes:
+			linked_nodes[ source ].append( row[ 3 ] )
+			
+		else:
+			linked_nodes[ source ] = []
+
 		edges.append({
 			'value':row[2],
-			'source':row[1],
-			'target':row[0],
+			'source':source,
+			'target':target,
 			'color': '#660000'
 		})
 
-
+	for n in linked_nodes:
+		nodes[ n ] = candidates[ n ]
+		nodes[ n ]['size'] = len( set( linked_nodes[n] ))
     # write nodes isnide view
+	# response['linked_nodes'] = linked_nodes	
 	response['edges'] = edges	
 	response['nodes'] = nodes
 
