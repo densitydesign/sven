@@ -3,7 +3,6 @@ var graph;
 	// get actors
 	
 	query.getActors(function(response){
-		console.log(response);
 		var actorList = response.objects;
 		
 		/*
@@ -31,7 +30,7 @@ var graph;
                 closeOnSelect:false
             });
 		
-		});
+		},actorArgs);
 
 query.getDocuments(function(response){
 
@@ -67,7 +66,7 @@ query.getDocuments(function(response){
     .key(function(d) { return d.date; })
     .entries(data);
     
-    console.log(d3.min(dateList.map(function(d){return d.key})), d3.max(dateList.map(function(d){return d.key})));
+    //console.log(d3.min(dateList.map(function(d){return d.key})), d3.max(dateList.map(function(d){return d.key})));
 	var minDate = d3.min(dateList.map(function(d){return d.key}));
 	var maxDate = d3.max(dateList.map(function(d){return d.key}));
 	
@@ -139,7 +138,7 @@ query.getDocuments(function(response){
 			nodes = d3.entries(data.nodes).map(function(d){ return d.value; }),
 			edges = d3.entries(data.edges).map(function(d){ return d.value; })
 		
-		console.log(data)
+		
 		
 		var edgesL = data.edges;
 		var valueList = d3.nest()
@@ -149,14 +148,14 @@ query.getDocuments(function(response){
 	var minValue = d3.min(valueList.map(function(d){return d.key}));
 	var maxValue = d3.max(valueList.map(function(d){return d.key}));
 	
-	console.log(valueList);
+	//console.log(valueList);
 	$( "#slider-range-min" ).slider({
             range: "min",
             value: 1,
             min: 1,
             max: valueList.length,
             slide: function( event, ui ) {
-                console.log(valueList[ui.value-1].key);
+                //console.log(valueList[ui.value-1].key);
                 args['min-cosine-similarity'] = valueList[ui.value-1].key;
             }
         });
@@ -188,7 +187,7 @@ query.getDocuments(function(response){
 
 	query.streamgraph(args['corpus'],function(response){
 	
-		console.log(response);
+		//console.log(response);
 	
 	});
 
@@ -234,7 +233,7 @@ function updateGraph(){
 
 	query.streamgraph(args['corpus'],function(response){
 	
-		console.log(response);
+		//console.log(response);
 	
 	});
 

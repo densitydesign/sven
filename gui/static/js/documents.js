@@ -91,8 +91,8 @@ query.getCorpora(function(response){
 
 	// get actors
 	
-	query.getActors(function(response){
-		console.log(response);
+query.getActors(function(response){
+		
 		var actorList = response.objects;
 		
 		/*
@@ -119,7 +119,28 @@ query.getCorpora(function(response){
                 width:"element",
                 closeOnSelect:false
             });
-		});
+		},actorArgs);
+
+function setFilters(){
+	args['limit'] = 50;
+	args['offset'] = 0;
+	var filters = {};
+	filters["ref_date__gte"] = $('#dp1').data('date') + " 00:00";
+	filters["ref_date__lte"] = $('#dp2').data('date') + " 00:00";
+	filters["title__icontains"] = d3.select("#filterContains").property("value");
+	filters["language__in"] = []
+	d3.select(".filterLang").selectAll("input:checked").each(function(d){filters["language__in"].push(d.key)});
+	if (filters["language__in"].length == 0){delete filters["language__in"]}
+	//filters["tags__id__in"] = [];
+	//d3.select(".filterActors").selectAll("input:checked").each(function(d){filters["tags__id__in"].push(d.id)});
+	filters["tags__id__in"] = $("#selectActors").select2("val");
+	if (filters["tags__id__in"].length == 0){delete filters["tags__id__in"]}
+	args['filters'] = JSON.stringify(filters);
+	
+	$.cookie('sven_filters', JSON.stringify(filters), { path: '/'});
+	//getDocumentsList();
+	getUpdateDocumentsList();
+	}
 
 function switchCorpus(id){
 	query.switchCorpus(id, function(response){
@@ -223,7 +244,7 @@ function getDocumentsList(){
     .key(function(d) { return d.date; })
     .entries(data);
     
-    console.log(d3.min(dateList.map(function(d){return d.key})), d3.max(dateList.map(function(d){return d.key})));
+    //console.log(d3.min(dateList.map(function(d){return d.key})), d3.max(dateList.map(function(d){return d.key})));
 	var minDate = d3.min(dateList.map(function(d){return d.key}));
 	var maxDate = d3.max(dateList.map(function(d){return d.key}));
 	
@@ -268,26 +289,7 @@ function getDocumentsList(){
 		
 	d3.select("#filter").append("hr")
 	
-	function setFilters(){
-	args['limit'] = 50;
-	args['offset'] = 0;
-	var filters = {};
-	filters["ref_date__gte"] = $('#dp1').data('date') + " 00:00";
-	filters["ref_date__lte"] = $('#dp2').data('date') + " 00:00";
-	filters["title__icontains"] = d3.select("#filterContains").property("value");
-	filters["language__in"] = []
-	d3.select(".filterLang").selectAll("input:checked").each(function(d){filters["language__in"].push(d.key)});
-	if (filters["language__in"].length == 0){delete filters["language__in"]}
-	//filters["tags__id__in"] = [];
-	//d3.select(".filterActors").selectAll("input:checked").each(function(d){filters["tags__id__in"].push(d.id)});
-	filters["tags__id__in"] = $("#selectActors").select2("val");
-	if (filters["tags__id__in"].length == 0){delete filters["tags__id__in"]}
-	args['filters'] = JSON.stringify(filters);
-	
-	$.cookie('sven_filters', JSON.stringify(filters), { path: '/'});
-	//getDocumentsList();
-	getUpdateDocumentsList();
-	}
+
 	},args);
 }
 
@@ -395,8 +397,7 @@ function checkStatus(){
 				//	})
 				
 			
- $('#export')
-      .click(function () {
+ $('#export') .click(function () {
         var btn = $(this);
         btn.button('loading');
         query.exportEntities(args['corpus'], function(response){

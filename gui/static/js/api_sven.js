@@ -101,7 +101,6 @@ svenjs.Sven.prototype.addCorpus = function(successCallback, args){
 /* get documents */
 svenjs.Sven.prototype.getDocuments = function(successCallback, args){
 	
-    //var url = this.url + "/sketch/query/" + this.database + "/" + collection + "/" + command + "/";
     var url = this.url + "/anta/api/documents/?indent=true";
 	
 	var args = args || { };
@@ -112,7 +111,7 @@ svenjs.Sven.prototype.getDocuments = function(successCallback, args){
         url: url,
         data: args,
         complete: function(){
-        	console.log(this.url);
+        	//console.log(this.url);
     		},
         success: successCallback,
         error: successCallback,
@@ -202,7 +201,7 @@ svenjs.Sven.prototype.getRelations = function(successCallback, args){
         url: url,
         data: args,
         complete: function(){
-        	console.log(this.url);
+        	//console.log(this.url);
     		},
         success: successCallback,
         error: successCallback,
@@ -316,7 +315,6 @@ svenjs.Sven.prototype.download = function(id, successCallback, args){
 /* graph */
 svenjs.Sven.prototype.graph = function(id, successCallback, args){
 		
-    //var url = this.url + "/sketch/query/" + this.database + "/" + collection + "/" + command + "/";
     var url = this.url + "/anta/api/relations/graph/corpus/" + id + "/?filters={}";
 
     $.ajax({
@@ -326,7 +324,7 @@ svenjs.Sven.prototype.graph = function(id, successCallback, args){
         success: successCallback,
         error: successCallback,
         complete: function(){
-        	//console.log(this.url);
+        	console.log(this.url);
     		},
         dataType: 'json'
     });
@@ -416,8 +414,8 @@ svenjs.Sven.prototype.exportEntities = function(id, successCallback){
 /*get actors */
 svenjs.Sven.prototype.getActors = function(successCallback, args){
 		
-    var url = this.url + "/anta/api/tags/?indent=true&filters={%22type%22:%22actor%22}&order_by=name";
-	
+    var url = this.url + "/anta/api/tags/?indent=true&filters={%22type%22:%22actor%22}&order_by=[%22name%22]";
+
      $.ajax({
         type: 'GET',
         url: url,

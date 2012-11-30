@@ -7,7 +7,7 @@ var prevFilters = $.cookie('sven_filters');
 relArgs['corpus'] = args['corpus'];
 
 query.getActors(function(response){
-		console.log(response);
+		
 		var actorList = response.objects;
 		/*
 		d3.select(".filterActors").selectAll("label.checkbox")
@@ -34,7 +34,7 @@ query.getActors(function(response){
             });
 		
 		
-		});
+		},actorArgs);
 
 query.getDocuments(function(response){
 
@@ -167,7 +167,7 @@ function updateTimeline(){
 	
 	//TODO: check for limits and offset: we need ALL the relations here!
 	query.getRelations(function(response){
-		console.log(response);
+		
 		var links = response.results;
 		if (!links) return;
 		

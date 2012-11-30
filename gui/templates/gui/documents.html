@@ -115,15 +115,18 @@
 {% block js_body %}
 <script>
     var args = {};
+    var actorArgs = {}
  	$(".tip").tooltip();
 	var corpusID = {{corpus.id}}; 
 	args.corpus = corpusID;
+	actorArgs.corpus = corpusID;
+	actorArgs.limit = -1; //prende TUTTI gli attori
 	
 		$(window).ready(function(){
 
 		// listen to success event
 		$.fn.discontinue.on( 'success.keepon.discontinue', function(event, data){
-			console.log(data);
+			
 			var progress = data.objects[0].completion * 100;
 			if(data.objects[0].status == "OK"){
 				d3.select("#sven-alert .bar").style("width", progress + "%")
