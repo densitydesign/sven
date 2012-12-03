@@ -1,6 +1,16 @@
 {% extends "gui/base.html" %}
 
+{% block css_1 %}
+	<link href="{{ custom.STATIC_URL }}css/select2/select2.css" rel="stylesheet"/>
 
+{% endblock %}
+
+{% block js_head %}
+
+    <script src="{{ custom.STATIC_URL }}js/select2/select2.js"></script>
+    
+	
+{% endblock %}
 
 {% block content %}
 
@@ -11,7 +21,7 @@
 
 	  
 		<!-- Actors -->
-	  	<div class="filterActors filter-block">
+	  	<div class="filterActorsSelect filter-block">
 	  		<p class="filter-title">By actors</p>
 	  	</div>
 
@@ -20,14 +30,16 @@
 		<div class="filterLang filter-block">
 	  		<p class="filter-title">By language</p>		
 		</div>
+		
 	  
 	
 	</div>
 	
 	
 	 <div class="span10">
-
+<p id="timeInfo">
 <a class="btn pull-right" title="Show/hide relationships" style="margin-right:10px" id="toggle-button" href="#!"><i id="toggle-icon" class="icon-eye-close"></i></a>
+</p>
 <div id="timeline">
 	
 	<div id="blocks"></div>
@@ -54,6 +66,10 @@
 	var staticUrl = "{{custom.STATIC_URL}}";
 	var corpusID = {{corpus.id}}; 
 	args.corpus = corpusID;
+	
+	var actorArgs = {};
+	actorArgs.corpus = corpusID;
+	actorArgs.limit = -1; //prende TUTTI gli attori
 </script>
 
 <script src="{{ custom.STATIC_URL }}js/time.js" type="text/javascript"></script>

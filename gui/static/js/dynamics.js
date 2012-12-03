@@ -3,8 +3,9 @@ var graph;
 	// get actors
 	
 	query.getActors(function(response){
-		console.log(response);
 		var actorList = response.objects;
+		
+		/*
 		d3.select(".filterActors").selectAll("label.checkbox")
 		.data(actorList)
 		.enter()
@@ -13,9 +14,23 @@ var graph;
 		.text(function(d){return d.name;})
 		.append("input")
 		.attr("type", "checkbox")
+		*/
 		
+		d3.select(".filterActorsSelect").append("select").attr("multiple", "multiple").attr("id","selectActors").selectAll("option")
+		.data(actorList)
+		.enter()
+		.append("option")
+		.attr("value", function(d){return d.id;})
+		.text(function(d){return d.name;})
 		
-		});
+		$("#selectActors").select2({
+                placeholder: "Select actors",
+                allowClear: true,
+                width:"element",
+                closeOnSelect:false
+            });
+		
+		},actorArgs);
 
 query.getDocuments(function(response){
 
@@ -51,7 +66,7 @@ query.getDocuments(function(response){
     .key(function(d) { return d.date; })
     .entries(data);
     
-    console.log(d3.min(dateList.map(function(d){return d.key})), d3.max(dateList.map(function(d){return d.key})));
+    //console.log(d3.min(dateList.map(function(d){return d.key})), d3.max(dateList.map(function(d){return d.key})));
 	var minDate = d3.min(dateList.map(function(d){return d.key}));
 	var maxDate = d3.max(dateList.map(function(d){return d.key}));
 	
@@ -105,8 +120,8 @@ query.getDocuments(function(response){
 	filters["language__in"] = []
 	d3.select(".filterLang").selectAll("input:checked").each(function(d){filters["language__in"].push(d.key)});
 	if (filters["language__in"].length == 0){delete filters["language__in"]}
-	filters["tags__id__in"] = [];
-	d3.select(".filterActors").selectAll("input:checked").each(function(d){filters["tags__id__in"].push(d.id)});
+	filters["tags__id__in"] = $("#selectActors").select2("val");
+	//d3.select(".filterActors").selectAll("input:checked").each(function(d){filters["tags__id__in"].push(d.id)});
 	if (filters["tags__id__in"].length == 0){delete filters["tags__id__in"]}
 	args['filters'] = JSON.stringify(filters);
 	updateGraph();
@@ -123,7 +138,7 @@ query.getDocuments(function(response){
 			nodes = d3.entries(data.nodes).map(function(d){ return d.value; }),
 			edges = d3.entries(data.edges).map(function(d){ return d.value; })
 		
-		console.log(data)
+		
 		
 		var edgesL = data.edges;
 		var valueList = d3.nest()
@@ -133,14 +148,14 @@ query.getDocuments(function(response){
 	var minValue = d3.min(valueList.map(function(d){return d.key}));
 	var maxValue = d3.max(valueList.map(function(d){return d.key}));
 	
-	console.log(valueList);
+	//console.log(valueList);
 	$( "#slider-range-min" ).slider({
             range: "min",
             value: 1,
             min: 1,
             max: valueList.length,
             slide: function( event, ui ) {
-                console.log(valueList[ui.value-1].key);
+                //console.log(valueList[ui.value-1].key);
                 args['min-cosine-similarity'] = valueList[ui.value-1].key;
             }
         });
@@ -172,7 +187,7 @@ query.getDocuments(function(response){
 
 	query.streamgraph(args['corpus'],function(response){
 	
-		console.log(response);
+		//console.log(response);
 	
 	});
 
@@ -218,7 +233,7 @@ function updateGraph(){
 
 	query.streamgraph(args['corpus'],function(response){
 	
-		console.log(response);
+		//console.log(response);
 	
 	});
 
