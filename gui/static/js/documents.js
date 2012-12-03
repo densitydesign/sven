@@ -166,7 +166,7 @@ function getDocumentsList(){
 			.target("#documents-list")
 			.keys(function(d){ return ['id','title','date','actors','language']; })
 			.highlight(function(d){ return ['title']; })
-			.handle("actors", function(d){ return d.actors.map(function(v){return v.name;}).join(","); })
+			.handle("actors", function(d){ return d.actors.map(function(v){return v.name;}).join(", "); })
 			.handle("title", function(d){ return "<a href='/gui/documents/"+ d.id +"'>" + d.title + "</a>" })
 			.update()
 		
