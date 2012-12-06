@@ -60,6 +60,7 @@
 			var color = sven.colors.diverging(colorGroups.length);
 			colorGroups.forEach(function(d){
 				color(d);
+				console.log(d)
 			})
 			
 			var groups = interval(nodes).map(function(d){
@@ -153,7 +154,8 @@
 					//vecchia y return y.range()[1] - (i+1)*elementHeight - elementHeight*(groups[b].children.length-1); })
 					.attr("height", fixHeight)
 					.attr("width", x.rangeBand())
-					.attr("fill", function(d){ return color.values()[d.actor]; })
+					//.attr("fill", function(d){ return color.values()[d.actor]; })
+					.attr("fill", "LightGrey")
 					.attr("stroke", "#ffffff")//function(d){ return d3.rgb(color.values()[d.actor]).darker(); })
 					.attr("rel", "popover")
 					.attr("data-content",function(d){var dt = new Date(d.date);var format= d3.time.format("%B %e, %Y"); var content =  "<p>" + format(dt) + "</p><p>actor: <b>" + d.actor + "</b></p><p>relations: <b>" + d.relations_count + "</b></p>"; return content;} )
@@ -172,7 +174,7 @@
 				.data(function(d){ return d.children; })
 				.enter().append("image")
 				.attr("class","toggle-link")
-				.attr("xlink:href", staticUrl + "/css/images/links.png")
+				.attr("xlink:href", staticUrl + "css/images/links.png")
   				.attr("x", x.rangeBand()/2 - fixHeight/2)
   				.attr("y", function(d,i,b) { return i*elementHeight + (y.range()[1] -elementHeight*(groups[b].children.length-1))/2 ; })
 			    .attr("width", 16)
@@ -215,7 +217,8 @@
 					visible:true,
 					sourceNode:sourceNode,
 					targetNode:targetNode,
-					description:d.description
+					description:d.description,
+					polarity: d.polarity
 				}
 					
 				if (!paths.filter(function(j){ return j.id==d.id; }).length) {
@@ -230,15 +233,25 @@
 				.data(paths)
 				.enter().append("svg:path")
 				.attr("class","link")
+				.attr("rel","tooltip")
+				.attr("title",function(d){return d.description})
 				.style("stroke-width",fixHeight/2)
 				.attr("stroke-linecap","butt")
+				.style("stroke",function(d){return sven.colors.polarity(d.polarity)})
 				.style("opacity",function(d){ return d.visible? 1 : 0; })
 				.attr("d",function(d){ return curve([d.sourceNode,d.targetNode]); })
-				.on("mouseover",function(d){
-				
-				})	
-	
-		
+				.on("click", function(d){window.location = "/gui/relations/"+ d.id})
+				.on("mouseover",function(d){ d3.select(".desc")
+											.select(".tooltip-inner")
+											.text(d.description);
+
+											d3.select(".desc")
+											.attr("class","tooltip fade in desc")
+											.attr("style","top: " + (d3.event.pageY - $(".desc").height() -15 ) + "px; left:"+ (d3.event.pageX - $(".desc").width()/2 ) + "px")
+
+							 })
+				.on("mousemove",function(d){d3.select(".desc").attr("style","top: " + (d3.event.pageY - $(".desc").height() - 15) + "px; left:"+ (d3.event.pageX - $(".desc").width()/2) + "px");})
+				.on("mouseout",function(d){d3.select(".desc").attr("class","tooltip fade out desc")})	
 			
 			var label = group.append("svg:text")
 				.attr("class","timeline-label")

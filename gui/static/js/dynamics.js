@@ -26,7 +26,7 @@ var graph;
 		$("#selectActors").select2({
                 placeholder: "Select actors",
                 allowClear: true,
-                width:"element",
+                width:function(){return $("#filters").width() + "px"},
                 closeOnSelect:false
             });
 		

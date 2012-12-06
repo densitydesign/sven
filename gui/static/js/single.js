@@ -268,7 +268,7 @@ query.getDocument(id_document, function(response){
 	}
 	else{
 		$('#iframe2').hide();
-		d3.select("#target_document .pdf-container").append("div").append("class", "sheet").append("p").text(text);
+		d3.select("#target_document .pdf-container").append("div").attr("class", "sheet").append("p").text(text);
 		}
 
 	
@@ -360,9 +360,12 @@ query.getDocument(id_document, function(response){
 							return "<strong>Oh. Something went wrong:</strong><p>"+errorString+"</p>"
 						})
 					
+			
 					return;
 				}
 				
+					
+					
 				d3.select(".addResult")
 					.style("display","block")
 					.attr("class","addResult alert alert-success")
@@ -370,6 +373,10 @@ query.getDocument(id_document, function(response){
 						return "<strong>Great! </strong><p>The relation has been successfully created.</p>"
 					})
 				
+					//reset form
+					$("#description").val("");
+					$("#radio .active").button("reset");
+					d3.select("#search-document").property("value","");
 				drawRelation();
 					
 				},relationArgs)
@@ -528,7 +535,7 @@ function updateRalation(id, args){
 					
 					return;
 				}
-				console.log("andata bene cazzo")
+				console.log("andata bene")
 				$(".updateResult").empty();
 				d3.select(".updateResult")
 					.append("div")
