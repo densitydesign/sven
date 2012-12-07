@@ -1029,7 +1029,8 @@ def relations_graph(request, corpus_id):
 		}
 
 	# load relations and distances
-	edges = []
+	edges = {}
+	candidates_edges = {}
 	from django.db import connection
 
 	#  "document__ref_date__gt": 20111011, 
@@ -1076,9 +1077,20 @@ def relations_graph(request, corpus_id):
 		if row[5] is not None and row[7] is not None:
 			relation = "%s %s" % ( (source, target) if target > source else (target, source) )
 			if relation not in relations:
-				relations[ relation ]={'polarity':row[6], 'intensity':[p[0] for p in POLARITY_CHOICES].index( row[6] ), 'source':source,'target':target, 'size':0};
-			relations[ relation ]['size'] = relations[ relation ]['size']  + 1
+				relations[ relation ]=[]
+			relations[ relation ].append({'polarity':row[6], 'intensity':[p[0] for p in POLARITY_CHOICES].index( row[6] ), 'source':source,'target':target, 'size':0});
 			
+
+		edge_key = "%s %s" % ( (source, target) if target > source else (target, source) )
+		if edge_key not in candidates_edges:
+			candidates_edges[ edge_key ] = []
+
+		candidates_edges[ edge_key].append({
+				'value':row[2],
+				'source':source,
+				'target':target,
+		});
+		
 
 			
 		if target in  linked_nodes:
@@ -1092,23 +1104,30 @@ def relations_graph(request, corpus_id):
 			
 		else:
 			linked_nodes[ source ] = []
-
-		edges.append({
-			'value':row[2],
-			'source':source,
-			'target':target,
-			'color': '#660000'
-		})
+		continue
+		
 
 	response['relations'] = relations
-	
+	response['c_edges'] = candidates_edges
 
 	for n in linked_nodes:
 		nodes[ n ] = candidates[ n ]
 		nodes[ n ]['size'] = len( set( linked_nodes[n] ))
+
+	for k in candidates_edges:
+		
+		edges[k] = {
+			'value':sum([ e['value'] for e in candidates_edges[ k ] ])/len(candidates_edges[ k ]),
+			'source':candidates_edges[ k ][0]['source'],
+			'target':candidates_edges[ k ][0]['target'],
+			'color':"#ffffff"
+		}
+		if k in relations:
+			edges[k]['color'] = "#6b6b6b"
+
     # write nodes isnide view
 	# response['linked_nodes'] = linked_nodes	
-	response['edges'] = edges	
+	response['edges'] = edges.values()
 	response['nodes'] = nodes
 
 	return render_to_json( response )
