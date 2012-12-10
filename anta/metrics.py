@@ -430,8 +430,6 @@ def similarity( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 	documents = {}
 
 	# out some information
-	print "[info] corpus:",corpus.json()
-	print "[info] document in corpus:",number_of_documents
 	
 	# get the list of every stemmed segments inside each document.
 	# the distance algorithm will work on "stemmed" documents!
@@ -485,10 +483,8 @@ def similarity( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 	
 	# store document in corpus.
 	c = pvCorpus( documents.values() )
-	
 	# computate and save similarities
 	for counter, d in enumerate(documents):
-		print counter
 		for n in c.neighbors( documents[d], top=number_of_documents):
 			alpha_id = pattern_id_translation[ documents[d].id ]
 			omega_id = pattern_id_translation[ n[1].id ]

@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from datetime import datetime 
+import colorsys
 
 LANGUAGE_CHOICES = (
 	(u'NL', u'Dutch'),
@@ -217,9 +218,18 @@ class Relation( models.Model ):
 	class Meta:
 		unique_together = ("source", "target") 
 
-	def intensity( self, min, max):
-		steps  = float(max - min) / len( POLARITY_CHOICES )
-		return min + steps * [p[0] for p in POLARITY_CHOICES].index( self.polarity )
+	def intensity( self, min=0, max=1):
+		steps  = float(max - min) / (len( POLARITY_CHOICES ) - 1)
+		return -min + steps * [p[0] for p in POLARITY_CHOICES].index( self.polarity )
+
+	@staticmethod
+	def intensity_as_color( value, min, max ):
+		d  = int( 4 * (value - min ) / float(max - min) )
+		colors = ["#1A9641", "#A6D96A", "#FFFFBF", "#FDAE61", "#D7191C"]
+		return colors[d]
+		# (["PPO", "POS", "NEU", "NEG", "NNE"] "#1A9641", "#A6D96A", "#FFFFBF", "#FDAE61", "#D7191C"]
+		
+
 
 	def json(self, min=-1, max=1):
 		return {

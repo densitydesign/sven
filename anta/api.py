@@ -10,7 +10,10 @@ from django.conf import settings
 from django.contrib.auth import login, logout
 from django.core import serializers
 from django.db import IntegrityError
+from django.db.models import Q
+from django.core.exceptions import FieldError
 import os, json, datetime, operator, inspect
+from sets import Set
 
 from sven.anta.utils import *
 from sven.anta.forms import ApiQueryForm,LoginForm, UpdateDocumentForm, TagForm, ApiMetaForm, ApiDocumentsFilter, ApiRelationForm, ApiCorpusForm
@@ -18,7 +21,7 @@ from django.contrib.auth.models import User
 from django.db.models import Count, Min, Max, Avg
 
 from sven.core.utils import _whosdaddy, render_to_json, throw_error, JsonQ
-from sven.core.misc import Epoxy, grep
+from sven.core.misc import Epoxy, grep, API_EXCEPTION_FIELDERROR
 import urllib,logging
 
 
@@ -404,7 +407,7 @@ def create_document( request, response, corpus ):
 		try:
 			d = store_document( filename=filename, corpus=corpus )
 		except Exception, e:
-			return response.throw_error( error="Exception: %s " % e, code=API_EXCEPTION_EMPTY )
+			return response.throw_error( error="Exception: %s " % e, code=API_EXCEPTION_EMPTY ).json()
 
 		# update with document form fileds above :D. Validation has already been done.
 		if presets is not None:
@@ -960,44 +963,39 @@ def streamgraph( request, corpus_id ):
 
 
 def relations_graph(request, corpus_id):
-	response = _json( request )
+	response = Epoxy( request )
 	
-	c =  _get_corpus( corpus_id )
-	if c is None:
-		return throw_error( response, "Corpus %s does not exist...," % corpus_id, code=API_EXCEPTION_DOESNOTEXIST )	
-	response['corpus'] = c.json()
-
-	# 0. BASIC filters for django queryset
+	# get the corpus
+	try:
+		c = response.add('corpus', Corpus.objects.get( id=corpus_id ), jsonify=True )
+	except Corpus.DoesNotExist, e:
+		return response.throw_error( error="%s" % e, code=API_EXCEPTION_DOESNOTEXIST ).json()
+	
+	# 1. BASIC filters for django queryset
 	filters = ["d1.corpus_id=%s", "d2.corpus_id=%s"]
 	ids = []
 
 	# 1. handle filters via get,just documents id
 
-	if len( response['meta']['filters'] ):
-		try:
-			ids = [ str(d.id) for d in Document.objects.filter(corpus=c,**response['meta']['filters'])]
-		except Exception, e:
-			return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION )
-	else:
-		ids = [ str(d.id) for d in Document.objects.filter(corpus=c)]
+	try:
+		ids = [ str(d.id) for d in Document.objects.filter(corpus=c).filter(**response.filters) ]
+	except FieldError, e:
+		return response.throw_error( error="%s" % e, code=API_EXCEPTION_FIELDERROR ).json()
+	
+	response.add('documents_filtered',ids)
 
-	# debug only
-	response['documents_filtered'] = ids
-
-
+	
 	# 2. validate length
 	if len(ids) == 0:
-		response['meta']['total'] = 0;
-		response['nodes'] = {}
-		response['edges'] = {}
-		return throw_error( response, error="Query does not return any values", code=API_EXCEPTION_EMPTY )
+		response.meta("total_count",0)
+		response.add('nodes', {})
+		response.add('edges', {})
+		return response.json()
 	
 	
-	# 4. test: recalculate distances "on the fly". @todo: Document Patch needed
-
 
 	# 3. add some basic filters
-	filters.append( "t1.id != t2.id")
+	# filters.append( "t1.id != t2.id")
 	filters.append( "t1.type='actor'" ) # filter by tag type actor
 	filters.append( "t2.type='actor'" ) 
 	filters.append( "d1.id IN ( %s )" % ",".join(ids) )
@@ -1010,47 +1008,83 @@ def relations_graph(request, corpus_id):
 	except Exception, e:
 		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_FORMERRORS )
 
-	# 4. load actors as nodes
+
+
+
+	# 4. load ALL actors as nodes
 	actors = Document_Tag.objects.filter(tag__type='actor', document__id__in=ids)
-	nodes = {}
+	edges = {}
 	candidates = {}
+	shared_documents = {}
+
+
 	for dt in actors:
 		
-		#if dt.tag.id in nodes: 
-		#	nodes[ dt.tag.id ]['size'] = nodes[ dt.tag.id ]['size'] + 1
-		#	candidates[ dt.tag.id ]['docs'].append( dt.document.id )
-		#	continue
-		# create a new node with tag id
-		candidates[ dt.tag.id] = {
-			'size': 0,
-			'name':dt.tag.name,
-			'id':dt.tag.id#,
-		#	'docs':[  dt.document.id ]
-		}
+		if dt.document.id not in shared_documents:
+			shared_documents[ dt.document.id ] = []
+		shared_documents[ dt.document.id ].append( dt.tag.id )
 
-	# load relations and distances
-	edges = {}
-	candidates_edges = {}
-	from django.db import connection
+		if dt.tag.id not in candidates: 
+			candidates[ dt.tag.id ] = {
+				'size': 0,
+				'name':dt.tag.name,
+				'id':dt.tag.id,
+				'docs':[]
+			}
+		candidates[ dt.tag.id]['size'] = candidates[ dt.tag.id]['size'] + 1
+		candidates[ dt.tag.id]['docs'].append( dt.document.id )
 
-	#  "document__ref_date__gt": 20111011, 
-    #  "document__ref_date__lt": 20121011
 	
-	# relations = Relation.objects.filter(source__corpus=c, target__corpus=c, source__id__in=ids, target__id__in=ids )
+	actors_involved = []
 
+	#
+	# 6. MANUAL RELATIONS edges ( intensity points )
+	#
+	relations = Relation.objects.filter( source__id__in=ids , target__id__in=ids )
+	for r in relations:
+		sa = r.source.tags.filter(type='actor')
+		ta = r.target.tags.filter(type='actor')
+		for a in sa:
+			
+			for t in ta:
+				if t.id == a.id:
+					continue
+				
+				actors_involved.append( a.id )
+				actors_involved.append( t.id )
+
+				# calculate average here
+				edge = " ".join( sorted([ str(t.id), str( a.id)]) )
+				actors_involved.append( t.id )
+				if edge not in edges:
+					edges[ edge ] ={
+						'source':t.id,
+						'target':a.id,
+						'value':0,
+						'sum':0,
+						'components': 0,
+						'color':'#383838' # black is neuter
+					}
+				edges[ edge ]['components'] = edges[ edge ]['components'] + 1
+				edges[ edge ]['sum'] = edges[ edge ]['sum'] + r.intensity()
+	
+	for e in edges:
+		edges[ e ]['value'] = edges[ e ]['sum'] / edges[ e ]['components']
+		edges[ e ]['color'] = Relation.intensity_as_color(value=edges[ e ]['value'],min=0, max=1)
+
+	#
+	# 7. SIMILARITY DISTANCE edges
+	#		
+	from django.db import connection
 	cursor = connection.cursor()
 	cursor.execute("""
-		    SELECT 
+		SELECT 
 		    t1.id as alpha_actor,  
 		    t2.id as omega_actor,
 		    AVG( y.cosine_similarity ) as average_cosine_similarity,
-		    dt1.document_id as alpha_id,
-		    dt2.document_id as omega_id,
-		    r1.id,
-		    r1.polarity,
-		    r2.id,
 		    MIN( y.cosine_similarity ) as min_cosine_similarity,
-		    MAX( y.cosine_similarity ) as max_cosine_similarity
+		    MAX( y.cosine_similarity ) as max_cosine_similarity,
+		    COUNT( distinct t2.id ) as alpha_size
 		FROM `anta_distance` y
 		JOIN anta_document_tag dt1 ON y.alpha_id = dt1.document_id
 		JOIN anta_document_tag dt2 ON y.omega_id = dt2.document_id  
@@ -1058,8 +1092,6 @@ def relations_graph(request, corpus_id):
 		JOIN anta_tag t2 ON dt2.tag_id = t2.id
 		JOIN anta_document d1 ON y.alpha_id = d1.id
 		JOIN anta_document d2 on y.omega_id = d2.id
-		LEFT OUTER JOIN anta_relation r1 ON r1.source_id = d1.id
-		LEFT OUTER JOIN anta_relation r2 ON r2.target_id = d2.id
 			WHERE 
 		    """ + " AND ".join( filters ) +  """
 		
@@ -1067,52 +1099,149 @@ def relations_graph(request, corpus_id):
 			""" + ( " HAVING min_cosine_similarity > %s " % min_cosine_similarity if min_cosine_similarity > 0 else "" ) + """
 		ORDER BY average_cosine_similarity
 	""",[ corpus_id, corpus_id])
-	linked_nodes = {}
+
+	for row in cursor.fetchall():
+		alpha_actor = row[0]
+		omega_actor = row[1] 
+		size  = row[5] 
+		
+		if alpha_actor == omega_actor:
+			continue
+		actors_involved.append( alpha_actor )
+		actors_involved.append( omega_actor )
+
+		edge = " ".join( sorted([ str( alpha_actor), str( omega_actor)]) )
+		if edge not in edges:
+			edges[ edge ] = {
+				'value':row[2],
+				'source': alpha_actor,
+				'target': omega_actor,
+				'color': '#cccccc'
+			};
+
+	#
+	# 5. SHARED ACTORS LINKS ( +1% points)
+	#
+	for d in shared_documents:
+		if len( shared_documents[d] ) < 2:
+			continue
+
+		for i in range( len( shared_documents[d] ) ):
+			for j in range( i + 1 ):
+				if i == j:
+					continue
+				# has_key? add points? 
+				edge = " ".join( sorted([ str(  shared_documents[d][i] ), str( shared_documents[d][j]) ]) )
+				if edge not in edges:
+					edges[ edge ] = {
+						'source': shared_documents[d][i],
+						'target': shared_documents[d][j],
+						'value':  0.01,
+						'color':  '#cccccc'
+					}
+	#nodes = []
+	#actors_involved = Set( actors_involved )
+	#for n in actors_involved:
+	#	nodes.append( candidates[ actors_involved[n] ] )
+
+	#response.add('actors_involved', actors_involved ) #actors_involved
+
+	response.add('nodes', candidates.values() )
+	response.add('edges', edges.values() )
+	
+	return response.json()
+
+	# load rleat
+	for r in relations:
+		for c in candidates:
+			pass
+		i = " ".join( sorted([ str( r.source.id ), str( r.target.id )]) )
+		if i in edges:
+			continue
+		edges[ i ] = {
+			
+		}
+
+	response.add('nodes', candidates.values() )
+	response.add('edges', documents.values() )
+	
+
+	return response.json()
+
+
+	from django.db import connection
+
+	#  "document__ref_date__gt": 20111011, 
+    #  "document__ref_date__lt": 20121011
+	
+	
+	cursor = connection.cursor()
+	cursor.execute("""
+		SELECT 
+		    t1.id as alpha_actor,  
+		    t2.id as omega_actor,
+		    AVG( y.cosine_similarity ) as average_cosine_similarity,
+		    MIN( y.cosine_similarity ) as min_cosine_similarity,
+		    MAX( y.cosine_similarity ) as max_cosine_similarity,
+		    COUNT( distinct t2.id ) as alpha_size
+		FROM `anta_distance` y
+		JOIN anta_document_tag dt1 ON y.alpha_id = dt1.document_id
+		JOIN anta_document_tag dt2 ON y.omega_id = dt2.document_id  
+		JOIN anta_tag t1 ON dt1.tag_id = t1.id
+		JOIN anta_tag t2 ON dt2.tag_id = t2.id
+		JOIN anta_document d1 ON y.alpha_id = d1.id
+		JOIN anta_document d2 on y.omega_id = d2.id
+			WHERE 
+		    """ + " AND ".join( filters ) +  """
+		
+		GROUP BY alpha_actor, omega_actor 
+			""" + ( " HAVING min_cosine_similarity > %s " % min_cosine_similarity if min_cosine_similarity > 0 else "" ) + """
+		ORDER BY average_cosine_similarity
+	""",[ corpus_id, corpus_id])
+
+	# load relations and distances
+	edges = {}
+	actors = {}
 	relations = {}
 
 	for row in cursor.fetchall():
-		target = row[1]
-		source = row[0]
+		alpha_actor = row[0]
+		omega_actor = row[1] 
+		size  = row[5] 
+
+		edges[ " ".join( sorted([ str( alpha_actor), str( omega_actor)]) )] = {
+			'value':row[2],
+			'source': alpha_actor,
+			'target': omega_actor
+		};
 		
-		if row[5] is not None and row[7] is not None:
-			relation = "%s %s" % ( (source, target) if target > source else (target, source) )
-			if relation not in relations:
-				relations[ relation ]=[]
-			relations[ relation ].append({'polarity':row[6], 'intensity':[p[0] for p in POLARITY_CHOICES].index( row[6] ), 'source':source,'target':target, 'size':0});
-			
+		if alpha_actor not in actors:
+			actors[ alpha_actor ] = {'size':size,'id':alpha_actor}
+		elif omega_actor not in actors:
+			actors[ omega_actor ] = {'size':size,'id':omega_actor}
 
-		edge_key = "%s %s" % ( (source, target) if target > source else (target, source) )
-		if edge_key not in candidates_edges:
-			candidates_edges[ edge_key ] = []
-
-		candidates_edges[ edge_key].append({
-				'value':row[2],
-				'source':source,
-				'target':target,
-		});
-		
-
-			
-		if target in  linked_nodes:
-			
-			linked_nodes[ target ].append( row[ 4 ] )
-		else:
-			linked_nodes[ target ] = []
-
-		if source in  linked_nodes:
-			linked_nodes[ source ].append( row[ 3 ] )
-			
-		else:
-			linked_nodes[ source ] = []
-		continue
+	for a in actors:
+		actors[ a ]['name'] = candidates[ a ]['name']
+		actors[ a ]['size'] = candidates[ a ]['size']
 		
 
-	response['relations'] = relations
+	response.add('nodes', actors.values() )
+	response.add('edges', edges.values() )
+	# get all relationships
+	# load relations
+	relations = Relation.objects.filter( Q( source__id__in=ids ) | Q(target__id__in=ids) )
+	for r in relations:
+		pass
+
+	return response.json()
+
+
+	#response['relations'] = relations
 	response['c_edges'] = candidates_edges
 
 	for n in linked_nodes:
 		nodes[ n ] = candidates[ n ]
-		nodes[ n ]['size'] = len( set( linked_nodes[n] ))
+		#nodes[ n ]['size'] = len( set( linked_nodes[n] ))
 
 	for k in candidates_edges:
 		
@@ -1126,7 +1255,7 @@ def relations_graph(request, corpus_id):
 			edges[k]['color'] = "#6b6b6b"
 
     # write nodes isnide view
-	# response['linked_nodes'] = linked_nodes	
+	response['linked_nodes'] = linked_nodes	
 	response['edges'] = edges.values()
 	response['nodes'] = nodes
 
@@ -1398,7 +1527,7 @@ def _delete_instance( request, response, instance, attachments=[] ):
 	
 def _get_instances( request, response, model_name, app_name="anta" ):
 	from django.db.models.loading import get_model
-	from django.db.models import Q
+	
 	m = get_model(app_name,model_name)
 	
 	# get toal objects
