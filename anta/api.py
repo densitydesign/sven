@@ -1129,7 +1129,7 @@ def relations_graph(request, corpus_id):
 			};
 		else:
 			# substitute value with similarity
-			edges[ edge ]['value'] = row[2]
+			edges[ edge ]['value'] = edges[ edge ]['value'] + row[2]  / 2
 
 	#
 	# 5. SHARED ACTORS LINKS ( +1% points)
@@ -1161,7 +1161,7 @@ def relations_graph(request, corpus_id):
 	# response.add('actors_involved', actors_involved ) #actors_involved
 
 	response.add('nodes', nodes )
-	response.add('edges', edges )
+	response.add('edges', edges.values() )
 	
 	return response.json()
 
