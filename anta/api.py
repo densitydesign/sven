@@ -1139,14 +1139,16 @@ def relations_graph(request, corpus_id):
 						'value':  0.01,
 						'color':  '#cccccc'
 					}
-	#nodes = []
-	#actors_involved = Set( actors_involved )
+	nodes = []
+	actors_involved = list( Set( actors_involved ) )
 	#for n in actors_involved:
 	#	nodes.append( candidates[ actors_involved[n] ] )
+	for n in actors_involved:
+		nodes.append( candidates[ n ] )
 
-	#response.add('actors_involved', actors_involved ) #actors_involved
+	# response.add('actors_involved', actors_involved ) #actors_involved
 
-	response.add('nodes', candidates.values() )
+	response.add('nodes', nodes )
 	response.add('edges', edges.values() )
 	
 	return response.json()
