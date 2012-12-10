@@ -1072,6 +1072,14 @@ def relations_graph(request, corpus_id):
 	for e in edges:
 		edges[ e ]['value'] = edges[ e ]['sum'] / edges[ e ]['components']
 		edges[ e ]['color'] = Relation.intensity_as_color(value=edges[ e ]['value'],min=0, max=1)
+		if edges[ e ][ 'value' ] < 0.5 and (1 - edges[ e ][ 'value' ] * 2) < min_cosine_similarity:
+			# negative connection
+			del edges[e]
+			# rescale based on similarity value
+			
+		elif edges[ e ][ 'value' ] > 0.5 and ( edges[ e ][ 'value' ] - 0.5 ) < (min_cosine_similarity/2):
+			del edges[e]
+		
 
 	#
 	# 7. SIMILARITY DISTANCE edges
@@ -1153,119 +1161,10 @@ def relations_graph(request, corpus_id):
 	# response.add('actors_involved', actors_involved ) #actors_involved
 
 	response.add('nodes', nodes )
-	response.add('edges', edges.values() )
+	response.add('edges', edges )
 	
 	return response.json()
 
-	# load rleat
-	for r in relations:
-		for c in candidates:
-			pass
-		i = " ".join( sorted([ str( r.source.id ), str( r.target.id )]) )
-		if i in edges:
-			continue
-		edges[ i ] = {
-			
-		}
-
-	response.add('nodes', candidates.values() )
-	response.add('edges', documents.values() )
-	
-
-	return response.json()
-
-
-	from django.db import connection
-
-	#  "document__ref_date__gt": 20111011, 
-    #  "document__ref_date__lt": 20121011
-	
-	
-	cursor = connection.cursor()
-	cursor.execute("""
-		SELECT 
-		    t1.id as alpha_actor,  
-		    t2.id as omega_actor,
-		    AVG( y.cosine_similarity ) as average_cosine_similarity,
-		    MIN( y.cosine_similarity ) as min_cosine_similarity,
-		    MAX( y.cosine_similarity ) as max_cosine_similarity,
-		    COUNT( distinct t2.id ) as alpha_size
-		FROM `anta_distance` y
-		JOIN anta_document_tag dt1 ON y.alpha_id = dt1.document_id
-		JOIN anta_document_tag dt2 ON y.omega_id = dt2.document_id  
-		JOIN anta_tag t1 ON dt1.tag_id = t1.id
-		JOIN anta_tag t2 ON dt2.tag_id = t2.id
-		JOIN anta_document d1 ON y.alpha_id = d1.id
-		JOIN anta_document d2 on y.omega_id = d2.id
-			WHERE 
-		    """ + " AND ".join( filters ) +  """
-		
-		GROUP BY alpha_actor, omega_actor 
-			""" + ( " HAVING min_cosine_similarity > %s " % min_cosine_similarity if min_cosine_similarity > 0 else "" ) + """
-		ORDER BY average_cosine_similarity
-	""",[ corpus_id, corpus_id])
-
-	# load relations and distances
-	edges = {}
-	actors = {}
-	relations = {}
-
-	for row in cursor.fetchall():
-		alpha_actor = row[0]
-		omega_actor = row[1] 
-		size  = row[5] 
-
-		edges[ " ".join( sorted([ str( alpha_actor), str( omega_actor)]) )] = {
-			'value':row[2],
-			'source': alpha_actor,
-			'target': omega_actor
-		};
-		
-		if alpha_actor not in actors:
-			actors[ alpha_actor ] = {'size':size,'id':alpha_actor}
-		elif omega_actor not in actors:
-			actors[ omega_actor ] = {'size':size,'id':omega_actor}
-
-	for a in actors:
-		actors[ a ]['name'] = candidates[ a ]['name']
-		actors[ a ]['size'] = candidates[ a ]['size']
-		
-
-	response.add('nodes', actors.values() )
-	response.add('edges', edges.values() )
-	# get all relationships
-	# load relations
-	relations = Relation.objects.filter( Q( source__id__in=ids ) | Q(target__id__in=ids) )
-	for r in relations:
-		pass
-
-	return response.json()
-
-
-	#response['relations'] = relations
-	response['c_edges'] = candidates_edges
-
-	for n in linked_nodes:
-		nodes[ n ] = candidates[ n ]
-		#nodes[ n ]['size'] = len( set( linked_nodes[n] ))
-
-	for k in candidates_edges:
-		
-		edges[k] = {
-			'value':sum([ e['value'] for e in candidates_edges[ k ] ])/len(candidates_edges[ k ]),
-			'source':candidates_edges[ k ][0]['source'],
-			'target':candidates_edges[ k ][0]['target'],
-			'color':"#ffffff"
-		}
-		if k in relations:
-			edges[k]['color'] = "#6b6b6b"
-
-    # write nodes isnide view
-	response['linked_nodes'] = linked_nodes	
-	response['edges'] = edges.values()
-	response['nodes'] = nodes
-
-	return render_to_json( response )
 
 def download_document(request, document_id):
 	
