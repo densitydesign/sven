@@ -26,7 +26,7 @@ var graph;
 		$("#selectActors").select2({
                 placeholder: "Select actors",
                 allowClear: true,
-                width:"element",
+                width:function(){return $("#filters").width() + "px"},
                 closeOnSelect:false
             });
 		
@@ -177,9 +177,11 @@ query.getDocuments(function(response){
 		var min = d3.min(edges.map(function(d){ return d.value })),
 			max = d3.max(edges.map(function(d){ return d.value })),
 			weight = d3.scale.linear().domain([min,max]).range([1,10])
-	
+		
+		var change = function(c){if(c == "#ffffff"){return "rgba(204,204,204,0.3)"}else{return c}}
+		
 		edges.forEach(function(d){
-			graph.addEdge(d.source,d.target,{ weight : weight(d.value), size: weight(d.value), color: "#f5f5f5" })
+			graph.addEdge(d.source,d.target,{ weight : weight(d.value), size: weight(d.value), color: change(d.color) })
 		})
 
 	});
@@ -221,9 +223,11 @@ function updateGraph(){
 		var min = d3.min(edges.map(function(d){ return d.value })),
 			max = d3.max(edges.map(function(d){ return d.value })),
 			weight = d3.scale.linear().domain([min,max]).range([1,10])
+		
+		var change = function(c){if(c == "#ffffff"){return "rgba(204,204,204,0.3)"}else{return c}}
 	
 		edges.forEach(function(d){
-			graph.addEdge(d.source,d.target,{ weight : weight(d.value), size: weight(d.value), color: "#f5f5f5" })
+			graph.addEdge(d.source,d.target,{ weight : weight(d.value), size: weight(d.value), color:change(d.color) })
 		})
 		
 		

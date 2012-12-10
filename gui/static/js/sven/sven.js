@@ -13,6 +13,11 @@
 	
 	sven.colors = {}
 	
+	sven.colors.polarity = function(p){
+		var scale = d3.scale.ordinal().domain(["PPO", "POS", "NEU", "NEG", "NNE"]).range(["#1A9641", "#A6D96A", "#FFFFBF", "#FDAE61", "#D7191C"]);
+		return scale(p)
+		}
+	
 	sven.colors.diverging = function(c){
 		
 		var classes = c ? c : 1,
