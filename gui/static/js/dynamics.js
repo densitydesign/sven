@@ -178,8 +178,9 @@ query.getDocuments(function(response){
 			max = d3.max(edges.map(function(d){ return d.value })),
 			weight = d3.scale.linear().domain([min,max]).range([1,10])
 		
-		var change = function(c){if(c == "#ffffff"){return "rgba(204,204,204,0.3)"}else{return c}}
-		
+		var scale = d3.scale.ordinal().domain([ "#D7191C","#1A9641","#1A9641","#A6D96A", "#FFFFBF","#FDAE61" ]).range(["#1A9641", "#A6D96A", "#FFFFBF", "#FDAE61", "#D7191C"]);
+		var change = function(c){if(c == "#ffffff"){return "rgba(204,204,204,0.3)"}else{return scale(c)}}
+
 		edges.forEach(function(d){
 			graph.addEdge(d.source,d.target,{ weight : weight(d.value), size: weight(d.value), color: change(d.color) })
 		})
@@ -224,7 +225,8 @@ function updateGraph(){
 			max = d3.max(edges.map(function(d){ return d.value })),
 			weight = d3.scale.linear().domain([min,max]).range([1,10])
 		
-		var change = function(c){if(c == "#ffffff"){return "rgba(204,204,204,0.3)"}else{return c}}
+		var scale = d3.scale.ordinal().domain([ "#D7191C","#1A9641","#1A9641","#A6D96A", "#FFFFBF","#FDAE61" ]).range(["#1A9641", "#A6D96A", "#FFFFBF", "#FDAE61", "#D7191C"]);
+		var change = function(c){if(c == "#ffffff"){return "rgba(204,204,204,0.3)"}else{return scale(c)}}
 	
 		edges.forEach(function(d){
 			graph.addEdge(d.source,d.target,{ weight : weight(d.value), size: weight(d.value), color:change(d.color) })
