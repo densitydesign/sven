@@ -190,13 +190,13 @@ rect.node, text.label {
 
 .link {
 	stroke:#000000;
-	stroke-opacity:.1;
+	stroke-opacity:.5;
 	fill:none;
 	cursor:pointer;
 }
 
 .link:hover {
-	stroke-opacity:.3;
+	stroke-opacity:.8;
 }
 
 
