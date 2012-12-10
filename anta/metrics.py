@@ -430,8 +430,8 @@ def similarity( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 	documents = {}
 
 	# out some information
-	print "[info] corpus:",corpus.json()
-	print "[info] document in corpus:",number_of_documents
+	#	print "[info] corpus:",corpus.json()
+	#print "[info] document in corpus:",number_of_documents
 	
 	# get the list of every stemmed segments inside each document.
 	# the distance algorithm will work on "stemmed" documents!
@@ -477,18 +477,26 @@ def similarity( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 	
 	# reformat each document into a PATTERN compatible document: join space separated stemmed segment values.
 	for d in documents:
+		logger.info( "creating PATTERN document from stemmed version" )
+	
 		documents[d] = pvDocument( " ".join( documents[d] ) )
 		log_routine( routine, entry="join stemmed segments", completion=0.15, completion_start=completion_start, completion_score=completion_score)
 	
 		pattern_id_translation[ documents[d].id ] = d
 	
+	print "[info] document with segments in corpus:",len(pattern_id_translation)
 	
 	# store document in corpus.
 	c = pvCorpus( documents.values() )
-	
 	# computate and save similarities
 	for counter, d in enumerate(documents):
-		print counter
+		# print counter, "neighbors of" ,documents[d],
+		neighbors =  c.neighbors( documents[d], top=number_of_documents)
+		if len( neighbors ) == 0:
+			logger.warning( "no neighbors for document: %s" %  pattern_id_translation[ documents[d].id ] )
+		print "%s neighbors found for document: %s" % ( len(neighbors), pattern_id_translation[ documents[d].id ] )
+		logger.info( "%s neighbors found for document: %s" % ( len(neighbors), pattern_id_translation[ documents[d].id ] ) )
+
 		for n in c.neighbors( documents[d], top=number_of_documents):
 			alpha_id = pattern_id_translation[ documents[d].id ]
 			omega_id = pattern_id_translation[ n[1].id ]
