@@ -997,22 +997,25 @@ def relations_graph(request, corpus_id):
 
 
 	# 3. add some basic filters
-	filters.append( "d1.id IN ( %s )" % ",".join(ids) )
-	filters.append( "d2.id IN ( %s )"  % ",".join(ids) )
+	filters.append( "t1.id != t2.id")
 	filters.append( "t1.type='actor'" ) # filter by tag type actor
 	filters.append( "t2.type='actor'" ) 
+	filters.append( "d1.id IN ( %s )" % ",".join(ids) )
+	filters.append( "d2.id IN ( %s )"  % ",".join(ids) )
 	
-	# 3.5. filter edges?
+	
+	# 3.5. filter edges? min similarity == 0
 	try:
 		min_cosine_similarity = float( request.REQUEST.get('min-cosine-similarity', "0.0" ) )
 	except Exception, e:
 		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_FORMERRORS )
 
 	# 4. load actors as nodes
-	actors = Document_Tag.objects.filter(tag__type='actor', document__corpus__id=corpus_id, document__id__in=ids)
+	actors = Document_Tag.objects.filter(tag__type='actor', document__id__in=ids)
 	nodes = {}
 	candidates = {}
 	for dt in actors:
+		
 		#if dt.tag.id in nodes: 
 		#	nodes[ dt.tag.id ]['size'] = nodes[ dt.tag.id ]['size'] + 1
 		#	candidates[ dt.tag.id ]['docs'].append( dt.document.id )
@@ -1026,7 +1029,8 @@ def relations_graph(request, corpus_id):
 		}
 
 	# load relations and distances
-	edges = []
+	edges = {}
+	candidates_edges = {}
 	from django.db import connection
 
 	#  "document__ref_date__gt": 20111011, 
@@ -1042,6 +1046,9 @@ def relations_graph(request, corpus_id):
 		    AVG( y.cosine_similarity ) as average_cosine_similarity,
 		    dt1.document_id as alpha_id,
 		    dt2.document_id as omega_id,
+		    r1.id,
+		    r1.polarity,
+		    r2.id,
 		    MIN( y.cosine_similarity ) as min_cosine_similarity,
 		    MAX( y.cosine_similarity ) as max_cosine_similarity
 		FROM `anta_distance` y
@@ -1051,7 +1058,9 @@ def relations_graph(request, corpus_id):
 		JOIN anta_tag t2 ON dt2.tag_id = t2.id
 		JOIN anta_document d1 ON y.alpha_id = d1.id
 		JOIN anta_document d2 on y.omega_id = d2.id
-		    WHERE 
+		LEFT OUTER JOIN anta_relation r1 ON r1.source_id = d1.id
+		LEFT OUTER JOIN anta_relation r2 ON r2.target_id = d2.id
+			WHERE 
 		    """ + " AND ".join( filters ) +  """
 		
 		GROUP BY alpha_actor, omega_actor 
@@ -1059,10 +1068,31 @@ def relations_graph(request, corpus_id):
 		ORDER BY average_cosine_similarity
 	""",[ corpus_id, corpus_id])
 	linked_nodes = {}
+	relations = {}
 
 	for row in cursor.fetchall():
 		target = row[1]
 		source = row[0]
+		
+		if row[5] is not None and row[7] is not None:
+			relation = "%s %s" % ( (source, target) if target > source else (target, source) )
+			if relation not in relations:
+				relations[ relation ]=[]
+			relations[ relation ].append({'polarity':row[6], 'intensity':[p[0] for p in POLARITY_CHOICES].index( row[6] ), 'source':source,'target':target, 'size':0});
+			
+
+		edge_key = "%s %s" % ( (source, target) if target > source else (target, source) )
+		if edge_key not in candidates_edges:
+			candidates_edges[ edge_key ] = []
+
+		candidates_edges[ edge_key].append({
+				'value':row[2],
+				'source':source,
+				'target':target,
+		});
+		
+
+			
 		if target in  linked_nodes:
 			
 			linked_nodes[ target ].append( row[ 4 ] )
@@ -1074,20 +1104,30 @@ def relations_graph(request, corpus_id):
 			
 		else:
 			linked_nodes[ source ] = []
+		continue
+		
 
-		edges.append({
-			'value':row[2],
-			'source':source,
-			'target':target,
-			'color': '#660000'
-		})
+	response['relations'] = relations
+	response['c_edges'] = candidates_edges
 
 	for n in linked_nodes:
 		nodes[ n ] = candidates[ n ]
 		nodes[ n ]['size'] = len( set( linked_nodes[n] ))
+
+	for k in candidates_edges:
+		
+		edges[k] = {
+			'value':sum([ e['value'] for e in candidates_edges[ k ] ])/len(candidates_edges[ k ]),
+			'source':candidates_edges[ k ][0]['source'],
+			'target':candidates_edges[ k ][0]['target'],
+			'color':"#ffffff"
+		}
+		if k in relations:
+			edges[k]['color'] = "#6b6b6b"
+
     # write nodes isnide view
 	# response['linked_nodes'] = linked_nodes	
-	response['edges'] = edges	
+	response['edges'] = edges.values()
 	response['nodes'] = nodes
 
 	return render_to_json( response )
