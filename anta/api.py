@@ -1010,12 +1010,13 @@ def relations_graph(request, corpus_id):
 
 
 
-
-	# 4. load ALL actors as nodes
-	actors = Document_Tag.objects.filter(tag__type='actor', document__id__in=ids)
 	edges = {}
 	candidates = {}
 	shared_documents = {}
+
+	# 4. load ALL actors as nodes
+	actors = Document_Tag.objects.filter(tag__type='actor', document__id__in=ids)
+	
 
 
 	for dt in actors:
@@ -1034,7 +1035,7 @@ def relations_graph(request, corpus_id):
 		candidates[ dt.tag.id]['size'] = candidates[ dt.tag.id]['size'] + 1
 		candidates[ dt.tag.id]['docs'].append( dt.document.id )
 
-	
+
 	actors_involved = []
 
 	#
@@ -1116,29 +1117,32 @@ def relations_graph(request, corpus_id):
 				'value':row[2],
 				'source': alpha_actor,
 				'target': omega_actor,
-				'color': '#cccccc'
+				'color': '#ffffff'
 			};
+		else:
+			# substitute value with similarity
+			edges[ edge ]['value'] = row[2]
 
 	#
 	# 5. SHARED ACTORS LINKS ( +1% points)
 	#
-	for d in shared_documents:
-		if len( shared_documents[d] ) < 2:
-			continue
+	#for d in shared_documents:
+	#	if len( shared_documents[d] ) < 2:
+	#		continue
 
-		for i in range( len( shared_documents[d] ) ):
-			for j in range( i + 1 ):
-				if i == j:
-					continue
+	#	for i in range( len( shared_documents[d] ) ):
+	#		for j in range( i + 1 ):
+	#			if i == j:
+	#				continue
 				# has_key? add points? 
-				edge = " ".join( sorted([ str(  shared_documents[d][i] ), str( shared_documents[d][j]) ]) )
-				if edge not in edges:
-					edges[ edge ] = {
-						'source': shared_documents[d][i],
-						'target': shared_documents[d][j],
-						'value':  0.01,
-						'color':  '#cccccc'
-					}
+	#			edge = " ".join( sorted([ str(  shared_documents[d][i] ), str( shared_documents[d][j]) ]) )
+	#			if edge not in edges:
+	#				edges[ edge ] = {
+	#					'source': shared_documents[d][i],
+	#					'target': shared_documents[d][j],
+	#					'value':  0.01,
+	#					'color':  '#cccccc'
+	#				}
 	nodes = []
 	actors_involved = list( Set( actors_involved ) )
 	#for n in actors_involved:
