@@ -1,6 +1,11 @@
 var query = new svenjs.Sven("");
 var graph;
-	// get actors
+
+//bug fixing..to be removed
+var scale = d3.scale.ordinal().domain([ "#D7191C","#FDAE61","#FFFFBF","#A6D96A","#1A9641" ]).range(["#1A9641", "#A6D96A", "#FFFFBF", "#FDAE61", "#D7191C"]);
+var change = function(c){if(c == "#ffffff"){return "rgba(204,204,204,0.3)"}else{return scale(c)}}
+
+// get actors
 	
 	query.getActors(function(response){
 		var actorList = response.objects;
@@ -148,15 +153,19 @@ query.getDocuments(function(response){
 	var minValue = d3.min(valueList.map(function(d){return d.key}));
 	var maxValue = d3.max(valueList.map(function(d){return d.key}));
 	
-	//console.log(valueList);
+	var ascending = function(a, b) {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+	valueList = valueList.map(function(d){return parseFloat(d.key)}).sort(ascending);
+	
 	$( "#slider-range-min" ).slider({
             range: "min",
             value: 1,
             min: 1,
             max: valueList.length,
             slide: function( event, ui ) {
-                //console.log(valueList[ui.value-1].key);
-                args['min-cosine-similarity'] = valueList[ui.value-1].key;
+                console.log(valueList[ui.value-1]);
+                args['min-cosine-similarity'] = valueList[ui.value-1];
             }
         });
 
@@ -177,13 +186,15 @@ query.getDocuments(function(response){
 		var min = d3.min(edges.map(function(d){ return d.value })),
 			max = d3.max(edges.map(function(d){ return d.value })),
 			weight = d3.scale.linear().domain([min,max]).range([1,10])
-		
-		var scale = d3.scale.ordinal().domain([ "#D7191C","#1A9641","#1A9641","#A6D96A", "#FFFFBF","#FDAE61" ]).range(["#1A9641", "#A6D96A", "#FFFFBF", "#FDAE61", "#D7191C"]);
-		var change = function(c){if(c == "#ffffff"){return "rgba(204,204,204,0.3)"}else{return scale(c)}}
 
 		edges.forEach(function(d){
 			graph.addEdge(d.source,d.target,{ weight : weight(d.value), size: weight(d.value), color: change(d.color) })
 		})
+		
+		//zoom control
+		$('#zoomIn').click(function(){graph.zoomIn()})
+		$('#zoomOut').click(function(){graph.zoomOut()})
+		$('#zoomCenter').click(function(){graph.center()})
 
 	});
 
@@ -224,19 +235,20 @@ function updateGraph(){
 		var min = d3.min(edges.map(function(d){ return d.value })),
 			max = d3.max(edges.map(function(d){ return d.value })),
 			weight = d3.scale.linear().domain([min,max]).range([1,10])
-		
-		var scale = d3.scale.ordinal().domain([ "#D7191C","#1A9641","#1A9641","#A6D96A", "#FFFFBF","#FDAE61" ]).range(["#1A9641", "#A6D96A", "#FFFFBF", "#FDAE61", "#D7191C"]);
-		var change = function(c){if(c == "#ffffff"){return "rgba(204,204,204,0.3)"}else{return scale(c)}}
+
 	
 		edges.forEach(function(d){
 			graph.addEdge(d.source,d.target,{ weight : weight(d.value), size: weight(d.value), color:change(d.color) })
 		})
 		
-		
+		//zoom control
+		$('#zoomIn').click(function(){graph.zoomIn()})
+		$('#zoomOut').click(function(){graph.zoomOut()})
+		$('#zoomCenter').click(function(){graph.center()})
 
 	},args);
 
-
+	
 	query.streamgraph(args['corpus'],function(response){
 	
 		//console.log(response);
