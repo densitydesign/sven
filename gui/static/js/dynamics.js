@@ -188,7 +188,7 @@ query.getDocuments(function(response){
 			weight = d3.scale.linear().domain([min,max]).range([1,10])
 
 		edges.forEach(function(d){
-			graph.addEdge(d.source,d.target,{ weight : weight(d.value), size: weight(d.value), color: change(d.color) })
+			graph.addEdge(d.source,d.target,{ weight : weight(d.value), size: weight(d.value), color: d.color })
 		})
 		
 		//zoom control
@@ -238,7 +238,7 @@ function updateGraph(){
 
 	
 		edges.forEach(function(d){
-			graph.addEdge(d.source,d.target,{ weight : weight(d.value), size: weight(d.value), color:change(d.color) })
+			graph.addEdge(d.source,d.target,{ weight : weight(d.value), size: weight(d.value), color:d.color })
 		})
 		
 		//zoom control
