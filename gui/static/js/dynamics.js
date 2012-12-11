@@ -3,7 +3,7 @@ var graph;
 
 //bug fixing..to be removed
 var scale = d3.scale.ordinal().domain([ "#D7191C","#FDAE61","#FFFFBF","#A6D96A","#1A9641" ]).range(["#1A9641", "#A6D96A", "#FFFFBF", "#FDAE61", "#D7191C"]);
-var change = function(c){if(c == "#ffffff"){return "rgba(204,204,204,0.3)"}else{return scale(c)}}
+var change = function(c){if(c == "#ffffff"){return "rgba(204,204,204,0.3)"}else{return c}}
 
 // get actors
 	
