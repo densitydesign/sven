@@ -219,14 +219,16 @@ class Relation( models.Model ):
 		unique_together = ("source", "target") 
 
 	def intensity( self, min=0, max=1):
-		steps  = float(max - min) / (len( POLARITY_CHOICES ) - 1)
-		return -min + steps * [p[0] for p in POLARITY_CHOICES].index( self.polarity )
+		choices = [p[0] for p in POLARITY_CHOICES]
+		i = choices.index( self.polarity )
+		
+		return - min + ( float( index ) * (max - min) / ( len( choiches ) - 1 ) )
 
 	@staticmethod
 	def intensity_as_color( value, min, max ):
 		d  = int( 4 * (value - min ) / float(max - min) )
 		colors = ["#1A9641", "#A6D96A", "#FFFFBF", "#FDAE61", "#D7191C"]
-		return colors[d]
+		return colors[ d ]
 		# (["PPO", "POS", "NEU", "NEG", "NNE"] "#1A9641", "#A6D96A", "#FFFFBF", "#FDAE61", "#D7191C"]
 		
 
