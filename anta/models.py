@@ -222,7 +222,7 @@ class Relation( models.Model ):
 		choices = [p[0] for p in POLARITY_CHOICES]
 		i = choices.index( self.polarity )
 		
-		return - min + ( float( index ) * (max - min) / ( len( choiches ) - 1 ) )
+		return min + ( float( i ) * (max - min) / ( len( choiches ) - 1 ) )
 
 	@staticmethod
 	def intensity_as_color( value, min, max ):
