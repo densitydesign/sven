@@ -225,13 +225,9 @@ class Relation( models.Model ):
 		return min + ( float( i ) * (max - min) / ( len( choices ) - 1 ) )
 
 	@staticmethod
-	def intensity_as_color( value, min, max ):
-		d  = int( 4 * (value - min ) / float(max - min) )
-		colors = ["#1A9641", "#A6D96A", "#FFFFBF", "#FDAE61", "#D7191C"]
-		return colors[ d ]
-		# (["PPO", "POS", "NEU", "NEG", "NNE"] "#1A9641", "#A6D96A", "#FFFFBF", "#FDAE61", "#D7191C"]
-		
-
+	def intensity_as_color( value, min, max):
+		colors = [ "#D7191C", "#FDAE61", "#FFFFBF", "#A6D96A", "#1A9641"]
+		return colors[int ( (value - min )* 4 / ( max - min ) )]
 
 	def json(self, min=-1, max=1):
 		return {
