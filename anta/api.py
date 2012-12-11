@@ -1069,7 +1069,7 @@ def relations_graph(request, corpus_id):
 				edges[ edge ]['components'] = edges[ edge ]['components'] + 1
 				edges[ edge ]['sum'] = edges[ edge ]['sum'] + r.intensity()
 	
-	for e in edges:
+	for e in edges.keys():
 		edges[ e ]['value'] = edges[ e ]['sum'] / edges[ e ]['components']
 		edges[ e ]['color'] = Relation.intensity_as_color(value=edges[ e ]['value'],min=0, max=1)
 		if edges[ e ][ 'value' ] < 0.5 and (1 - edges[ e ][ 'value' ] * 2) < min_cosine_similarity:
