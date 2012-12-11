@@ -767,6 +767,9 @@
 				
 		var graph = {},
 			sig,
+			center,
+			zoomIn,
+			zoomOut,
 			target,
 			nodes = [],
 			nodesIndex = {},
@@ -789,6 +792,23 @@
 			overnodes,
 			outnodes
 			*/
+		
+		graph.center = function(){
+			sig.position(0,0,1).draw();
+			return graph;
+		}
+		
+		graph.zoomIn = function(){
+			var a = sig._core;
+	    	sig.zoomTo(a.domElements.nodes.width / 2, a.domElements.nodes.height / 2, a.mousecaptor.ratio * (1.5));
+			return graph;
+		}
+				
+		graph.zoomOut = function(){
+			var a = sig._core;
+	    	sig.zoomTo(a.domElements.nodes.width / 2, a.domElements.nodes.height / 2, a.mousecaptor.ratio * (0.5));
+			return graph;
+		}
 		
 		graph.target = function(x){
 			if (!arguments.length) return target;
@@ -835,7 +855,8 @@
 	  	         'x': Math.random(),
 	  	         'y': Math.random(),
 	  	         'size': data.size,
-				 'color': color(idNode),
+				 //'color': color(idNode),
+				 'color': "grey",
 				 'label' : label(data)
 	  	       });
 			   nodes.push(data);
@@ -959,7 +980,6 @@
 					 //drawActiveNodes: true
 			     })
 					 
-			
 			/* Mouse listeners 
 
 			sig.bind("downnodes",function(d){

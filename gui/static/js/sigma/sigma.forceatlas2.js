@@ -7,10 +7,10 @@ sigma.forceatlas2.ForceAtlas2 = function(graph) {
   this.graph = graph;
 
   this.p = {
-    linLogMode: false,
+    linLogMode: true,
     outboundAttractionDistribution: false,
     adjustSizes: false,
-    edgeWeightInfluence: 0,
+    edgeWeightInfluence: 2,
     scalingRatio: 1,
     strongGravityMode: false,
     gravity: 1,
