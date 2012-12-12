@@ -241,7 +241,7 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 						
 
 			if len(segment[0]) > 128:
-				print "[warning] sample 'segment' will be truncated:", segment[0]
+				#print "[warning] sample 'segment' will be truncated:", segment[0]
 				continue
 			try:
 				s = Segment.objects.get( content=segment[0][:128], language=d.language)
@@ -442,11 +442,11 @@ if __name__ == '__main__':
 		error = "Use -l to specify the language, 2chars lower, e.g. 'en'"
 	
 	if error is not None:
-		print "\n\n", error, "\n\n"
+		#print "\n\n", error, "\n\n"
 		parser.print_help()
-		print
+		#print
 		exit()
 	
-	print distill( filename=options.filename, language=options.language )
+	#print distill( filename=options.filename, language=options.language )
 	#print distill( "../warehouse/2012_DMB_actorenbevraging_Fevia_Nachtergaele.docx.txt", language="nl")
 	# print json.dumps( distill( "../warehouse/pinocchio.chapter-01.en.txt", language="en") )

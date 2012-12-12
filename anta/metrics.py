@@ -74,8 +74,8 @@ def entities_alchemy( corpus, routine ):
 	
 
 	number_of_documents = Document.objects.filter( corpus=corpus ).count()
-	print "[info] number_of_documents:",number_of_documents
-	print "[info] alchmy apikey:", settings.ALCHEMY_API_KEY
+	#print "[info] number_of_documents:",number_of_documents
+	#print "[info] alchmy apikey:", settings.ALCHEMY_API_KEY
 
 	for d in  Document.objects.filter( corpus=corpus ):
 		if d.language not in ['EN', 'FR']:
@@ -84,8 +84,10 @@ def entities_alchemy( corpus, routine ):
 		textified =  textify( d, settings.MEDIA_ROOT )
 		try:
 			with codecs.open( textified, "r", "utf-8" ) as f:
-   				print f.read()
-			print textified
+   				#print f.read()
+   				pass
+			#print textified
+			pass
 		except Exception, e:
 			continue
 	
@@ -145,10 +147,10 @@ def clean( corpus, routine ):
 	number_of_links = Document_Segment.objects.filter(document__corpus=corpus).count()
 	loops = int( math.ceil( number_of_links / 25.0 ) )
 	
-	print "corpus: %s" % corpus.json()
+	#print "corpus: %s" % corpus.json()
 	
-	print "number_of_links: %s" % number_of_links
-	print "loops: %s" % loops
+	#print "number_of_links: %s" % number_of_links
+	#print "loops: %s" % loops
 	
 	try:
 		# manually change
@@ -307,7 +309,7 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 				df = float( row['distribution'] ) / number_of_documents
 				# print float(current_stem) / number_of_stems * 100.0, row[ column ], row['distribution'], df
 			except Exception, e:
-				print e
+				#print e
 				close_routine( routine, error="Ho trovato Wally alla liena 281 di metrics.py, Exception: %s" % e, status="ERR")
 				transaction.commit()
 				return
@@ -344,7 +346,7 @@ def export( corpus, language, parser, column="stemmed" ):
 	try:
 		c = Corpus.objects.get( name=corpus )
 	except Exception, e:
-		print "Exception: %s" % e
+		#print "Exception: %s" % e
 		return error( message="corpus '%s' was not found!" % corpus, parser=parser )
 	
 	ss = Segment.objects.raw("""
@@ -362,10 +364,10 @@ def export( corpus, language, parser, column="stemmed" ):
 		""",[c.id]
 	) 
 	
-	print ss.query	
+	#print ss.query	
 
 	for s in ss:
-		print s.id, s.stemmed, s.distro, s.max_tfidf, s.max_tf
+		#print s.id, s.stemmed, s.distro, s.max_tfidf, s.max_tf
 		break
 
 
@@ -399,7 +401,7 @@ def importcsv( routine, csvfile, column="stemmed" ):
 
 		if i % 25 == 0:
 			log_routine( routine, entry="importcsv at line: %s" % i, completion=i/float(totalrows) )
-			print i, i/float(totalrows)
+			#print i, i/float(totalrows)
 			
 			transaction.commit()
 
@@ -484,7 +486,7 @@ def similarity( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 	
 		pattern_id_translation[ documents[d].id ] = d
 	
-	print "[info] document with segments in corpus:",len(pattern_id_translation)
+	#print "[info] document with segments in corpus:",len(pattern_id_translation)
 	
 	# store document in corpus.
 	c = pvCorpus( documents.values() )
@@ -494,7 +496,7 @@ def similarity( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 		neighbors =  c.neighbors( documents[d], top=number_of_documents)
 		if len( neighbors ) == 0:
 			logger.warning( "no neighbors for document: %s" %  pattern_id_translation[ documents[d].id ] )
-		print "%s neighbors found for document: %s" % ( len(neighbors), pattern_id_translation[ documents[d].id ] )
+		#print "%s neighbors found for document: %s" % ( len(neighbors), pattern_id_translation[ documents[d].id ] )
 		logger.info( "%s neighbors found for document: %s" % ( len(neighbors), pattern_id_translation[ documents[d].id ] ) )
 
 		for n in c.neighbors( documents[d], top=number_of_documents):
@@ -504,11 +506,11 @@ def similarity( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 			
 			try:
 				dist = Distance.objects.get( alpha__id=alpha_id, omega__id=omega_id )
-				print "[info] distantce exists ( %s - %s ), old value: %s, difference: %s" % ( alpha_id, omega_id, dist.cosine_similarity,(dist.cosine_similarity - cosine_similarity) )
+				#print "[info] distantce exists ( %s - %s ), old value: %s, difference: %s" % ( alpha_id, omega_id, dist.cosine_similarity,(dist.cosine_similarity - cosine_similarity) )
 			except Exception, e:
-				print e
+				#print e
 				dist = Distance( alpha_id=alpha_id, omega_id=omega_id )
-				print "[info] create Distance object", dist.id, cosine_similarity
+				#print "[info] create Distance object", dist.id, cosine_similarity
 			#	print a distance exist between these two document	
 			dist.cosine_similarity = cosine_similarity
 			dist.save()
@@ -600,7 +602,7 @@ def main( argv):
 	#     ==============================
 	#
 	if error_message is not None:
-		print error_message
+		#print error_message
 		close_routine( routine, error=error_message, status="ERR")
 		error( message=error_message, parser=parser )
 	
