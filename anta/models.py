@@ -360,14 +360,23 @@ class Segment( models.Model):
 		# a content which has the same pos tag and the same creation mode
 
 	def json(self):
-		return {
-			'id'	: self.id,
-			'stemmed': self.stemmed,
-			'content': self.content,
-			'tfidf'	 : self.tfidf if self.tfidf else 0.0,
-			'distribution': self.distribution if self.distribution else 0,
-			'aliases': self.aliases if self.aliases else None
-		}
+		try:
+			return {
+				'id'	: self.id,
+				'stemmed': self.stemmed,
+				'content': self.content,
+				'tfidf'	 : self.tfidf if self.tfidf else 0.0,
+				'distribution': self.distribution if self.distribution else 0,
+				'aliases': self.aliases if self.aliases else None
+			}
+		except:
+			return {
+				'id'	: self.id,
+				'stemmed': self.stemmed,
+				'content': self.content
+			}
+
+
 
 class Segment_Semantic_Relation( models.Model ):
 	segment = models.ForeignKey( Segment )

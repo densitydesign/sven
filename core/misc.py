@@ -176,19 +176,27 @@ class Epoxy:
 		if type( queryset ) == QuerySet:
 			self.response['meta']['total_count'] = queryset.filter( **self.filters ).count()
 			qs = queryset.filter( **self.filters ).order_by( *self.order_by )
+			# apply limits
+			if self.limit == -1:
+				qs = qs[ self.offset : ]
+			else:
+				qs = qs[ self.offset : self.offset + self.limit ]
 
 		elif type( queryset ) == RawQuerySet:
 			# Special exceptions for RawQuerySets (cannot filter, does not have count() method)
-			self.response['meta']['total_count'] = sum( 1 for r in queryset )
-			qs = queryset
-		else:
-			qs = queryset.filer()
+			#self.response['meta']['total_count'] = sum( 1 for r in queryset )
 			
-		# apply limits
-		if self.limit == -1:
-			qs = qs[ self.offset : ]
+			self.response['meta']['raw'] = queryset.query
+			qs = queryset
+
 		else:
-			qs = qs[ self.offset : self.offset + self.limit ]
+			qs = queryset.filter()
+			
+			# apply limits
+			if self.limit == -1:
+				qs = qs[ self.offset : ]
+			else:
+				qs = qs[ self.offset : self.offset + self.limit ]
 
 		if model_name is not None:
 			self.response['meta']['model'] = model_name # @todo: guess from queryset/rawqueryset ?

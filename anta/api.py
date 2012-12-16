@@ -502,6 +502,7 @@ def document(request, document_id):
 	
 	return render_to_json( response )
 
+
 #
 #    ======================================
 #    ---- TAGS, ACTORS & OTHER STORIES ----
@@ -550,21 +551,17 @@ def segments_clean( request, corpus_id ):
 	)
 	
 
-@login_required( login_url = API_LOGIN_REQUESTED_URL )
-def segments( request ):
-	response = _json( request )
 
-	return render_to_json( response )
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
-def segment_stems( request, corpus_id=None ):
-	response = _json( request )
+def segment_stems( request, corpus_id ):
+	response = Epoxy( request )
 
 	# split order_by stuff
 	# order_by = ["tfidf DESC","tfidf ASC","distribution ASC", "distribution DESC"]
 	basic_query = """
 		SELECT 
-			s.stemmed as content, GROUP_CONCAT( s.content ) as sample, 
+			s.stemmed as content, s.id as sample, 
 			AVG( ds.tfidf ) as avg_tfidf, MAX( ds.tfidf ) as max_tfidf, MIN( ds.tfidf ) as min_tfidf,
 			AVG( ds.tf ) as avg_tf, MAX( ds.tf ) as max_tf, MIN( ds.tf ) as min_tf,
 			COUNT( distinct ds.document_id ) as distribution,
@@ -576,23 +573,17 @@ def segment_stems( request, corpus_id=None ):
 	where = []
 	binds = []
 
-	if corpus_id is not None:
-		try:
-			c = Corpus.objects.get(pk=corpus_id)
-		except Exception, e:
-			return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+
+	try:
+		corpus = response.add('corpus', Corpus.objects.get(owner=request.user, id=corpus_id) )
 		where.append("d.corpus_id = %s")
-		binds.append(corpus_id)
+		binds.append(corpus.id)
+	except Corpus.DoesNotExist, e:
+		return response.throw_error( error="%s", code=API_EXCEPTION_DOESNOTEXIST )
 
+	order_by =  response.order_by if len( response.order_by ) > 0 else [ "distribution DESC", "avg_tfidf DESC",  "aliases DESC"]
 
-
-	if 'order_by' in response['meta']:
-		order_by = response['meta']['order_by']
-	else:
-		order_by = [ "distribution DESC", "avg_tfidf DESC",  "aliases DESC"]
-
-	response['meta']['total'] = 0
-
+	
 	from django.db import connection
 	try:
 		cursor = connection.cursor()
@@ -604,7 +595,7 @@ def segment_stems( request, corpus_id=None ):
 			"GROUP BY stemmed )"
 		]), binds)
 		(number_of_rows,) =cursor.fetchone()
-		response['meta']['total'] = number_of_rows
+		response.meta('total_count', number_of_rows)
 
 		# build query
 		query = [ basic_query,
@@ -613,21 +604,28 @@ def segment_stems( request, corpus_id=None ):
 			"ORDER BY " + ", ".join( order_by ) if len( order_by ) else "",
 			""" LIMIT %s,%s """
 		]
-		response["query"] = " ".join( query )
+		response.add("query", " ".join( query ) )
 
-		binds.append( response['meta']['offset'] )
-		binds.append( response['meta']['limit'] )
+		binds.append( response.offset )
+		binds.append( response.limit )
 
 		ss = Stem.objects.raw( " ".join( query ), binds )
 
-		response['results'] = [ s.json() for s in ss ]
+		response.add('objects',[ s.json() for s in ss ] )
 	except Exception, e:
 		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
-	return render_to_json( response )
+	return response.json()
 
-def segment_stem( request, segment_id ):
-	response = _json( request )
-	return render_to_json( response )
+def segment_stem( request, segment_id, corpus_id ):
+	response = Epoxy( request )
+	try:
+		corpus = response.add('corpus', Corpus.objects.get(owner=request.user, id=corpus_id),jsonify=True)
+	except Corpus.DoesNotExist,e:
+		return response.throw_error( error="%s" % e, code=API_EXCEPTION_DOESNOTEXIST ).json()
+	response.queryset( Segment.objects.filter( stemmed=Segment.objects.get(id=segment_id).stemmed ) )
+	
+
+	return response.json()
 
 
 
@@ -1241,7 +1239,7 @@ def segments_export( request, corpus_id ):
 			JOIN `anta_document_segment` ON (`anta_segment`.`id` = `anta_document_segment`.`segment_id`) 
 			JOIN `anta_document` ON (`anta_document_segment`.`document_id` = `anta_document`.`id`) 
 		WHERE `anta_document`.`corpus_id` = %s AND content NOT REGEXP '^[[:alpha:]][[:punct:]]$'
-		GROUP BY `anta_segment`.`id`
+		GROUP BY `anta_segment`.`stemmed`
 		""",[corpus_id]
 	) 
 	
