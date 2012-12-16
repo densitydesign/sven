@@ -39,32 +39,33 @@ query.getCorpora(function(response){
 			.append("p")
 			.html("Sorry, but something wrong happened:" + response.errors)
 		return;
-	}else{
-		var corpora = response.results;
-		d3.select(".corpus-list").append("p")
-			.attr("class", "filter-title")
-			.text("Change corpus")
+	}
+	
+	var corpora = response.objects;
+	d3.select(".corpus-list").append("p")
+		.attr("class", "filter-title")
+		.text("Change corpus")
+	
+	d3.select(".corpus-list")
+		.append("select")
+		.attr("class", "span8")
+		.selectAll("option")
+		.data(corpora)
+		.enter()
+		.append("option")
+		.text(function(d){return d.name})
+		.attr("value", function(d){return d.id})
+		.attr("selected", function(d){if(d.id == args['corpus']){return "selected"}})
+	
+	$(".corpus-list select").change(function(){
+		var id = $(this+":selected").attr("value")
+		switchCorpus(id);
+		})
 		
-		d3.select(".corpus-list")
-			.append("select")
-			.attr("class", "span8")
-			.selectAll("option")
-			.data(corpora)
-			.enter()
-			.append("option")
-			.text(function(d){return d.name})
-			.attr("value", function(d){return d.id})
-			.attr("selected", function(d){if(d.id == args['corpus']){return "selected"}})
-		
-		$(".corpus-list select").change(function(){
-			var id = $(this+":selected").attr("value")
-			switchCorpus(id);
-			})
-			
-		}
+	
 	
 	/* No corpus */
-	if ( !response.results.length ){
+	if ( !corpora.length ){
 		d3.select("#sven-alert")
 			.attr("class","alert alert-block")
 			.append("h4")

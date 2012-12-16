@@ -19,10 +19,11 @@ from sven.anta.utils import *
 from sven.anta.forms import ApiQueryForm,LoginForm, UpdateDocumentForm, TagForm, ApiMetaForm, ApiDocumentsFilter, ApiRelationForm, ApiCorpusForm
 from django.contrib.auth.models import User
 from django.db.models import Count, Min, Max, Avg
+from django.template.defaultfilters import slugify
 
 from sven.core.utils import _whosdaddy, render_to_json, throw_error, JsonQ
-from sven.core.misc import Epoxy, grep, API_EXCEPTION_FIELDERROR
-import urllib,logging
+from sven.core.misc import Epoxy, grep, API_EXCEPTION_FIELDERROR, API_EXCEPTION_INTEGRITY
+import urllib,logging, shutil
 
 
 logger = logging.getLogger(__name__)
@@ -43,6 +44,9 @@ API_EXCEPTION_DUPLICATED	=	'Duplicated'
 API_EXCEPTION_FORMERRORS	=	'FormErrors'
 API_EXCEPTION_INCOMPLETE	=	'Incomplete'
 API_EXCEPTION_EMPTY			=	'Empty'
+API_EXCEPTION_OSERROR		=	'OsError'
+API_EXCEPTION_IOERROR		=	'IOError'
+API_EXCEPTION_BADZIPFILE	=	'BadZipfile'
 
 
 #
@@ -173,73 +177,85 @@ def relation( request, id ):
 #	
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def corpora(request):
-	response = _json( request )
-
-	# create documents
-	if response['meta']['method'] == 'POST':
+	response = Epoxy( request )
+	
+	if response.method == 'POST':
 		return create_corpus( request, response )
 	
-	if len(response['meta']['filters']) > 0:
-		# with filters: models static var
-		response['meta']['total'] = Corpus.objects.filter(**response['meta']['filters']).count()
-		response['results'] = [c.json() for c in Corpus.objects.filter(**response['meta']['filters'])[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
-	else:
-		response['meta']['total'] = Corpus.objects.count()		
-		response['results'] = [c.json() for c in Corpus.objects.all()[ response['meta']['offset']: response['meta']['offset'] + response['meta']['limit'] ] ]
+	return response.queryset( Corpus.objects.filter( owner=request.user ) ).json()
 	
-	
-	return render_to_json( response )
 
-@login_required( login_url = API_LOGIN_REQUESTED_URL )
 def create_corpus( request, response ):
-	response['owner'] = request.user.json()
+	response.add('owner', request.user, jsonify=True )
 	
 	form = ApiCorpusForm( request.REQUEST, initial={'owner':request.user.id} )
-	if form.is_valid():		
-		corpus_path = settings.MEDIA_ROOT + os.path.basename( form.cleaned_data['name'] )
-		response['corpus_path'] = corpus_path
+	if not form.is_valid():		
+		return response.throw_error( error=form.errors, code=API_EXCEPTION_FORMERRORS ).json()
 
-		try:
-			# create corpus
-			
-			# create folder if does not exists
-			if not os.path.exists( corpus_path ):
-				os.makedirs( corpus_path )
-			
-			c = Corpus( name=form.cleaned_data['name'] )
-			
-			c.save()
-			o = Owners( corpus=c, user=request.user )
-			o.save()
-			
-		except Exception, e:
-			return throw_error( response, error="Exception: %s" % e, code="fault" )
+	corpus_path = response.add('corpus_path', os.path.join( settings.MEDIA_ROOT, slugify( os.path.basename( form.cleaned_data['name'] ) ) ) )
 
+	#try:
+		# create folder if does not exists
+	if not os.path.exists( corpus_path ):
+		os.makedirs( corpus_path )
+	try:
+		c = Corpus( name=slugify( form.cleaned_data['name'] ) )
+		c.save()
+		o = Owners( corpus=c, user=request.user )
+		o.save()
+	except IntegrityError, e:
+		return response.throw_error( error=form.errors, code=API_EXCEPTION_INTEGRITY ).json()
 
-
-			
-		response['created'] = c.json()
-		return render_to_json( response )
-	else:
-		return throw_error( response, error=form.errors, code=API_EXCEPTION_FORMERRORS )
+	#except Exception, e:
+	#	return throw_error( response, error="Exception: %s" % e, code="fault" )
+	
+	response.add('object', c, jsonify=True )
+	return response.json()
+	
+@login_required( login_url = API_LOGIN_REQUESTED_URL )
+def corpus( request, corpus_id ):
+	response = Epoxy( request )
+	try:
+		corpus = response.add('object', Corpus.objects.get(owner=request.user, id=corpus_id),jsonify=True)
+	except Corpus.DoesNotExist,e:
+		return response.throw_error( error="%s" % e, code=API_EXCEPTION_DOESNOTEXIST ).json()
+	
+	if response.method == 'DELETE':
+		corpus_path = os.path.join( settings.MEDIA_ROOT, corpus.name )
+		shutil.rmtree( corpus_path )
+		corpus.delete()
+		# delete
+		#
+		pass
+	
+	return response.json()
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
-def corpus( request, id ):
-	response = _json( request )
-	# all documents
-	c =  _get_corpus( id )
-	if c is None:
-		return throw_error( response, "Corpus %s does not exist...," % id, code=API_EXCEPTION_DOESNOTEXIST )	
-	
-	response['results'] = [c.json()]
-		
-	if response['meta']['method'] == 'DELETE':
-		c.delete()		
-	
-	
-	return render_to_json( response )
+def corpus_download( request, corpus_id ):
+	response = Epoxy( request )
+	try:
+		corpus = response.add('object', Corpus.objects.get(owner=request.user,id=corpus_id),jsonify=True)
+	except Corpus.DoesNotExist,e:
+		return response.throw_error( error="%s" % e, code=API_EXCEPTION_DOESNOTEXIST ).json()
+
+	corpus_path = os.path.join( settings.MEDIA_ROOT, corpus.name )
+
+	zip_path = response.add("zip", "/tmp/sven_%s_%s.zip" % ( slugify(request.user.username), corpus.name )  )
 
 
+	try:
+		zipdir( corpus_path,  zip_path )
+	except IOError, e:
+		return response.throw_error( error="%s" % e, code=API_EXCEPTION_IOERROR ).json()
+	except OSError, e:
+		return response.throw_error( error="%s" % e, code=API_EXCEPTION_OSERROR ).json()
+	except zipfile.BadZipfile, message:
+		return  response.throw_error( error="%s" % e, code=API_EXCEPTION_BADZIPFILE ).json()
+	
+	response = HttpResponse( open( zip_path,'r' ).read(), content_type='application/zip') 
+	response['Content-Disposition']='attachment;filename="%s"'% os.path.basename( zip_path )
+	response['Content-length'] = os.stat( zip_path ).st_size
+	return response
 #
 #    ==================
 #    ---- DOCUMENTS----
@@ -1391,6 +1407,31 @@ def _start_process( popen_args, routine, response ):
 	
 	return render_to_json( response )
 
+def zipdir(folder_path, output_path):
+	import zipfile
+	"""Zip the contents of an entire folder (with that folder included
+	in the archive). 
+
+	Empty subfolders will be included in the archive as well.
+	"""
+	parent_folder = os.path.dirname(folder_path)
+	# Retrieve the paths of the folder contents.
+	contents = os.listdir(folder_path)
+	try:
+		zip_file = zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED)
+		for file_name in contents:
+			absolute_path = os.path.join(folder_path, file_name)
+			relative_path = os.path.basename( file_name )
+			zip_file.write(absolute_path, relative_path)
+		return output_path
+	except IOError, message:
+		raise
+	except OSError, message:
+		raise
+	except zipfile.BadZipfile, message:
+		raise
+	finally:
+		zip_file.close()
 
 def check_output(*popenargs, **kwargs):
 	import subprocess
@@ -1474,7 +1515,6 @@ def _save_or_die( model_name, response, app_name="anta", filters={}):
 		return m( **filters ).save()
 	except Exception, e:
 		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_EMPTY )
-
 
 
 def _store_analysis( corpus, type=""):

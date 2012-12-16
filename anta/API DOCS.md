@@ -181,6 +181,15 @@ Special functions are marked by a * sign. Of course, special functions have spec
     </tr>
 </table>
 
+### corpus
+---
+	r'^api/corpus/(<?corpus_id>\d+)/$'
+
+method=DELETE delete the corpus directory under MEDIA_ROOT.
+	
+	r'^api/corpus/$'
+	
+use method=POST to create a brand new corpus.
  
 ### relations_graph
 ---

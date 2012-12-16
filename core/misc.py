@@ -151,15 +151,16 @@ class Epoxy:
 					'offset': max( self.offset - self.limit, 0 ) if self.limit != -1 else 0,
 					'limit': self.limit
 				}
-		
-		self.response['meta']['offset'] = self.offset
-		self.response['meta']['limit'] = self.limit
-			
-		# set limit of offset
-		self.response['meta']['next'] = {
-			'offset': self.offset + self.limit,
-			'limit': self.limit
-		}
+
+		if self.method=='GET':
+			self.response['meta']['offset'] = self.offset
+			self.response['meta']['limit'] = self.limit
+				
+			# set limit of offset
+			self.response['meta']['next'] = {
+				'offset': self.offset + self.limit,
+				'limit': self.limit
+			}
 
 		return self
 

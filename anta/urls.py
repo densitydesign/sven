@@ -51,11 +51,13 @@ urlpatterns = patterns('',
 	
 	# corpus (sing.)
 	url(r'^api/corpus/$', 'sven.anta.api.corpora', name='anta_api_corpora' ),    
-	url(r'^api/corpus/(\d+)/$', 'sven.anta.api.corpus', name='anta_api_corpus' ),    
+	url(r'^api/corpus/(?P<corpus_id>\d+)/download/$', 'sven.anta.api.corpus_download', name='anta_api_corpus_download'),
+	url(r'^api/corpus/(?P<corpus_id>\d+)/$', 'sven.anta.api.corpus', name='anta_api_corpus' ),   # method=DELETE
 	url(r'^api/use-corpus/$', 'sven.anta.api.use_corpus', name='anta_api_use_corpus' ),
 	url(r'^api/use-corpus/(\d+)/$', 'sven.anta.api.use_corpus', name='anta_api_use_corpus' ),
 	url(r'^api/attach-corpus/(\d+)$', 'sven.anta.api.attach_corpus', name='anta_api_attach_corpus' ),
 	
+
 	# tags
 	url(r'^api/tags/$', 'sven.anta.api.tags', name='anta_api_tags' ),    
 	url(r'^api/tags/(?P<tag_id>\d+)/$', 'sven.anta.api.tag', name='anta_api_tag' ), 
