@@ -941,7 +941,7 @@ def streamgraph( request, corpus_id ):
 			return render_to_json( response )
 	query = """
 		SELECT 
-	    	t.name,  s.stemmed as concept, MAX(ds.tfidf), AVG(tf),
+	    	t.name,  s.stemmed as concept, MAX(ds.tfidf) as max_tfidf, AVG(tf),
 			count( DISTINCT s.id ) as distro 
 		FROM `anta_document_segment` ds
 			JOIN anta_segment s ON s.id = ds.segment_id
@@ -950,7 +950,7 @@ def streamgraph( request, corpus_id ):
 			JOIN anta_tag t ON t.id = dt.tag_id 
 			
 		WHERE d.corpus_id = %s """ + filters + """ AND t.type='actor'
-		GROUP BY t.id, concept  ORDER BY `distro` DESC
+		GROUP BY t.id, concept HAVING tfidf > 0.01 ORDER BY max_tfidf DESC, `distro` DESC
 		"""
 	response['query'] = query
 	cursor = connection.cursor()
@@ -962,6 +962,9 @@ def streamgraph( request, corpus_id ):
 	for row in cursor.fetchall():
 		if row[0] not in response['actors']:
 			response['actors'][ row[0] ] = []
+
+		if len(response['actors'][ row[0] ]) > 4:
+			continue
 
 		response['actors'][ row[0] ].append({
 			'concept':row[1],
