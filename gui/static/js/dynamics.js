@@ -201,7 +201,50 @@ query.getDocuments(function(response){
 
 	query.streamgraph(args['corpus'],function(response){
 	
-		//console.log(response);
+	var data = response.actors;
+	
+	var actors = d3.keys(data);
+	console.log(actors)
+	
+	var dataF = [];
+	actors.forEach(function(d){
+		
+		data[d].forEach(function(k){k.actor = d; k.step = k.actor; k.value = k.tf*1000; dataF.push(k);});
+	
+		
+		})
+	
+	dataF = d3.nest().key(function(d){return d.concept}).entries(dataF).sort(function(a,b){ return b.values.length - a.values.length});
+	
+	
+	actors.forEach(function(d){
+		
+		dataF.forEach(function(k){
+			
+			var p = d3.nest().key(function(c){return c.actor}).entries(k.values)
+			p = p.map(function(l){return l.key})
+			if($.inArray(d, p) < 0){
+				k.values.push({'actor': d, 'step':d, 'value':0})
+				}
+			
+			k.values.sort(function(a,b){ return a.actor > b.actor? 1 : -1;})
+			
+			})
+		
+		})
+
+	//console.log(JSON.stringify(dataF));
+	
+	var streamkey = sven.viz.streamkey()
+	.width(1200)
+	.height(400)
+	.data(dataF)
+	.barWidth(2)
+	.barPadding(5)
+	.minHeight(1)
+	.colors(['#709cc2', '#a7c290'])
+	.target("#stream")
+	.init();
 	
 	});
 

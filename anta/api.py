@@ -950,7 +950,7 @@ def streamgraph( request, corpus_id ):
 			JOIN anta_tag t ON t.id = dt.tag_id 
 			
 		WHERE d.corpus_id = %s """ + filters + """ AND t.type='actor'
-		GROUP BY t.id, concept HAVING tfidf > 0.01 ORDER BY max_tfidf DESC, `distro` DESC
+		GROUP BY t.id, concept HAVING max_tfidf > 0.01 ORDER BY max_tfidf DESC, `distro` DESC
 		"""
 	response['query'] = query
 	cursor = connection.cursor()
