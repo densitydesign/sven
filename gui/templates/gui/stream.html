@@ -55,7 +55,11 @@
 	
 	
 	 <div class="span10">
+	 	
+	 	<div id="stream_container">
+	 	<div class="loader"></div>
 		<div id="stream">
+		</div>
 		</div>
 	</div>
 </div>
@@ -79,9 +83,6 @@
 	actorArgs.corpus = corpusID;
 	actorArgs.limit = -1; //prende TUTTI gli attori
 </script>
-
-<script src="{{ custom.STATIC_URL }}js/sigma/sigma.min.js" type="text/javascript"></script>
-<script src="{{ custom.STATIC_URL }}js/sigma/sigma.forceatlas2.js" type="text/javascript"></script>
 
 <script src="{{ custom.STATIC_URL }}js/stream.js" type="text/javascript"></script>
 
