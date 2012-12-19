@@ -23,12 +23,6 @@
 
 		<p class="breath"><strong>Filters</strong></p>
 
-		<!-- Cosine similarity -->
-	  	<div class="filterSimilarity filter-block">
-	  		<p class="filter-title">Set min similarity</p>
-	  		<div id="slider-range-min"></div>
-	  	</div>
-	  
 		<!-- Dates -->
 		<div class="filter-block">
 			<p class="filter-title">By date</p>
@@ -61,16 +55,14 @@
 	
 	
 	 <div class="span10">
-	 	<div class="pull-right" id="zoomControl">
-	 		<div class="btn" id="zoomIn" ><i class="icon-zoom-in"></i></div>
-	 		<div class="btn" id="zoomOut"><i class="icon-zoom-out"></i></div>
-	 		<div class="btn" id="zoomCenter"><i class="icon-fullscreen"></i></div>
-	 	</div>
-		<div class="pull-left" id="graph">
+		<div id="stream">
 		</div>
 	</div>
 </div>
 
+<div class="tooltip desc">
+<div class="tooltip-inner"></div>
+</div>
 
 
 {% endblock %}
@@ -91,6 +83,6 @@
 <script src="{{ custom.STATIC_URL }}js/sigma/sigma.min.js" type="text/javascript"></script>
 <script src="{{ custom.STATIC_URL }}js/sigma/sigma.forceatlas2.js" type="text/javascript"></script>
 
-<script src="{{ custom.STATIC_URL }}js/dynamics.js" type="text/javascript"></script>
+<script src="{{ custom.STATIC_URL }}js/stream.js" type="text/javascript"></script>
 
 {% endblock %}

@@ -1142,6 +1142,10 @@
 		n = data.length;
         m = data[0]['values'].length;
 		
+		var margin = {top: 20, right: 20, bottom: 20, left: 20}
+		streamkey.width(width - margin.left - margin.right);
+    	streamkey.height(height - margin.top - margin.bottom);
+    	
 		//get values
 		data.forEach(function(d,i){
 			d['values'].forEach(function(d){if(d['value'] != null){values.push(d['value'])}})
@@ -1178,17 +1182,35 @@
     		.range([height, 0]);
 
 		var svg = d3.select(target).append("svg")
-				.attr("width", width)
-				.attr("height", height);
-		console.log(n,m)
+				//.attr("width", width)
+				//.attr("height", height);
+				.attr("width", width + margin.left + margin.right)
+    			.attr("height", height + margin.top + margin.bottom);
+
 		var colorz = sven.colors.diverging(n);
 		var layer = svg.selectAll("g")
 			.data(dataF)
 		  .enter().append("g")
 			.attr("class", function(d,i){return "layer_"+i})
 			.style("fill", function(d, i) { return colorz("" +i +"") })
-			.on("mouseover", function(){d3.select(this).selectAll("path").transition().attr("fill-opacity",0.75)})
-			.on("mouseout", function(){d3.select(this).selectAll("path").transition().attr("fill-opacity",0.5)});
+			//.on("mouseover", function(){d3.select(this).selectAll("path").transition().attr("fill-opacity",0.75)})
+			//.on("mouseout", function(){d3.select(this).selectAll("path").transition().attr("fill-opacity",0.5)})
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+			.on("mouseover",function(d){ d3.select(this).selectAll("path").transition().attr("fill-opacity",0.75);
+											d3.select(".desc")
+											.select(".tooltip-inner")
+											.text(d[0].category);
+
+											d3.select(".desc")
+											.attr("class","tooltip fade in desc")
+											.attr("style","top: " + (d3.event.pageY - $(".desc").height() -15 ) + "px; left:"+ (d3.event.pageX - $(".desc").width()/2 ) + "px")
+
+							 })
+			.on("mousemove",function(d){d3.select(".desc").attr("style","top: " + (d3.event.pageY - $(".desc").height() - 15) + "px; left:"+ (d3.event.pageX - $(".desc").width()/2) + "px");})
+			.on("mouseout",function(d){
+				d3.select(this).selectAll("path").transition().attr("fill-opacity",0.5);
+				d3.select(".desc").attr("class","tooltip fade out desc")
+				})	
 		
 		var rect = layer.selectAll("rect")
 			.data(function(d) { return d; })
@@ -1210,6 +1232,19 @@
 			.attr("display", "inline")
 			.filter(function(d){return d[4] == false})
 			.attr("display", "none");
+			
+		
+				//labels
+		
+		var stepsLabel = svg.selectAll("text")
+			.data(steps)
+		  .enter().append("text")
+			.attr("x", function(d) { return x(d) + margin.left; })
+			.attr("y", function(d) { return y(mY) + margin.top -5; })
+      		.attr("text-anchor", "middle")
+      		.attr("class", "filter-title")
+      		.attr("fill", "#888")
+      		.text(function(d){return d})
 		
 		return streamkey;
 	};
@@ -1217,13 +1252,17 @@
 	streamkey.update = function(){
         var steps = [],
         values = [],
-        color = d3.scale.linear().range(colors),
+        //color = d3.scale.linear().range(colors),
         i,
         j;
 		
 		n = data.length;
         m = data[0]['values'].length;
 		
+		var margin = {top: 20, right: 20, bottom: 20, left: 20}
+		//streamkey.width(width - margin.left - margin.right);
+    	//streamkey.height(height - margin.top - margin.bottom);
+    	
 		//get values
 		data.forEach(function(d,i){
 			d['values'].forEach(function(d){if(d['value'] != null){values.push(d['value'])}})
@@ -1234,6 +1273,7 @@
 			steps.push(data[0]['values'][j]['step'])
 		}
 		
+		console.log(steps);
 		//min height scale
 		var setMinHeight = d3.scale.linear().domain([d3.min(values),d3.max(values)]).range([d3.min(values)+minHeight,d3.max(values)+minHeight])
 
@@ -1262,8 +1302,12 @@
 		var svg = d3.select(target + " svg");
 			
 			svg.transition().duration(500)
-			 .attr("width", width)
-			 .attr("height", height);
+			 //.attr("width", width)
+			 //.attr("height", height);
+			 .attr("width", width + margin.left + margin.right)
+    		 .attr("height", height + margin.top + margin.bottom);
+		
+		var colorz = sven.colors.diverging(n);
 		
 		var layer = svg.selectAll("g");
 
@@ -1274,9 +1318,11 @@
 		   .transition()
       	   .duration(500)
 			//.attr("class", function(d,i){return "layer_"+i})
-			.style("fill", function(d, i) { return color(i) })
+			.style("fill", function(d, i) { return colorz("" +i +"") })
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 			//.on("mouseover", function(){d3.select(this).selectAll("path").transition().attr("fill-opacity",0.75)})
 			//.on("mouseout", function(){d3.select(this).selectAll("path").transition().attr("fill-opacity",0.5)});
+			
 		
 		var rect = layer.selectAll("rect");
 		
@@ -1288,17 +1334,30 @@
 			.attr("y", function(d) { return y(d.y0 + d.y); })
 			.attr("height", function(d) { return y(d.y0) - y(d.y0 + d.y); })
 			.attr("width", barWidth)
-			.attr("display", "inline")
-		   .filter(function(d){return d['value'] == null})
-			.attr("display", "none");
+			.attr("display", function(d){if(d['value'] == null){return "none"}else{return "inline"} })
+				//.exit()
+		  //.remove();
 		
 		var stream = layer.selectAll("path")
-		
 			stream.data(function(d){return areaStreamKey(d, xF)})
 		   .transition()
       	   .duration(500)
 			.attr("d", function(d){return drawLink(d[0], d[1], d[2], d[3])})
-			.attr("display", function(d){if(d[4] == false){return "none"}else{return "inline"} });
+			.attr("display", function(d){if(d[4] == false){return "none"}else{return "inline"} })
+		//.exit()
+		//  .remove();
+		
+		var stepsLabel = svg.selectAll("text");
+			stepsLabel.data(steps)
+			.exit()
+			.remove()
+		   .transition()
+      	   .duration(500)
+			.attr("x", function(d) { return x(d) + margin.left; })
+			//.attr("y", function(d) { return y(mY) + margin.top -5; })
+      		//.attr("text-anchor", "middle")
+      		.text(function(d){return d})
+ 
 		
 		return streamkey;
 	};
