@@ -177,8 +177,8 @@ query.streamgraph(args['corpus'],function(response){
 	.height(height)
 	.data(dataF)
 	.barWidth(2)
-	.barPadding(1)
-	.minHeight(0.1)
+	.barPadding(5)
+	.minHeight(1)
 	.colors(['#709cc2', '#a7c290'])
 	.target("#stream")
 	.init();
@@ -230,8 +230,8 @@ function updateStream(){
 	.height(height)
 	.data(dataF)
 	.barWidth(2)
-	.barPadding(1)
-	.minHeight(0.1)
+	.barPadding(5)
+	.minHeight(1)
 	.colors(['#709cc2', '#a7c290'])
 	.target("#stream")
 	.init();
