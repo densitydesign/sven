@@ -135,6 +135,7 @@ query.getDocuments(function(response){
 	
 query.streamgraph(args['corpus'],function(response){
 	
+	$('.loader').hide();
 	var data = response.actors;
 	
 	var actors = d3.keys(data);
@@ -173,7 +174,7 @@ query.streamgraph(args['corpus'],function(response){
 	var height = parseFloat(d3.select("#stream").style("height").replace("px",""));
 
 	streamkey = sven.viz.streamkey()
-	.width(width)
+	.width(actors.length * 145)
 	.height(height)
 	.data(dataF)
 	.barWidth(2)
@@ -226,7 +227,7 @@ function updateStream(){
 	var height = parseFloat(d3.select("#stream").style("height").replace("px",""));
 
 	streamkey = sven.viz.streamkey()
-	.width(width)
+	.width(actors.length * 145)
 	.height(height)
 	.data(dataF)
 	.barWidth(2)

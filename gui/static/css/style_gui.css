@@ -516,3 +516,17 @@ h3 {
 	#graph {
 		border-left:1px solid #DDD;
 	}
+	
+/* stream*/
+
+#stream_container{
+	overflow-x:scroll;
+	overflow-y:hidden;
+	box-shadow: 0px 0px 3px #888 inset;
+}
+
+.loader{
+	width:32px;
+	height:32px;
+	background:url('images/ajax-loader.gif');
+	}
