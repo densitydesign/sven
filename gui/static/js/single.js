@@ -15,6 +15,14 @@ query.getDocument(id_document, function(response){
     	d3.select("#source_document").text(data.error + ", error: " + data.errorCode);
 		return
     }
+    
+    if(response.results[0].status != 'IN'){
+    	
+    	d3.select("#source_document .doc-info").append("div")
+    		.attr("class","alert")
+    		.html("<strong>Warning!</strong> The text analysis failed, maybe the documente is protected by password or it contains only images")
+    	
+    	}
 	
 	sDocumentId = data.results[0].id;
     
@@ -219,6 +227,14 @@ query.getDocument(id_document, function(response){
     	target_document.text(data.error + ", error: " + data.errorCode);
     	return;
 	}
+	
+	if(response.results[0].status != 'IN'){
+    	
+    	d3.select("#target_document .doc-info").append("div")
+    		.attr("class","alert")
+    		.html("<strong>Warning!</strong> The text analysis failed, maybe the documente is protected by password or it contains only images")
+    	
+    	}
     
 	tDocumentId = data.results[0].id;
 	

@@ -950,7 +950,7 @@ def streamgraph( request, corpus_id ):
 			JOIN anta_tag t ON t.id = dt.tag_id 
 			
 		WHERE d.corpus_id = %s """ + filters + """ AND t.type='actor'
-		GROUP BY t.id, concept HAVING tfidf > 0.01 ORDER BY max_tfidf DESC, `distro` DESC
+		GROUP BY t.id, concept HAVING max_tfidf > 0.001 ORDER BY max_tfidf DESC, `distro` DESC
 		"""
 	response['query'] = query
 	cursor = connection.cursor()
@@ -963,7 +963,7 @@ def streamgraph( request, corpus_id ):
 		if row[0] not in response['actors']:
 			response['actors'][ row[0] ] = []
 
-		if len(response['actors'][ row[0] ]) > 4:
+		if len(response['actors'][ row[0] ]) > 14:
 			continue
 
 		response['actors'][ row[0] ].append({

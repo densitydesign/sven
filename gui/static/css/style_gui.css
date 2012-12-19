@@ -507,9 +507,12 @@ h3 {
 
 	/* Dynamics */
 
-	#graph {
+	#graph, #stream {
 		width:100%;
 		height:600px;
-		border-left:1px solid #DDD;
+
 	}
 
+	#graph {
+		border-left:1px solid #DDD;
+	}
