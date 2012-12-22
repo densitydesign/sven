@@ -928,25 +928,29 @@ def d3_streamgraph( request, corpus_id ):
 
 	response = Epoxy( request )
 
+
 	# query 1: get actors name for the given corpus
 
 	actors = [{'name':t.name,'id':t.id } for t in Tag.objects.filter( type='actor', document__corpus__id= corpus_id ) ]
 
 
 	cursor = connection.cursor()
-	cursor.execute(
-		"""
+	query = response.meta( 'query', """
 		SELECT 
 	    	s.stemmed as concept, MAX(ds.tfidf) as max_tfidf, AVG(tf) as avg_tf,
-			count( DISTINCT ds.document_id ) as distribution 
+			count( DISTINCT ds.document_id ) as distribution,
+			MAX(tf) as max_tf
 		FROM `anta_document_segment` ds
 			JOIN anta_segment s ON s.id = ds.segment_id
 			JOIN anta_document d ON d.id = ds.document_id
 		WHERE d.corpus_id = %s AND s.status = %s
 		GROUP BY stemmed
-		ORDER BY max_tfidf DESC
+		ORDER BY """ + (", ".join( response.order_by ) if len( response.order_by ) > 0 else "max_tfidf DESC") + """
 		LIMIT %s, %s
-		"""
+		""")
+
+	cursor.execute(
+		query
 		, [corpus_id, 'IN', response.offset, response.limit ])
 
 	objects = []
