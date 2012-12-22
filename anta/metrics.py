@@ -372,30 +372,51 @@ def export( corpus, language, parser, column="stemmed" ):
 
 
 @transaction.commit_manually
-def importcsv( routine, csvfile, column="stemmed" ):
+def importcsv( routine, csvfile, corpus, column="stemmed" ):
 	print """
 	========================================
 	---- IMPORT SEGMENTS ROM REFINE CSV ----
 	========================================
 	"""
 	
+
 	log_routine( routine, entry="importcsv started", completion=0 );
 	transaction.commit()
-
+	
 	rows = list(csvfile)
 	totalrows = len(rows)
+
+	logger.info( "[corpus:%s] import csv, total rows: %s" % (corpus.name, totalrows) )
+
+
 	for i, row in enumerate(rows):
+		try:
+			segment_id = row['segment_id']
+			concept = row['concept']
+			status = 'IN' if row['status'] == 'IN' else 'OUT'
+		except KeyError,e:
+			logger.error( "KeyError exception: %s" % e )
+			transaction.rollback()
+			return
+			
 		# update stemmed_refined cell
 		try:
-			s = Segment.objects.get(id=row['segment_id'])
+			s = Segment.objects.filter(id=segment_id, documents__corpus=corpus)[0]
+
 			buffer_stemmed = s.stemmed
-			s.stemmed = row['concept']
+			s.stemmed = concept
+			s.status = status
 			s.stemmed_refined = buffer_stemmed
 			s.save()
 
-		except Exception, e:
+		except Segment.DoesNotExist, e:
+			logger.error( "[corpus:%s] import csv, row %s raised exception: %s" % (corpus.name, i,e) )
 			#print	" segemnt id %s was not found!" % row['segment_id']
-			close_routine( routine, error="Ho trovato Wally , Exception: %s %s" % (e,row), status="ERR" )
+			close_routine( routine, error="Exception: %s %s" % (e,row), status="ERR" )
+			transaction.commit()
+			return
+		except IndexError, e:
+			logger.error( "[corpus:%s] import csv, row %s raised IndexError (Segment does not belong to the given corpus ?): %s" % (corpus.name, i,e) )
 			transaction.commit()
 			return
 
@@ -407,6 +428,7 @@ def importcsv( routine, csvfile, column="stemmed" ):
 
 	# completed import csv
 	# @todo: we need to reintegrate similarity( corpus, routine )
+	logger.info( "[corpus:%s] import csv completed, total rows: %s" % (corpus.name, totalrows) )
 	log_routine( routine, entry="completed importcsv at line: %s" % i, completion=1.0 )
 	close_routine( routine, status="OK" )
 	transaction.commit()
@@ -585,17 +607,17 @@ def main( argv):
 
 	if options.func == "importcsv":
 		import unicodecsv,codecs
-		try:
-			f = open( options.filename, "rU")
+		#try:
+		f = open( options.filename, "rU")
 			#f = open( options.csv, 'rb' )
-			csvfile = csv.DictReader( f, delimiter=options.delimiter )
+		csvfile = csv.DictReader( f, delimiter=options.delimiter )
 			#content = f.read()
 			#print "delimiter: options.delimiter", content
 			#csv.reader(f, dialect, **kwds)
 			#csvfile = unicodecsv.reader( content, encoding='utf-8')
 			
-		except Exception, e:
-			error_message = "Ho trovato Wally 559, Exception: %s" % e
+		#except Exception, e:
+		#	error_message = "Ho trovato Wally 559, Exception: %s" % e
 	#
 	#     ==============================
 	#     ---- otuput error message ----
@@ -634,7 +656,7 @@ def main( argv):
 		return tfidf( routine=routine, corpus=corpus ) # tfidf ONLY, per language analysis
 
 	elif options.func == "importcsv":
-		return importcsv( routine=routine, csvfile=csvfile )
+		return importcsv( routine=routine, csvfile=csvfile, corpus=corpus )
 
 	close_routine( routine, error="Fatal: function not found", status="ERR")
 	

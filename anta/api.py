@@ -1301,35 +1301,42 @@ def pending_analysis_corpus( request, corpus_id ):
 
 
 def segments_export( request, corpus_id ):
-	c =  _get_corpus( corpus_id )
-	if c is None:
-		return throw_error( _json( request, enable_method=False ), error="corpus id %s does not exist..." % corpus_id, code=API_EXCEPTION_DOESNOTEXIST )
+	try:
+		c = Corpus.objects.get( id=corpus_id, owner=request.user )
+	except Corpus.DoesNotExist, e:
+		response = Epoxy(request)
+		return response.throw_error( error="%s" % e, code=API_EXCEPTION_DOESNOTEXIST ).json()
+	
 	import unicodecsv
 	ss = Segment.objects.raw("""
 		SELECT 
-			`anta_segment`.`id`, `anta_segment`.`content`, `anta_segment`.`language`, 
-			`anta_segment`.`stemmed`, `anta_segment`.`status`, 
-			MAX(`anta_document_segment`.`tfidf`) AS `max_tfidf`,
-			MAX(`anta_document_segment`.`tf`) AS `max_tf`, 
-			COUNT(`anta_document_segment`.`document_id`) AS `distro` 
-		FROM `anta_segment`
-			JOIN `anta_document_segment` ON (`anta_segment`.`id` = `anta_document_segment`.`segment_id`) 
-			JOIN `anta_document` ON (`anta_document_segment`.`document_id` = `anta_document`.`id`) 
-		WHERE `anta_document`.`corpus_id` = %s AND content NOT REGEXP '^[[:alpha:]][[:punct:]]$'
-		GROUP BY `anta_segment`.`stemmed`
+			s.`id`, s.`content`,s.`language`, 
+			s.`stemmed`, s.`status`, 
+			MAX( ds.`tfidf`) AS `max_tfidf`,
+			MAX( ds.`tf`) AS `max_tf`, 
+			COUNT( DISTINCT ds.document_id) AS `distro` 
+		FROM anta_segment s
+			JOIN anta_document_segment ds ON s.id = ds.segment_id 
+			JOIN anta_document d ON ds.document_id = d.id
+		WHERE d.corpus_id = %s
+		GROUP BY s.stemmed
 		""",[corpus_id]
 	) 
 	
-	response = HttpResponse(mimetype='text/csv; charset=utf-8')
-	response['Content-Description'] = "File Transfer";
-	response['Content-Disposition'] = "attachment; filename=%s.csv" % c.name 
+	if 'plain-text' not in request.REQUEST:
+		response = HttpResponse(mimetype='text/csv; charset=utf-8')
+		response['Content-Description'] = "File Transfer";
+		response['Content-Disposition'] = "attachment; filename=%s.csv" % c.name 
+	
+	else:
+		response = HttpResponse(mimetype='text/plain; charset=utf-8')
 	writer = unicodecsv.writer(response, encoding='utf-8')
 	
 	# headers	
-	writer.writerow(['segment_id', 'content', 'concept', 'distribution', 'max_tf', 'max_tfidf'])
+	writer.writerow(['segment_id', 'content', 'concept',  'distribution', 'status', 'max_tf', 'max_tfidf'])
 
 	for s in ss:
-		writer.writerow([  s.id, s.content, s.stemmed, s.distro,  s.max_tf, s.max_tfidf])
+		writer.writerow([  s.id, s.content, s.stemmed, s.distro, s.status, s.max_tf, s.max_tfidf])
 	
 	return response
 
