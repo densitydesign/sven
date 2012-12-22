@@ -923,6 +923,80 @@ def start_metrics( request, corpus_id):
 def start_alchemy(request, corpus):
 	pass
 
+def d3_streamgraph( request, corpus_id ):
+	from django.db import connection
+
+	response = Epoxy( request )
+
+	# query 1: get actors name for the given corpus
+
+	actors = [{'name':t.name,'id':t.id } for t in Tag.objects.filter( type='actor', document__corpus__id= corpus_id ) ]
+
+
+	cursor = connection.cursor()
+	cursor.execute(
+		"""
+		SELECT 
+	    	s.stemmed as concept, MAX(ds.tfidf) as max_tfidf, AVG(tf) as avg_tf,
+			count( DISTINCT ds.document_id ) as distribution 
+		FROM `anta_document_segment` ds
+			JOIN anta_segment s ON s.id = ds.segment_id
+			JOIN anta_document d ON d.id = ds.document_id
+		WHERE d.corpus_id = %s AND s.status = %s
+		GROUP BY stemmed
+		ORDER BY max_tfidf DESC
+		LIMIT %s, %s
+		"""
+		, [corpus_id, 'IN', response.offset, response.limit ])
+
+	objects = []
+	
+	for row in cursor.fetchall():
+		objects.append({
+			'key': row[ 0 ], # the concept alias stemmed group
+			'tfidf': row[ 1 ], # max tfidf
+			'tf': row[ 2 ], # avg tf
+			'values': dict([( a['id'], { 'step':a['name'], 'value':0.0 } ) for a in actors ])
+		})
+	
+
+	# query 2
+	cursor = connection.cursor()
+	cursor.execute(
+		"""
+		SELECT 
+			s.stemmed as concept, t.id, MAX( ds.tfidf ) as max_tfidf, MAX( ds.tf ) as max_tf, t.name
+		FROM `anta_document_segment` ds
+			JOIN anta_segment s ON s.id = ds.segment_id
+			JOIN anta_document d ON d.id = ds.document_id
+			JOIN anta_document_tag dt ON d.id = dt.document_id
+			JOIN anta_tag t ON t.id = dt.tag_id
+		WHERE d.corpus_id = %s AND s.status = %s and t.type='actor'
+		GROUP BY concept, t.id
+		""", [corpus_id, 'IN' ]
+	)
+
+	concepts = {}
+	for row in cursor.fetchall():
+		c = row[0] # stemmed
+		t = row[ 1 ] # actor id
+		if c not in concepts:
+			concepts[ c ] = {}
+		concepts[ c ][ t ] = { 'tf': row[ 3 ] }
+
+	res = []
+	for i, o in enumerate(objects):
+		c = objects[ i ][ 'key' ] 
+		
+		
+		for t in o[ 'values' ]:
+			if t in concepts[ c ]:
+				 objects[ i ][ 'values' ][ t ][ 'value' ] = concepts[ c ][ t ][ 'tf' ]
+
+	response.add('objects', objects )
+	#response.add('concepts', concepts )
+	return response.json()
+
 def streamgraph( request, corpus_id ):
 	response = _json( request )
 	c = _get_corpus( corpus_id )
