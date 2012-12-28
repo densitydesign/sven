@@ -986,7 +986,7 @@ def d3_streamgraph( request, corpus_id ):
 		t = row[ 1 ] # actor id
 		if c not in concepts:
 			concepts[ c ] = {}
-		concepts[ c ][ t ] = { 'tf': row[ 3 ] }
+		concepts[ c ][ t ] = { 'tf': row[ 3 ], 'tfidf': row[ 2 ] }
 
 	res = []
 	for i, o in enumerate(objects):
@@ -995,7 +995,9 @@ def d3_streamgraph( request, corpus_id ):
 		
 		for t in o[ 'values' ]:
 			if t in concepts[ c ]:
-				 objects[ i ][ 'values' ][ t ][ 'value' ] = concepts[ c ][ t ][ 'tf' ]
+				objects[ i ][ 'values' ][ t ][ 'value' ] = concepts[ c ][ t ][ 'tf' ]
+				objects[ i ][ 'values' ][ t ][ 'tfidf' ] = concepts[ c ][ t ][ 'tfidf' ]
+		objects[ i ][ 'values' ] = objects[ i ][ 'values'].values()
 
 	response.add('objects', objects )
 	#response.add('concepts', concepts )
