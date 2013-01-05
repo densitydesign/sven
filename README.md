@@ -50,15 +50,21 @@ Change `/path/to/` according to your virtualenv location, e.g.
 	             site.addsitedir('/home/daniele/.virtualenvs/sven.local/lib/python2.7/site-packages')
 
 
-Enable python logging
+Folder permissions
 ---
 Create a log file for ANTA processes (sven scripts for Pattern library) and make it writable for the apache user.
 
 	$ cd /path/to/sven
 	$ mkdir logs
 	$ touch logs/anta.log
-	$ chown -hR you-user:www-data logs
+	$ chown -hR your-user:www-data logs
 	$ chmod 0775 -R logs
+	$ mkdir media
+	$ chown your-user:www-data media
+	$ chmod 0775 media
+
+The directory `media` will host various documents corpora (one for each folder).
+Configure the `MEDIA_ROOT` directive inside the `settings.py` file accordingly.
 
 
 Configure settings.py file
