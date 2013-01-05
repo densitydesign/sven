@@ -1,0 +1,16 @@
+<VirtualHost *:80>
+  ServerName sven.local
+ 
+  WSGIDaemonProcess sven display-name=sven user=www-data processes=2 threads=15
+  WSGIScriptAlias / /path/to/sven/sven.wsgi
+  <Directory /path/to/sven/sven.wsgi>
+    Order allow,deny
+    Allow from all
+  </Directory>
+
+  Alias /static /path/to/sven/gui/static
+  <Directory /path/to/sven/gui/static>
+    Order allow,deny
+    Allow from all
+  </Directory>
+</Virtualhost>
