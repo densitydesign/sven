@@ -20,7 +20,6 @@ let's assume `/path/to/` as the parent path for sven installation
 
 Make sure that `settings.py` file is located at `/path/to/sven/settings.py`
 
----
 Create a sven dedicated virtualenv
 ---
 Once virtualenvwrapper installed, create a virtualenv directory `sven.local`, activate the virtualenv and install the requirements:
@@ -30,7 +29,6 @@ Once virtualenvwrapper installed, create a virtualenv directory `sven.local`, ac
 	$ workon sven.local
 	$ pip install -r requirements.txt
 
----
 Configure virtualhost
 ---
 You can use the `virtualhost.SAMPLE` file to enable sven site for apache server.
@@ -41,7 +39,6 @@ WSGIScriptAlias directive should point to `/path/to/sven/sven.wsgi`.
 
 Sven site will be available under `http://sven.local` (your ServerName directive).
 
----
 Configure wsgi
 ---
 You can use the `sven.wsgi.SAMPLE` file: rename it to `sven.wsgi`.
@@ -50,7 +47,6 @@ Make the WSGIScriptAlias directive in your virtualhost point to this file.
 Change `/path/to/` according to your virtualenv location, e.g.
 	             site.addsitedir('/home/daniele/.virtualenvs/sven.local/lib/python2.7/site-packages')
 
----
 Enable python logging
 ---
 Create a log file for ANTA processes (sven scripts for Pattern library) and make it writable for the apache user.
@@ -61,7 +57,6 @@ Create a log file for ANTA processes (sven scripts for Pattern library) and make
 	$ chown -hR you-user:www-data logs
 	$ chmod 0775 -R logs
 
----
 Configure settings.py file
 ---
 You can use the settings.SAMPLE file and modify variables according to your configuration. Make sure that sven.anta and sven.core appear under installed apps.
@@ -80,7 +75,6 @@ You can use the settings.SAMPLE file and modify variables according to your conf
 	)
 	...
 
----
 Start your engines
 ---
 Activate your virtualenv if it is not yet activated:
@@ -95,7 +89,7 @@ Then:
 
 Cross your fingers and go to your sven url...
 
----
+
 Create a Corpus
 ---
 A **corpus** is a collection of documents. Standard fidf text analysis will be performed on the whole corpus.
