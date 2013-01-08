@@ -335,9 +335,7 @@ svenjs.Sven.prototype.graph = function(id, successCallback, args){
 /* streamgraph */
 svenjs.Sven.prototype.streamgraph = function(id, successCallback, args){
 		
-    //var url = this.url + "/sketch/query/" + this.database + "/" + collection + "/" + command + "/";
-    var url = this.url + "/anta/api/streamgraph/corpus/" + id + "/?filters={}";
-
+	var url = this.url + "/anta/api/d3/streamgraph/corpus/" + id + "/?order_by=[%22max_tfidf%20DESC%22,%22distribution%20DESC%22]"
     $.ajax({
         type: 'GET',
         url: url,
