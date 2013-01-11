@@ -60,7 +60,6 @@
 			var color = sven.colors.diverging(colorGroups.length);
 			colorGroups.forEach(function(d){
 				color(d);
-				console.log(d)
 			})
 			
 			var groups = interval(nodes).map(function(d){
@@ -1199,12 +1198,12 @@
 				.attr("width", width)
     			.attr("height", height);
 
-		//var colorz = sven.colors.diverging(n);
+		var colorz = sven.colors.diverging(n);
 		var layer = svg.selectAll("g")
 			.data(dataF)
 		  .enter().append("g")
 			.attr("class", function(d,i){return "layer_"+i})
-			.style("fill", function(d, i) { return color("" +i +"") })
+			.style("fill", function(d, i) { return colorz("" + i +"") })
 			//.on("mouseover", function(){d3.select(this).selectAll("path").transition().attr("fill-opacity",0.75)})
 			//.on("mouseout", function(){d3.select(this).selectAll("path").transition().attr("fill-opacity",0.5)})
 			.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
@@ -1316,18 +1315,18 @@
 			 .attr("width", width)
     		 .attr("height", height);
 		
-		//var colorz = sven.colors.diverging(n);
+		var colorz = sven.colors.diverging(n);
 		
 		var layer = svg.selectAll("g");
 
 			layer.data(dataF)
 		  //.enter().append("g")
-		  .exit()
-		  .remove()
+		  //.exit()
+		  //.remove()
 		   .transition()
       	   .duration(500)
 			//.attr("class", function(d,i){return "layer_"+i})
-			.style("fill", function(d, i) { return color("" +i +"") })
+			.style("fill", function(d, i) { return colorz("" +i +"") })
 			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 			//.on("mouseover", function(){d3.select(this).selectAll("path").transition().attr("fill-opacity",0.75)})
 			//.on("mouseout", function(){d3.select(this).selectAll("path").transition().attr("fill-opacity",0.5)});
@@ -1358,8 +1357,8 @@
 		
 		var stepsLabel = svg.selectAll("text");
 			stepsLabel.data(steps)
-			.exit()
-			.remove()
+			//.exit()
+			//.remove()
 		   .transition()
       	   .duration(500)
 			.attr("x", function(d) { return x(d) + margin.left; })
@@ -1416,7 +1415,7 @@
  	
  	
  	scaledBarPadding = barPadding*max/graphHeight;
- 	scaledMinHeight = minHeight*max/graphHeight;
+ 	scaledMinHeight = minHeight*(max + scaledBarPadding * n)/graphHeight;
  	
  	minHeightScale.range([minHeightScale.domain()[0] + scaledMinHeight ,minHeightScale.domain()[1] + scaledMinHeight]);
     

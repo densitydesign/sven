@@ -1,13 +1,19 @@
 var query = new svenjs.Sven("");
 var graph;
 
+if($.cookie('sven_filters')){
+
+	args['filters'] = $.cookie('sven_filters');
+
+	};
+
 //bug fixing..to be removed
 var scale = d3.scale.ordinal().domain([ "#D7191C","#FDAE61","#FFFFBF","#A6D96A","#1A9641" ]).range(["#1A9641", "#A6D96A", "#FFFFBF", "#FDAE61", "#D7191C"]);
 var change = function(c){if(c == "#ffffff"){return "rgba(204,204,204,0.3)"}else{return c}}
 
 // get actors
 	
-	query.getActors(function(response){
+query.getActors(function(response){
 		var actorList = response.objects;
 		
 		/*
@@ -53,7 +59,9 @@ query.getDocuments(function(response){
 	var langList = d3.nest()
     .key(function(d) { return d.language; })
     .entries(data);
-
+	
+	//to do: fix filters
+	langList = [{"key":"EN"},{"key":"NL"}]
     
     d3.select(".filterLang").selectAll("label.checkbox")
 		.data(langList)
@@ -129,13 +137,22 @@ query.getDocuments(function(response){
 	//d3.select(".filterActors").selectAll("input:checked").each(function(d){filters["tags__id__in"].push(d.id)});
 	if (filters["tags__id__in"].length == 0){delete filters["tags__id__in"]}
 	args['filters'] = JSON.stringify(filters);
+	$.cookie('sven_filters', JSON.stringify(filters), { path: '/'});
 	updateGraph();
 	}
+	
+		if($.cookie('sven_filters')){
+	
+	d3.entries(JSON.parse(args['filters'])).forEach(function(d){
+			
+			loadFilters(d.key,d.value);
+		
+		})
+	};
+	
 	},args);
 	
-	
-
-	query.graph(args['corpus'],function(response){
+query.graph(args['corpus'],function(response){
 	
 		if (response.status == "ko") return;
 	
@@ -196,9 +213,7 @@ query.getDocuments(function(response){
 		$('#zoomOut').click(function(){graph.zoomOut()})
 		$('#zoomCenter').click(function(){graph.center()})
 
-	});
-
-
+	},args);
 
 function updateGraph(){
 	
@@ -246,3 +261,43 @@ function updateGraph(){
 
 	
 	}
+
+function loadFilters(filter,value){
+		
+		switch (filter){
+		case "ref_date__gte":
+		  if($('#dp1')){
+		  $('#dp1').datepicker('setValue', value.split(" ")[0]);
+	      d3.select("#startDate").text(value.split(" ")[0]);
+		  }
+		  break;
+		case "ref_date__lte":
+		  if($('#dp2')){
+		  $('#dp2').datepicker('setValue', value.split(" ")[0]);
+		  d3.select("#endDate").text(value.split(" ")[0]);
+		  }
+		  break;
+		case "title__icontains":
+		  if($("#filterContains")){
+		  	$("#filterContains").val(value)
+		  	};
+		  break;
+		case "language__in":
+			if($(".filterLang")){
+			value.forEach(function(d){
+		  d3.select(".filterLang").selectAll("input").each(function(f){
+		  	if(f.key == d){d3.select(this).property("checked","checked")
+		  	}})
+		  	});
+		  	}
+		  break;
+		case "tags__id__in":
+		  if($("#selectActors")){
+		  	
+		  		$("#selectActors").select2("val", value)
+		 	
+		  }
+		  break;
+		}
+		
+		}	

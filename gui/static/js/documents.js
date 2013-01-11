@@ -7,6 +7,11 @@ var nextLimit;
 var nextOffset;
 var total;
 
+if($.cookie('sven_filters')){
+
+	args['filters'] = $.cookie('sven_filters');
+
+	};
 // TODO:DA SISTEMARE ERRORI SULLA RISPOSTA....
 		d3.select("#create-corpus")
 			.on("click", function(){
@@ -228,6 +233,8 @@ function getDocumentsList(){
     .key(function(d) { return d.language; })
     .entries(data);
 
+//to do: fix filters
+	langList = [{"key":"EN"},{"key":"NL"}]
     
     d3.select(".filterLang").selectAll("label.checkbox")
 		.data(langList)
@@ -289,6 +296,15 @@ function getDocumentsList(){
 		.on("click", function(){setFilters();})
 		
 	d3.select("#filter").append("hr")
+	
+	if($.cookie('sven_filters')){
+	
+	d3.entries(JSON.parse(args['filters'])).forEach(function(d){
+			
+			loadFilters(d.key,d.value);
+		
+		})
+	};
 	
 
 	},args);
@@ -392,11 +408,46 @@ function checkStatus(){
 	})
 }
 
-
-				//query.exportEntities(corpusID,function(response){
-				//	
-				//	})
-				
+			
+function loadFilters(filter,value){
+		
+		switch (filter){
+		case "ref_date__gte":
+		  if($('#dp1')){
+		  $('#dp1').datepicker('setValue', value.split(" ")[0]);
+	      d3.select("#startDate").text(value.split(" ")[0]);
+		  }
+		  break;
+		case "ref_date__lte":
+		  if($('#dp2')){
+		  $('#dp2').datepicker('setValue', value.split(" ")[0]);
+		  d3.select("#endDate").text(value.split(" ")[0]);
+		  }
+		  break;
+		case "title__icontains":
+		  if($("#filterContains")){
+		  	$("#filterContains").val(value)
+		  	};
+		  break;
+		case "language__in":
+			if($(".filterLang")){
+			value.forEach(function(d){
+		  d3.select(".filterLang").selectAll("input").each(function(f){
+		  	if(f.key == d){d3.select(this).property("checked","checked")
+		  	}})
+		  	});
+		  	}
+		  break;
+		case "tags__id__in":
+		  if($("#selectActors")){
+		  	
+		  		$("#selectActors").select2("val", value)
+		 	
+		  }
+		  break;
+		}
+		
+		}	
 			
  $('#export') .click(function () {
         var btn = $(this);
@@ -491,3 +542,4 @@ function checkStatus(){
 		})
  	
 	 })
+	 

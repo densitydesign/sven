@@ -4,6 +4,9 @@ var streamkey;
 streamArgs['limit'] = 15;
 // get actors
 	
+
+
+
 query.getActors(function(response){
 		var actorList = response.objects;
 		
@@ -129,12 +132,14 @@ query.getDocuments(function(response){
 	updateStream();
 	}
 	},args);
-	
+
 query.streamgraph(args['corpus'],function(response){
-	
+
+	if(response.status != "ok"){ return;}
 	$('.loader').hide();
 	var data = response.objects;
-	console.log(data);
+	
+
 	/*
 	var actors = d3.keys(data);
 	
@@ -167,13 +172,14 @@ query.streamgraph(args['corpus'],function(response){
 		})
 
 	*/
-	var width = parseFloat(d3.select("#stream").style("width").replace("px",""));
+	var widthStream = parseFloat(d3.select("#stream").style("width").replace("px",""));
 	//var width = actors.length * 100;
-	var height = parseFloat(d3.select("#stream").style("height").replace("px",""));
-
+	var heightStream = parseFloat(d3.select("#stream").style("height").replace("px",""));
+	var widthStreamFull = data[0].values.length * 145;
 	streamkey = sven.viz.streamkey()
-	.width(data[0].values.length * 145)
-	.height(height)
+	//.width(data[0].values.length * 145)
+	.width(widthStream)
+	.height(heightStream)
 	.data(data)
 	.barWidth(2)
 	.barPadding(5)
@@ -182,52 +188,66 @@ query.streamgraph(args['corpus'],function(response){
 	.target("#stream")
 	.init();
 	
+	$('#expand').click(function(){
+		
+		if(widthStream < widthStreamFull)
+		
+		streamkey.width(widthStreamFull).update()
+		
+		})
+	
+	$('#resize').click(function(){
+		
+		streamkey.width(widthStream).update()
+		
+		})
 	}, streamArgs);
 
 function updateStream(){
 	
 	query.streamgraph(args['corpus'],function(response){
 	$("#stream").empty();
-	var data = response.actors;
+	var data = response.objects;
 	
-	var actors = d3.keys(data);
-	
-	var dataF = [];
-	actors.forEach(function(d){
-		
-		data[d].forEach(function(k){k.actor = d; k.step = k.actor; k.value = k.tf*1000; dataF.push(k);});
-	
-		
-		})
-	
-	
-	dataF = d3.nest().key(function(d){return d.concept}).entries(dataF).sort(function(a,b){ return b.values.length - a.values.length}).filter(function(d){return d.values.length >= 2});
+// 	var actors = d3.keys(data);
+// 	
+// 	var dataF = [];
+// 	actors.forEach(function(d){
+// 		
+// 		data[d].forEach(function(k){k.actor = d; k.step = k.actor; k.value = k.tf*1000; dataF.push(k);});
+// 	
+// 		
+// 		})
+// 	
+// 	
+// 	dataF = d3.nest().key(function(d){return d.concept}).entries(dataF).sort(function(a,b){ return b.values.length - a.values.length}).filter(function(d){return d.values.length >= 2});
+// 
+// 	actors.forEach(function(d){
+// 		
+// 		dataF.forEach(function(k){
+// 			
+// 			var p = d3.nest().key(function(c){return c.actor}).entries(k.values)
+// 			p = p.map(function(l){return l.key})
+// 			if($.inArray(d, p) < 0){
+// 				k.values.push({'actor': d, 'step':d, 'value':0})
+// 				}
+// 			
+// 			k.values.sort(function(a,b){ return a.actor.toLowerCase() > b.actor.toLowerCase() ? 1 : -1;})
+// 			
+// 			})
+// 		
+// 		})
 
-	actors.forEach(function(d){
-		
-		dataF.forEach(function(k){
-			
-			var p = d3.nest().key(function(c){return c.actor}).entries(k.values)
-			p = p.map(function(l){return l.key})
-			if($.inArray(d, p) < 0){
-				k.values.push({'actor': d, 'step':d, 'value':0})
-				}
-			
-			k.values.sort(function(a,b){ return a.actor.toLowerCase() > b.actor.toLowerCase() ? 1 : -1;})
-			
-			})
-		
-		})
 
-
-	var width = parseFloat(d3.select("#stream").style("width").replace("px",""));
+	var widthStream = parseFloat(d3.select("#stream").style("width").replace("px",""));
 	//var width = actors.length * 100;
-	var height = parseFloat(d3.select("#stream").style("height").replace("px",""));
+	var heightStream = parseFloat(d3.select("#stream").style("height").replace("px",""));
+	var widthStreamFull = data[0].values.length * 145;
 
 	streamkey = sven.viz.streamkey()
-	.width(actors.length * 145)
-	.height(height)
-	.data(dataF)
+	.width(widthStream)
+	.height(heightStream)
+	.data(data)
 	.barWidth(2)
 	.barPadding(5)
 	.minHeight(1)
@@ -235,8 +255,62 @@ function updateStream(){
 	.target("#stream")
 	.init();
 	
+		$('#expand').click(function(){
+		
+		if(widthStream < widthStreamFull)
+		
+		streamkey.width(widthStreamFull).update()
+		
+		})
 	
-	},args);
+	$('#resize').click(function(){
+		
+		streamkey.width(widthStream).update()
+		
+		})
+	
+	},streamArgs);
 
 	
 	}
+
+function loadFilters(filter,value){
+		
+		switch (filter){
+		case "ref_date__gte":
+		  if($('#dp1')){
+		  $('#dp1').datepicker('setValue', value.split(" ")[0]);
+	      d3.select("#startDate").text(value.split(" ")[0]);
+		  }
+		  break;
+		case "ref_date__lte":
+		  if($('#dp2')){
+		  $('#dp2').datepicker('setValue', value.split(" ")[0]);
+		  d3.select("#endDate").text(value.split(" ")[0]);
+		  }
+		  break;
+		case "title__icontains":
+		  if($("#filterContains")){
+		  	$("#filterContains").val(value)
+		  	};
+		  break;
+		case "language__in":
+			if($(".filterLang")){
+			value.forEach(function(d){
+		  d3.select(".filterLang").selectAll("input").each(function(f){
+		  	if(f.key == d){d3.select(this).property("checked","checked")
+		  	}})
+		  	});
+		  	}
+		  break;
+		case "tags__id__in":
+		  if($("#selectActors")){
+		  	value.forEach(function(d){
+		  		$("#selectActors").select2("val", d)
+		 	 })
+		  }
+		  break;
+		}
+		
+		}	
+		

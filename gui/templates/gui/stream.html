@@ -55,6 +55,16 @@
 	
 	
 	 <div class="span10">
+	 
+	 		<p class="breath"><strong>Streamgraph</strong></p>
+		
+		<div class="btn-toolbar">
+			<div class="btn-group pull-right">
+			<div class="btn btn-small tip " rel="tooltip" title="Resize streamgraph" id="resize"><i class="icon-resize-small"></i></div>
+		    <div class="btn btn-small tip " rel="tooltip" title="Expand streamgraph" id="expand"><i class="icon-resize-full"></i></div>
+		  	</div>
+		  <div class="clear"></div>
+		</div>
 	 	
 	 	<div id="stream_container">
 	 	<div class="loader"></div>
@@ -84,6 +94,7 @@
 	actorArgs.limit = -1; //prende TUTTI gli attori
 	
 	var streamArgs = {};
+	$(".tip").tooltip();
 </script>
 
 <script src="{{ custom.STATIC_URL }}js/stream.js" type="text/javascript"></script>
