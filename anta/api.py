@@ -928,12 +928,29 @@ def d3_streamgraph( request, corpus_id ):
 
 	response = Epoxy( request )
 
+	# query 1: get corpus
+	try:
+		corpus = response.add( 'corpus', Corpus.objects.get(id=corpus_id), jsonify=True )
+	except Corpus.DoesNotExist,e:
+		return response.throw_error( error="%s"%e,code=API_EXCEPTION_DOESNOTEXIST).json()
 
-	# query 1: get actors name for the given corpus
+	# if user has filter selected
+	if len(response.filters):
+		# query 2: filter documents by user filters
+		documents = response.add('ids',[ str(d.id) for d in Document.objects.filter(corpus=corpus).filter( **response.filters )])
+		if len( documents ) == 0:
+			response.warning('filters','no documents matches given query')
+			response.add( 'objects',[])
+			return response.json()
 
-	actors = [{'name':t.name,'id':t.id } for t in Tag.objects.filter( type='actor', document__corpus__id= corpus_id ) ]
+		actors = [{'name':t.name,'id':t.id } for t in Tag.objects.filter( type='actor', document__in= documents ) ]
+		# query 3: get actors name for the given corpus
+		
+	else:	
+		documents = None
+		actors = [{'name':t.name,'id':t.id } for t in Tag.objects.filter( type='actor', document__corpus__id= corpus_id ) ]
 
-
+	# query 4. a Limited number of concepts ( first 3 concepts per actor )
 	cursor = connection.cursor()
 	query = response.meta( 'query', """
 		SELECT 
@@ -943,7 +960,9 @@ def d3_streamgraph( request, corpus_id ):
 		FROM `anta_document_segment` ds
 			JOIN anta_segment s ON s.id = ds.segment_id
 			JOIN anta_document d ON d.id = ds.document_id
-		WHERE d.corpus_id = %s AND s.status = %s
+		WHERE d.corpus_id = %s AND s.status = %s """ +
+		(" AND d.id IN ( %s )" % ",".join(documents) if documents is not None else "")
+		+ """ 
 		GROUP BY stemmed
 		ORDER BY """ + (", ".join( response.order_by ) if len( response.order_by ) > 0 else "max_tfidf DESC") + """
 		LIMIT %s, %s
@@ -964,7 +983,7 @@ def d3_streamgraph( request, corpus_id ):
 		})
 	
 
-	# query 2
+	# query 2. concept per actor
 	cursor = connection.cursor()
 	cursor.execute(
 		"""
@@ -975,7 +994,9 @@ def d3_streamgraph( request, corpus_id ):
 			JOIN anta_document d ON d.id = ds.document_id
 			JOIN anta_document_tag dt ON d.id = dt.document_id
 			JOIN anta_tag t ON t.id = dt.tag_id
-		WHERE d.corpus_id = %s AND s.status = %s and t.type='actor'
+		WHERE d.corpus_id = %s AND s.status = %s and t.type='actor' """ + 
+		(" AND d.id IN ( %s )" % ",".join(documents) if documents is not None else "")
+		+ """
 		GROUP BY concept, t.id
 		""", [corpus_id, 'IN' ]
 	)
