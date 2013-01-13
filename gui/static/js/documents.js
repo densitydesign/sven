@@ -13,11 +13,10 @@ var total;
 
 				var corpusData = {}
 				corpusData['name'] = d3.select("#corpus-name").property("value")
-				query.addCorpus(function(r){
-
-					var id= r.created.id;
-					switchCorpus(id);
-				}, corpusData)
+				query.addCorpus(
+					function( data ){ switchCorpus( data.object.id );},
+					corpusData
+				);
 				
 			})
 			
