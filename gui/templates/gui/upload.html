@@ -37,7 +37,15 @@
 	
 	api = new svenjs.Sven("");
 	
-
+	$.validator.addMethod(
+    "regex",
+    function(value, element, regexp) {
+        var check = false;
+        var re = new RegExp(regexp);
+        return this.optional(element) || re.test(value);
+    },
+    "No special Characters allowed here."
+);
 	
 	
 	$(function(){
@@ -185,7 +193,8 @@
 	    rules: {
 	      titleInput: {
 	        minlength: 1,
-	        required: true
+	        required: true,
+	        regex: /^[A-Za-z0-9\d=-]+$/
 	      },
 	      langInput: {
 	      	maxlength: 2,
@@ -197,7 +206,8 @@
 	      },
 	      actorInput: {
 	        minlength: 1,
-	        required: true
+	        required: true,
+	        regex: /^[A-Za-z0-9\d=-]+$/
 	      }
 	    },
 	    highlight: function(label) {
