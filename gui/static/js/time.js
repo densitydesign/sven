@@ -75,6 +75,13 @@ query.getDocuments(function(response){
     .entries(data)
     .map(function(d){return d.key});
     
+    var dateList = d3.nest()
+    .key(function(d) { return d.date; })
+    .entries(data);
+    
+	var minDate = d3.min(dateList.map(function(d){return d.key}));
+	var maxDate = d3.max(dateList.map(function(d){return d.key}));
+    
 	var relFilters = {};
 	relFilters["source__in"] = docIdList;
 	relFilters["target__in"] = docIdList;
@@ -94,6 +101,31 @@ query.getDocuments(function(response){
 		.attr("class", "btn btn-small btn-success")
 		.text("Apply filters")
 		.on("click", function(){setFilters();})
+		
+		//reset filters
+	d3.select("#filters").append("button")
+		.attr("class", "btn btn-small btn-warning")
+		.text("Reset filters")
+		.on("click", function(){
+			$.removeCookie('sven_filters', { path: '/' });
+			delete args['filters'];
+			args['limit'] = 50;
+			args['offset'] = 0;
+			
+		  d3.select("#dp1").attr("data-date", minDate.split("T")[0]);
+	      d3.select("#dp2").attr("data-date", maxDate.split("T")[0]);
+	      d3.select("#startDate").text(minDate.split("T")[0]);
+	      d3.select("#endDate").text(maxDate.split("T")[0]);
+		  $("#filterContains").val("")
+		  $("#selectActors").select2("val", "")
+		  d3.select(".filterLang").selectAll("input").each(function(d){
+		  	d3.select(this).property("checked", false)
+		  })
+			
+		 updateTimeline();
+			
+			
+			})
 	
 	//load more doc
 	

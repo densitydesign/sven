@@ -4,8 +4,14 @@ var streamkey;
 streamArgs['limit'] = 15;
 // get actors
 	
+if($.cookie('sven_filters')){
+	
+	args['filters'] = $.cookie('sven_filters');
+	streamArgs['filters'] = $.cookie('sven_filters');
+	
+	};
 
-
+console.log(streamArgs);
 
 query.getActors(function(response){
 		var actorList = response.objects;
@@ -53,7 +59,9 @@ query.getDocuments(function(response){
 	var langList = d3.nest()
     .key(function(d) { return d.language; })
     .entries(data);
-
+	
+	//to do: fix filters
+	langList = [{"key":"EN"},{"key":"NL"}]
     
     d3.select(".filterLang").selectAll("label.checkbox")
 		.data(langList)
@@ -114,6 +122,32 @@ query.getDocuments(function(response){
 		.text("Apply filters")
 		.on("click", function(){setFilters();})
 		
+	//reset filters
+	d3.select("#filters").append("button")
+		.attr("class", "btn btn-small btn-warning")
+		.text("Reset filters")
+		.on("click", function(){
+			$.removeCookie('sven_filters', { path: '/' });
+			delete args['filters'];
+			delete streamArgs['filters'];
+			args['limit'] = 50;
+			args['offset'] = 0;
+			
+		  d3.select("#dp1").attr("data-date", minDate.split("T")[0]);
+	      d3.select("#dp2").attr("data-date", maxDate.split("T")[0]);
+	      d3.select("#startDate").text(minDate.split("T")[0]);
+	      d3.select("#endDate").text(maxDate.split("T")[0]);
+		  $("#filterContains").val("")
+		  $("#selectActors").select2("val", "")
+		  d3.select(".filterLang").selectAll("input").each(function(d){
+		  	d3.select(this).property("checked", false)
+		  })
+			
+		 updateStream();
+			
+			
+			})
+		
 	d3.select("#filter").append("hr")
 	
 	function setFilters(){
@@ -129,12 +163,24 @@ query.getDocuments(function(response){
 	//d3.select(".filterActors").selectAll("input:checked").each(function(d){filters["tags__id__in"].push(d.id)});
 	if (filters["tags__id__in"].length == 0){delete filters["tags__id__in"]}
 	args['filters'] = JSON.stringify(filters);
+	streamArgs['filters'] = JSON.stringify(filters);
+	$.cookie('sven_filters', JSON.stringify(filters), { path: '/'});
 	updateStream();
 	}
+	
+		if($.cookie('sven_filters')){
+	
+	d3.entries(JSON.parse(args['filters'])).forEach(function(d){
+			
+			loadFilters(d.key,d.value);
+		
+		})
+	};
+	
 	},args);
 
 query.streamgraph(args['corpus'],function(response){
-
+	
 	if(response.status != "ok"){ return;}
 	$('.loader').hide();
 	var data = response.objects;
@@ -204,39 +250,12 @@ query.streamgraph(args['corpus'],function(response){
 	}, streamArgs);
 
 function updateStream(){
-	
-	query.streamgraph(args['corpus'],function(response){
 	$("#stream").empty();
+	$('.loader').show();
+	query.streamgraph(args['corpus'],function(response){
+	$('.loader').hide();
 	var data = response.objects;
 	
-// 	var actors = d3.keys(data);
-// 	
-// 	var dataF = [];
-// 	actors.forEach(function(d){
-// 		
-// 		data[d].forEach(function(k){k.actor = d; k.step = k.actor; k.value = k.tf*1000; dataF.push(k);});
-// 	
-// 		
-// 		})
-// 	
-// 	
-// 	dataF = d3.nest().key(function(d){return d.concept}).entries(dataF).sort(function(a,b){ return b.values.length - a.values.length}).filter(function(d){return d.values.length >= 2});
-// 
-// 	actors.forEach(function(d){
-// 		
-// 		dataF.forEach(function(k){
-// 			
-// 			var p = d3.nest().key(function(c){return c.actor}).entries(k.values)
-// 			p = p.map(function(l){return l.key})
-// 			if($.inArray(d, p) < 0){
-// 				k.values.push({'actor': d, 'step':d, 'value':0})
-// 				}
-// 			
-// 			k.values.sort(function(a,b){ return a.actor.toLowerCase() > b.actor.toLowerCase() ? 1 : -1;})
-// 			
-// 			})
-// 		
-// 		})
 
 
 	var widthStream = parseFloat(d3.select("#stream").style("width").replace("px",""));
