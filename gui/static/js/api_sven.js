@@ -426,6 +426,7 @@ svenjs.Sven.prototype.getActors = function(successCallback, args){
 };
 
 /*add tag to document*/
+
 svenjs.Sven.prototype.addTag = function(id, successCallback, args){
 		
     var url = this.url + "/anta/api/attach-free-tag/document/" + id +"/?indent=true";
