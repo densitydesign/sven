@@ -2,11 +2,40 @@ var svenjs = svenjs || {};
 
 //TODO: use a more robust pattern for object creation
 svenjs.Sven = function(url){
-
+    /*
+        Perform ajquery ajax call. 
+        Handle json responses
+    */  ;
     this.url = url;
+    this.ajax = function( url, params, success, method ){
+        var id = ( new Date() ).getTime();
+        method = typeof method == "undefined"? 'GET': method;
+        $.ajax({
+            type: method,
+            dataType: 'json',
+            url: url,
+            data: params,
+            success: function( data, textStatus, jqXHR){
+                console.log("[svenjs " + method + "]",id,"json received :", data.status, data );
+                success.apply(this, arguments); // propagate
+            },
+            error: function( jqXHR, textStatus, errorThrown ){
+                console.log("[svenjs " + method + "]",id," ERROR :", textStatus,  errorThrown );
+                success.apply(this, arguments); // propagate
+            },
+            beforeSend:function( jqXHR, settings ){
+                console.log("[svenjs " + method + "]",id,"url :", settings.url );
+            },
+            complete:function( jqXHR, textStatus ){
+                // console.log("[svenjs GET]",id,"complete :", textStatus );
+            }
+        });
+    };
     return this;
 
 };
+
+
 
 
 $(document).ajaxSend(function(event, xhr, settings) {
@@ -51,15 +80,7 @@ $(document).ajaxSend(function(event, xhr, settings) {
 svenjs.Sven.prototype.getCorpora = function(successCallback, args){
 		
     var url = this.url + "/anta/api/corpus/";
-
-    $.ajax({
-        type: 'GET',
-        url: url,
-        data: args,
-        success: successCallback,
-        error: successCallback,
-        dataType: 'json'
-    });
+    this.ajax( url, args, successCallback );
     
 };
 
@@ -68,15 +89,7 @@ svenjs.Sven.prototype.getCorpora = function(successCallback, args){
 svenjs.Sven.prototype.getCorpus = function(id, successCallback, args){
 		
     var url = this.url + "/anta/api/corpus/" + id;
-
-    $.ajax({
-        type: 'GET',
-        url: url,
-        data: args,
-        success: successCallback,
-        error: successCallback,
-        dataType: 'json'
-    });
+    this.ajax( url, args, successCallback );
     
 };
 
@@ -85,15 +98,7 @@ svenjs.Sven.prototype.getCorpus = function(id, successCallback, args){
 svenjs.Sven.prototype.addCorpus = function(successCallback, args){
 		
     var url = this.url + "/anta/api/corpus/";
-
-    $.ajax({
-        type: 'POST',
-        url: url,
-        data: args,
-        success: successCallback,
-        error: successCallback,
-        dataType: 'json'
-    });
+    this.ajax( url, args, successCallback, 'POST' );
     
 };
 
@@ -102,21 +107,7 @@ svenjs.Sven.prototype.addCorpus = function(successCallback, args){
 svenjs.Sven.prototype.getDocuments = function(successCallback, args){
 	
     var url = this.url + "/anta/api/documents/?indent=true";
-	
-	var args = args || { };
-	args.corpus = args.corpus || 1;
-    
-    $.ajax({
-        type: 'GET',
-        url: url,
-        data: args,
-        complete: function(){
-        	//console.log(this.url);
-    		},
-        success: successCallback,
-        error: successCallback,
-        dataType: 'json'
-    });
+	this.ajax( url, args, successCallback );
 
 };
 
@@ -126,22 +117,8 @@ svenjs.Sven.prototype.getDocument = function(id, successCallback, args){
 		
     //var url = this.url + "/sketch/query/" + this.database + "/" + collection + "/" + command + "/";
     var url = this.url + "/anta/api/documents/" + id + "/" + "?indent=true";
-
-	//var args = args || { };
-	//args.corpus = args.corpus || 1;
-	//console.log(args);
-    $.ajax({
-        type: 'GET',
-        url: url,
-        data: args,
-        success: successCallback,
-        error: successCallback,
-        complete: function(){
-        	console.log(this.url);
-    		},
-        dataType: 'json'
-    });
-    
+    this.ajax( url, args, successCallback );
+	
     
 };
 
@@ -216,18 +193,7 @@ svenjs.Sven.prototype.getRelation = function(id, successCallback, args){
 		
     //var url = this.url + "/sketch/query/" + this.database + "/" + collection + "/" + command + "/";
     var url = this.url + "/anta/api/relations/" + id + "/" + "?indent=true";
-
-    $.ajax({
-        type: 'GET',
-        url: url,
-        data: args,
-        success: successCallback,
-        error: successCallback,
-        complete: function(){
-        	console.log(this.url);
-    		},
-        dataType: 'json'
-    });
+    this.ajax( url, args, successCallback );
     
     
 };
@@ -236,19 +202,7 @@ svenjs.Sven.prototype.getRelation = function(id, successCallback, args){
 svenjs.Sven.prototype.addRelation = function(successCallback, args){
 	
     var url = this.url + "/anta/api/relations/?method=POST&indent=true";
-	
-    
-    $.ajax({
-        type: 'GET',
-        url: url,
-        data: args,
-        complete: function(){
-        	console.log(this.url);
-    		},
-        success: successCallback,
-        error: successCallback,
-        dataType: 'json'
-    });
+	this.ajax( url, args, successCallback,'POST' );
 
 };
 
@@ -256,18 +210,7 @@ svenjs.Sven.prototype.addRelation = function(successCallback, args){
 svenjs.Sven.prototype.deleteRelation = function(id, successCallback){
 	
     var url = this.url + "/anta/api/relations/" + id + "/" + "?method=DELETE&indent=true";
-	
-    
-    $.ajax({
-        type: 'GET',
-        url: url,
-        complete: function(){
-        	console.log(this.url);
-    		},
-        success: successCallback,
-        error: successCallback,
-        dataType: 'json'
-    });
+	this.ajax( url, args, successCallback );
 
 };
 
@@ -275,19 +218,8 @@ svenjs.Sven.prototype.deleteRelation = function(id, successCallback){
 svenjs.Sven.prototype.updateRelation = function(id, successCallback, args){
 	
     var url = this.url + "/anta/api/relations/" + id + "/" + "?method=POST&indent=true";
-	
+	this.ajax( url, args, successCallback, 'POST' );
     
-    $.ajax({
-        type: 'GET',
-        url: url,
-        data: args,
-        complete: function(){
-        	console.log(this.url);
-    		},
-        success: successCallback,
-        error: successCallback,
-        dataType: 'json'
-    });
 
 };
 
@@ -297,18 +229,8 @@ svenjs.Sven.prototype.download = function(id, successCallback, args){
 		
     //var url = this.url + "/sketch/query/" + this.database + "/" + collection + "/" + command + "/";
     var url = this.url + "/anta/api/download/document/" + id;
-
-    $.ajax({
-        type: 'GET',
-        url: url,
-        data: args,
-        success: successCallback,
-        error: successCallback,
-        complete: function(){
-        	//console.log(this.url);
-    		},
-        dataType: 'json'
-    });
+    this.ajax( url, args, successCallback );
+    
     
 };
 
@@ -316,34 +238,17 @@ svenjs.Sven.prototype.download = function(id, successCallback, args){
 svenjs.Sven.prototype.graph = function(id, successCallback, args){
 		
     var url = this.url + "/anta/api/relations/graph/corpus/" + id + "/?filters={}";
-
-    $.ajax({
-        type: 'GET',
-        url: url,
-        data: args,
-        success: successCallback,
-        error: successCallback,
-        complete: function(){
-        	console.log(this.url);
-    		},
-        dataType: 'json'
-    });
+    this.ajax( url, args, successCallback );
     
 };
 
 
 /* streamgraph */
 svenjs.Sven.prototype.streamgraph = function(id, successCallback, args){
-		
-	var url = this.url + "/anta/api/d3/streamgraph/corpus/" + id + "/?order_by=[%22max_tfidf%20DESC%22,%22distribution%20DESC%22]"
-    $.ajax({
-        type: 'GET',
-        url: url,
-        data: args,
-        success: successCallback,
-        error: successCallback,
-        dataType: 'json'
-    });
+
+    var url = this.url + "/anta/api/d3/streamgraph/corpus/" + id + "/?order_by=[%22max_tfidf%20DESC%22,%22distribution%20DESC%22]";
+    this.ajax( url, args, successCallback );
+
     
 };
 
@@ -351,15 +256,7 @@ svenjs.Sven.prototype.streamgraph = function(id, successCallback, args){
 svenjs.Sven.prototype.startAnalysis = function(id, successCallback, args){
 		
     var url = this.url + "/anta/api/tfidf/corpus/" + id;
-
-    $.ajax({
-        type: 'GET',
-        url: url,
-        data: args,
-        success: successCallback,
-        error: successCallback,
-        dataType: 'json'
-    });
+    this.ajax( url, args, successCallback );
     
 };
 
@@ -367,15 +264,7 @@ svenjs.Sven.prototype.startAnalysis = function(id, successCallback, args){
 svenjs.Sven.prototype.updateAnalysis = function(id, successCallback, args){
 		
     var url = this.url + "/anta/api/update-tfidf/corpus/" + id;
-
-    $.ajax({
-        type: 'GET',
-        url: url,
-        data: args,
-        success: successCallback,
-        error: successCallback,
-        dataType: 'json'
-    });
+    this.ajax( url, args, successCallback );
     
 };
 
@@ -383,15 +272,7 @@ svenjs.Sven.prototype.updateAnalysis = function(id, successCallback, args){
 svenjs.Sven.prototype.status = function(id, successCallback, args){
 		
     var url = this.url + "/anta/api/status/corpus/" + id;
-
-    $.ajax({
-        type: 'GET',
-        url: url,
-        data: args,
-        success: successCallback,
-        error: successCallback,
-        dataType: 'json'
-    });
+    this.ajax( url, args, successCallback );
     
 };
 
@@ -399,13 +280,7 @@ svenjs.Sven.prototype.status = function(id, successCallback, args){
 svenjs.Sven.prototype.exportEntities = function(id, successCallback){
 		
     var url = this.url + "/anta/api/segments/export/corpus/" + id;
-	console.log(url)
-     $.ajax({
-        type: 'GET',
-        url: url,
-        success: successCallback(url),
-        error: successCallback
-    });
+	this.ajax( url, args, successCallback );
     
 };
 
@@ -413,15 +288,7 @@ svenjs.Sven.prototype.exportEntities = function(id, successCallback){
 svenjs.Sven.prototype.getActors = function(successCallback, args){
 		
     var url = this.url + "/anta/api/tags/?indent=true&filters={%22type%22:%22actor%22}&order_by=[%22name%22]";
-
-     $.ajax({
-        type: 'GET',
-        url: url,
-        data: args,
-        success: successCallback,
-        error: successCallback,
-        dataType: 'json'
-    });
+    this.ajax( url, args, successCallback );
     
 };
 
@@ -429,15 +296,7 @@ svenjs.Sven.prototype.getActors = function(successCallback, args){
 svenjs.Sven.prototype.addTag = function(id, successCallback, args){
 		
     var url = this.url + "/anta/api/attach-free-tag/document/" + id +"/?indent=true";
-	
-     $.ajax({
-        type: 'GET',
-        url: url,
-        data: args,
-        success: successCallback,
-        error: successCallback,
-        dataType: 'json'
-    });
+	this.ajax( url, args, successCallback, 'POST' );
     
 };
 
@@ -445,14 +304,7 @@ svenjs.Sven.prototype.addTag = function(id, successCallback, args){
 svenjs.Sven.prototype.detachTag = function(docId, tagId, successCallback){
 		
     var url = this.url + "/anta/api/detach-tag/document/" + docId +"/tag/" + tagId + "/?indent=true";
-
-     $.ajax({
-        type: 'GET',
-        url: url,
-        success: successCallback,
-        error: successCallback,
-        dataType: 'json'
-    });
+    this.ajax( url, args, successCallback, 'POST' );
     
 };
 
@@ -460,13 +312,6 @@ svenjs.Sven.prototype.detachTag = function(docId, tagId, successCallback){
 svenjs.Sven.prototype.switchCorpus = function(id, successCallback){
 		
     var url = this.url + "/anta/api/use-corpus/" + id;
-
-    $.ajax({
-        type: 'GET',
-        url: url,
-        success: successCallback,
-        error: successCallback,
-        dataType: 'json'
-    });
+    this.ajax( url, args, successCallback, 'POST' );
     
 };
