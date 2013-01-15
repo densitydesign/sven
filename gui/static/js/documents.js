@@ -49,6 +49,8 @@ query.getCorpora(function(response){
 		.attr("class", "filter-title")
 		.text("Change corpus")
 	
+	console.log(args['corpus']);
+	
 	d3.select(".corpus-list")
 		.append("select")
 		.attr("class", "span8")
@@ -61,7 +63,8 @@ query.getCorpora(function(response){
 		.attr("selected", function(d){if(d.id == args['corpus']){return "selected"}})
 	
 	$(".corpus-list select").change(function(){
-		var id = $(this+":selected").attr("value")
+		var id = $(this+":selected").attr("value");
+		console.log(id);
 		switchCorpus(id);
 		})
 		
