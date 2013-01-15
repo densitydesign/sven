@@ -60,7 +60,6 @@
 			var color = sven.colors.diverging(colorGroups.length);
 			colorGroups.forEach(function(d){
 				color(d);
-				console.log(d)
 			})
 			
 			var groups = interval(nodes).map(function(d){
@@ -1073,13 +1072,16 @@
 		barWidth = 5,
 		barPadding = 5,
 		minHeight = 0,
+		margin = {top: 30, right: 30, bottom: 30, left: 30},
 		mX,
 		mY,
 		n,
 		m,
 		target,
 		colors = ["#afa", "#669"],
-		streamWidth = width - barWidth;
+		graphWidth = width - margin.left - margin.right,
+		graphHeight = height - margin.top - margin.bottom,
+		streamWidth = graphWidth - barWidth;
 		
 	streamkey.data = function(x){
 		if (!arguments.length) return data;
@@ -1090,20 +1092,23 @@
 	streamkey.width = function(x){
 		if (!arguments.length) return width;
 		width = x;
-		streamWidth = width - barWidth;
+		graphWidth = width - margin.left - margin.right;
+		graphHeight = height - margin.top - margin.bottom;
+		streamWidth = graphWidth - barWidth;
 		return streamkey;
 	};	
 	
 	streamkey.height = function(x){
 		if (!arguments.length) return height;
 		height = x;
+		graphHeight = height - margin.top - margin.bottom;
 		return streamkey;
 	};
 
 	streamkey.barWidth = function(x){
 		if (!arguments.length) return barWidth;
 		barWidth = x;
-		streamWidth = width - barWidth;
+		streamWidth = graphWidth - barWidth;
 		return streamkey;
 	};
 	
@@ -1119,32 +1124,37 @@
 		return streamkey;
 	};
 
-	streamkey.colors = function(x){
-		if (!arguments.length) return colors;
-		colors = x;
+	streamkey.margin = function(x){
+		if (!arguments.length) return margin;
+		margin = x;
+		graphWidth = width - margin.left - margin.right;
+		graphHeight = height - margin.top - margin.bottom;
+		streamWidth = graphWidth - barWidth;
 		return streamkey;
 	};
-	
+
 	streamkey.minHeight = function(x){
 		if (!arguments.length) return minHeight;
 		minHeight = x;
 		return streamkey;
 	};
 	
+	streamkey.colors = function(x){
+		if (!arguments.length) return colors;
+		colors = x;
+		return streamkey;
+	};
 	
 	streamkey.init = function(){
         var steps = [],
         values = [],
-        //color = d3.scale.linear().range(colors),
+        color = d3.scale.linear().range(colors),
         i,
         j;
 		
 		n = data.length;
         m = data[0]['values'].length;
 		
-		var margin = {top: 20, right: 20, bottom: 20, left: 20}
-		streamkey.width(width - margin.left - margin.right);
-    	streamkey.height(height - margin.top - margin.bottom);
     	
 		//get values
 		data.forEach(function(d,i){
@@ -1157,10 +1167,10 @@
 		}
 		
 		//min height scale
-		var setMinHeight = d3.scale.linear().domain([d3.min(values),d3.max(values)]).range([d3.min(values)+minHeight,d3.max(values)+minHeight])
+		var setMinHeight = d3.scale.linear().domain([d3.min(values),d3.max(values)]);
 
 		//sort data, compute baseline and propagate it
-		var dataF = layout(sort(data, null,setMinHeight));
+		var dataF = layout(sort(data, null),setMinHeight);
 		
     	mX = m - 1;
 		mY = d3.max(dataF, function(d) {
@@ -1168,6 +1178,7 @@
         		return d.y0 + d.y;
       			});
    			});
+		
 		
 		var x = d3.scale.ordinal()
 			.domain(steps)
@@ -1179,20 +1190,20 @@
 
 		var y = d3.scale.linear()
     		.domain([0, mY])
-    		.range([height, 0]);
+    		.range([graphHeight, 0]);
 
 		var svg = d3.select(target).append("svg")
 				//.attr("width", width)
 				//.attr("height", height);
-				.attr("width", width + margin.left + margin.right)
-    			.attr("height", height + margin.top + margin.bottom);
+				.attr("width", width)
+    			.attr("height", height);
 
 		var colorz = sven.colors.diverging(n);
 		var layer = svg.selectAll("g")
 			.data(dataF)
 		  .enter().append("g")
 			.attr("class", function(d,i){return "layer_"+i})
-			.style("fill", function(d, i) { return colorz("" +i +"") })
+			.style("fill", function(d, i) { return colorz("" + i +"") })
 			//.on("mouseover", function(){d3.select(this).selectAll("path").transition().attr("fill-opacity",0.75)})
 			//.on("mouseout", function(){d3.select(this).selectAll("path").transition().attr("fill-opacity",0.5)})
 			.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
@@ -1240,7 +1251,8 @@
 			.data(steps)
 		  .enter().append("text")
 			.attr("x", function(d) { return x(d) + margin.left; })
-			.attr("y", function(d) { return y(mY) + margin.top -5; })
+			.attr("y", function(d) { return y(mY) + margin.top; })
+			.attr("dy", -10)
       		.attr("text-anchor", "middle")
       		.attr("class", "filter-title")
       		.attr("fill", "#888")
@@ -1252,16 +1264,13 @@
 	streamkey.update = function(){
         var steps = [],
         values = [],
-        //color = d3.scale.linear().range(colors),
+        color = d3.scale.linear().range(colors),
         i,
         j;
 		
 		n = data.length;
         m = data[0]['values'].length;
 		
-		var margin = {top: 20, right: 20, bottom: 20, left: 20}
-		//streamkey.width(width - margin.left - margin.right);
-    	//streamkey.height(height - margin.top - margin.bottom);
     	
 		//get values
 		data.forEach(function(d,i){
@@ -1273,12 +1282,11 @@
 			steps.push(data[0]['values'][j]['step'])
 		}
 		
-		console.log(steps);
 		//min height scale
-		var setMinHeight = d3.scale.linear().domain([d3.min(values),d3.max(values)]).range([d3.min(values)+minHeight,d3.max(values)+minHeight])
-
+		var setMinHeight = d3.scale.linear().domain([d3.min(values),d3.max(values)]);
+		
 		//sort data, compute baseline and propagate it
-		var dataF = layout(sort(data, null,setMinHeight));
+		var dataF = layout(sort(data, null),setMinHeight);
 		
     	mX = m - 1;
 		mY = d3.max(dataF, function(d) {
@@ -1297,15 +1305,15 @@
 
 		var y = d3.scale.linear()
     		.domain([0, mY])
-    		.range([height, 0]);
+    		.range([graphHeight, 0]);
 
 		var svg = d3.select(target + " svg");
 			
 			svg.transition().duration(500)
 			 //.attr("width", width)
 			 //.attr("height", height);
-			 .attr("width", width + margin.left + margin.right)
-    		 .attr("height", height + margin.top + margin.bottom);
+			 .attr("width", width)
+    		 .attr("height", height);
 		
 		var colorz = sven.colors.diverging(n);
 		
@@ -1313,8 +1321,8 @@
 
 			layer.data(dataF)
 		  //.enter().append("g")
-		  .exit()
-		  .remove()
+		  //.exit()
+		  //.remove()
 		   .transition()
       	   .duration(500)
 			//.attr("class", function(d,i){return "layer_"+i})
@@ -1349,8 +1357,8 @@
 		
 		var stepsLabel = svg.selectAll("text");
 			stepsLabel.data(steps)
-			.exit()
-			.remove()
+			//.exit()
+			//.remove()
 		   .transition()
       	   .duration(500)
 			.attr("x", function(d) { return x(d) + margin.left; })
@@ -1362,15 +1370,15 @@
 		return streamkey;
 	};
 
-	function sort(data, sorting, minHeightScale){	
+	function sort(data, sorting){	
 		var stepsY = [];
+	
 	//from fluxs to steps and sorting
 	for (j = 0; j < m; ++j) {
 		stepsY[j] = [];
 		
       for (i = 0; i < n; i++){ 
-      	var yf = minHeightScale(data[i]['values'][j]['value']);
-      	stepsY[j].push({'y':yf,'value': data[i]['values'][j]['value'], 'index':i, 'x':data[i]['values'][j]['step'], 'category':data[i]['key']})
+      	stepsY[j].push({'y':data[i]['values'][j]['value'],'value': data[i]['values'][j]['value'], 'index':i, 'x':data[i]['values'][j]['step'], 'category':data[i]['key']})
       }
 
 		var sorted = d3.nest().key(function(d){return d.y}).sortKeys(function(a,b){return parseFloat(a) - parseFloat(b); }).entries(stepsY[j]);
@@ -1381,13 +1389,17 @@
     		return stepsY;
     };
     
-    function layout(data){
+    function layout(data,minHeightScale){
 		
 		var sums = [],
         max = 0,
         o,
         dataInit = [],
-        y0 = [];
+        y0 = [],
+        scaledBarPadding,
+        scaledMinHeight;
+	
+	
 	
 	// compute baseline (now centered)...
 	for (j = 0; j < m; ++j) {
@@ -1401,20 +1413,30 @@
       sums.push(o);
     }
  	
-    for (j = 0; j < m; ++j) {
-      y0[j] = (max - sums[j]) / 2;
-      }
+ 	
+ 	scaledBarPadding = barPadding*max/graphHeight;
+ 	scaledMinHeight = minHeight*(max + scaledBarPadding * n)/graphHeight;
+ 	
+ 	minHeightScale.range([minHeightScale.domain()[0] + scaledMinHeight ,minHeightScale.domain()[1] + scaledMinHeight]);
     
-   
+    for (j = 0; j < m; ++j) {
+      y0[j] = (max - sums[j]) / 2 ;
+      }
     
     //...and propagate it to other
 	for (j = 0; j < m; ++j) {
 		 o = y0[j];
 		data[j][0]['y0'] = o;
+		data[j][0]['y'] = minHeightScale(data[j][0]['y']);
+		
       for (i = 1; i < n; i++){ 
       
       	if(data[j][i-1]['value'] != null){
-		o += data[j][i-1]['y'] + barPadding; 
+      	data[j][i]['y'] = minHeightScale(data[j][i]['y'])
+      	}
+      	
+      	if(data[j][i-1]['value'] != null){
+		o += data[j][i-1]['y'] + scaledBarPadding; 
 			}
 		data[j][i]['y0'] = o;
 		
@@ -1447,16 +1469,16 @@
 	}
 	
 	function areaStreamKey(data, xScale){
+
 		var steps = [];
 		data.forEach(function(d,i){
 			if(i < mX){
 			var vis,
 				points = [];
-			
-			var p0 = [xScale(d.x)*streamWidth/mX + barWidth, height - (d.y + d.y0) * height / mY ]; // upper left point
-			var p1 = [xScale(data[i+1].x)*streamWidth/mX, height - (data[i+1].y + data[i+1].y0) * height / mY ]; // upper right point
-			var p2 = [xScale(data[i+1].x)*streamWidth/mX, height - (data[i+1].y0 * height / mY) ]; // lower right point
-			var p3 = [xScale(d.x)*streamWidth/mX + barWidth, height - (d.y0 * height / mY)]; // lower left point
+			var p0 = [xScale(d.x)*streamWidth/mX + barWidth, graphHeight - (d.y + d.y0 ) * graphHeight / mY ]; // upper left point
+			var p1 = [xScale(data[i+1].x)*streamWidth/mX, graphHeight - (data[i+1].y + data[i+1].y0) * graphHeight / mY ]; // upper right point
+			var p2 = [xScale(data[i+1].x)*streamWidth/mX, graphHeight - (data[i+1].y0 * graphHeight / mY) ]; // lower right point
+			var p3 = [xScale(d.x)*streamWidth/mX + barWidth, graphHeight - ((d.y0) * graphHeight / mY)]; // lower left point
 			
 			if(d['value'] != null && data[i+1]['value'] != null){
 				vis = true;
@@ -1509,6 +1531,7 @@
 	};
 	
 	return streamkey;
+	
 	};
 	
 })();
