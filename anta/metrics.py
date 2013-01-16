@@ -396,18 +396,21 @@ def importcsv( routine, csvfile, corpus, column="stemmed" ):
 			status = 'IN' if row['status'] == 'IN' else 'OUT'
 		except KeyError,e:
 			logger.error( "KeyError exception: %s" % e )
+			close_routine( routine, error="Exception: %s %s" % (e,row), status="ERR" )
+			
 			transaction.rollback()
 			return
 			
 		# update stemmed_refined cell
 		try:
-			s = Segment.objects.filter(id=segment_id, documents__corpus=corpus)[0]
-
-			buffer_stemmed = s.stemmed
-			s.stemmed = concept
-			s.status = status
-			s.stemmed_refined = buffer_stemmed
-			s.save()
+			s = Segment.objects.get(id=segment_id)
+			# update all the similar segment with the brand new segment
+			Segment.objects.filter( stemmed=s.stemmed, documents__corpus=corpus ).update( stemmed=concept, status=status )
+			# buffer_stemmed = s.stemmed
+			# s.stemmed = concept
+			# s.status = status
+			# s.stemmed_refined = buffer_stemmed
+			# s.save()
 
 		except Segment.DoesNotExist, e:
 			logger.error( "[corpus:%s] import csv, row %s raised exception: %s" % (corpus.name, i,e) )
