@@ -960,6 +960,7 @@ def d3_streamgraph( request, corpus_id ):
 		FROM `anta_document_segment` ds
 			JOIN anta_segment s ON s.id = ds.segment_id
 			JOIN anta_document d ON d.id = ds.document_id
+
 		WHERE d.corpus_id = %s AND s.status = %s """ +
 		(" AND d.id IN ( %s )" % ",".join(documents) if documents is not None else "")
 		+ """ 
@@ -988,7 +989,8 @@ def d3_streamgraph( request, corpus_id ):
 	cursor.execute(
 		"""
 		SELECT 
-			s.stemmed as concept, t.id, MAX( ds.tfidf ) as max_tfidf, MAX( ds.tf ) as max_tf, t.name
+			s.stemmed as concept, t.id, MAX( ds.tfidf ) as max_tfidf, MAX( ds.tf ) as max_tf, t.name,
+			s.content
 		FROM `anta_document_segment` ds
 			JOIN anta_segment s ON s.id = ds.segment_id
 			JOIN anta_document d ON d.id = ds.document_id
@@ -1007,7 +1009,7 @@ def d3_streamgraph( request, corpus_id ):
 		t = row[ 1 ] # actor id
 		if c not in concepts:
 			concepts[ c ] = {}
-		concepts[ c ][ t ] = { 'tf': row[ 3 ], 'tfidf': row[ 2 ] }
+		concepts[ c ][ t ] = { 'tf': row[ 3 ], 'tfidf': row[ 2 ], 'label' : row[ 5 ] }
 
 	res = []
 	for i, o in enumerate(objects):
@@ -1017,6 +1019,7 @@ def d3_streamgraph( request, corpus_id ):
 		for t in o[ 'values' ]:
 			if t in concepts[ c ]:
 				objects[ i ][ 'values' ][ t ][ 'value' ] = concepts[ c ][ t ][ 'tf' ]
+				objects[ i ][ 'values' ][ t ][ 'labels' ] = concepts[ c ][ t ][ 'label' ]
 				objects[ i ][ 'values' ][ t ][ 'tfidf' ] = concepts[ c ][ t ][ 'tfidf' ]
 		objects[ i ][ 'values' ] = objects[ i ][ 'values'].values()
 
