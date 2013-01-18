@@ -17,7 +17,10 @@
 <div class="row-fluid">
 	<div class="span2" id="filters">
 
-		<p class="breath"><strong>Filters</strong></p>
+		<p class="breath">
+		<strong>Filters</strong>
+		<a class="btn btn-mini pull-right tip" rel="tooltip" style="display:none" id="reset" href="#!" title="Reset filters">reset</a>
+		</p>
 
 	  
 		<!-- Actors -->
@@ -37,9 +40,15 @@
 	
 	
 	 <div class="span10">
-<p id="timeInfo">
-<a class="btn pull-right" title="Show/hide relationships" style="margin-right:10px" id="toggle-button" href="#!"><i id="toggle-icon" class="icon-eye-close"></i></a>
-</p>
+
+<p class="breath"><strong>Timeline</strong></p>
+		
+		<div class="btn-toolbar" id="timeInfo">
+	 	
+	 		<a class="btn pull-right tip" rel="tooltip" title="Show/hide relationships" style="margin-right:10px" id="toggle-button" href="#!"><i id="toggle-icon" class="icon-eye-close"></i></a>
+			
+		  
+		</div>
 <div id="timeline">
 	
 	<div id="blocks"></div>
@@ -70,6 +79,7 @@
 	var actorArgs = {};
 	actorArgs.corpus = corpusID;
 	actorArgs.limit = -1; //prende TUTTI gli attori
+	
 </script>
 
 <script src="{{ custom.STATIC_URL }}js/time.js" type="text/javascript"></script>
