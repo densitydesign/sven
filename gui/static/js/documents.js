@@ -10,6 +10,7 @@ var total;
 if($.cookie('sven_filters')){
 
 	args['filters'] = $.cookie('sven_filters');
+	$("#reset").show();
 
 	};
 // TODO:DA SISTEMARE ERRORI SULLA RISPOSTA....
@@ -126,6 +127,9 @@ query.getActors(function(response){
                 width:function(){return $("#filters").width() + "px"},
                 closeOnSelect:false
             });
+            
+        $("#selectActors").on("change", function(){setFilters()});
+        
 		},actorArgs);
 
 function setFilters(){
@@ -146,12 +150,14 @@ function setFilters(){
 	
 	$.cookie('sven_filters', JSON.stringify(filters), { path: '/'});
 	//getDocumentsList();
+	$("#reset").show();
 	getUpdateDocumentsList();
 	}
 
 function switchCorpus(id){
 	query.switchCorpus(id, function(response){
 		
+		$.removeCookie('sven_filters', { path: '/' });
 		window.location.reload()
 		
 		
@@ -245,6 +251,7 @@ function getDocumentsList(){
 		.text(function(d){return d.key;})
 		.append("input")
 		.attr("type", "checkbox")
+		.on("change", function(){setFilters();})
 	
 	//datepicker
 	$('#alert').hide();
@@ -274,6 +281,7 @@ function getDocumentsList(){
 						$('#alert').hide();
 						startDate = new Date(ev.date);
 						$('#startDate').text($('#dp1').data('date'));
+						setFilters();
 					}
 					$('#dp1').datepicker('hide');
 				});
@@ -285,22 +293,22 @@ function getDocumentsList(){
 						$('#alert').hide();
 						endDate = new Date(ev.date);
 						$('#endDate').text($('#dp2').data('date'));
+						setFilters();
 					}
 					$('#dp2').datepicker('hide');
 				});
 	//end datepicker
 	
+	$("#filterContains").on("change", function(){setFilters()})
+	
 	//apply filters
-	d3.select("#filters").append("button")
-		.attr("class", "btn btn-small btn-success")
-		.text("Apply filters")
-		.on("click", function(){setFilters();})
+// 	d3.select("#filters").append("button")
+// 		.attr("class", "btn btn-small btn-success")
+// 		.text("Apply filters")
+// 		.on("click", function(){setFilters();})
 	
 	//reset filters
-	d3.select("#filters").append("button")
-		.attr("class", "btn btn-small btn-warning")
-		.text("Reset filters")
-		.on("click", function(){
+		d3.select("#reset").on("click", function(){
 			$.removeCookie('sven_filters', { path: '/' });
 			delete args['filters'];
 			args['limit'] = 50;
@@ -317,6 +325,7 @@ function getDocumentsList(){
 		  })
 			
 		 getUpdateDocumentsList();
+		 $("#reset").hide();
 			
 			
 			})
@@ -388,8 +397,6 @@ function getUpdateDocumentsList(){
 		},args)}
 
 // let's check if there is any analysis going
-
-
 function checkStatus(){
 	
 	query.status(args['corpus'],function(response){
@@ -474,9 +481,8 @@ function loadFilters(filter,value){
 		}
 		
 		}
-
-			
- $('#export') .click(function () {
+		
+$('#export') .click(function () {
         var btn = $(this);
         btn.button('loading');
         query.exportEntities(args['corpus'], function(response){
@@ -487,7 +493,7 @@ function loadFilters(filter,value){
       })
       
 
- $('#delete').click(function(){
+$('#delete').click(function(){
 	 
 	 if (!deleteList.length)
 	 	return;

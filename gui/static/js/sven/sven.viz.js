@@ -1051,7 +1051,45 @@
 //       n.attr['grey'] = 0;
 // 				})//.draw(2,2,2);
 // 			});
-			
+
+			var clicked = false;
+					// Bind events :
+			  sig.bind('downnodes',function(event){
+				var nodes = event.content;
+				var neighbors = {};
+				
+				if(!clicked){
+				sig.iterEdges(function(e){
+				  if(nodes.indexOf(e.source)>=0 || nodes.indexOf(e.target)>=0){
+					neighbors[e.source] = 1;
+					neighbors[e.target] = 1;
+				  }
+				}).iterNodes(function(n){
+				  if(!neighbors[n.id]){
+					n.hidden = 1;
+				  }else{
+					n.hidden = 0;
+				  }
+				}).draw(2,2,2);
+				clicked = true;
+				}
+				else{
+					sig.iterEdges(function(e){
+				  e.hidden = 0;
+				}).iterNodes(function(n){
+				  n.hidden = 0;
+				}).draw(2,2,2);
+				clicked = false;
+					}
+			  })
+			  // .bind('outnodes',function(){
+// 				sig.iterEdges(function(e){
+// 				  e.hidden = 0;
+// 				}).iterNodes(function(n){
+// 				  n.hidden = 0;
+// 				}).draw(2,2,2);
+// 			  });
+						
 			
 			return graph;
 		}
