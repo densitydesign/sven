@@ -21,7 +21,10 @@
 <div class="row-fluid">
 	<div class="span2" id="filters">
 
-		<p class="breath"><strong>Filters</strong></p>
+		<p class="breath">
+			<strong>Filters</strong>
+			<a class="btn btn-mini pull-right tip" rel="tooltip" style="display:none" id="reset" href="#!" title="Reset filters">reset</a>
+		</p>
 
 		<!-- Cosine similarity -->
 	  	<div class="filterSimilarity filter-block">
@@ -32,7 +35,7 @@
 		<!-- Dates -->
 		<div class="filter-block">
 			<p class="filter-title">By date</p>
-			<div class="alert alert-error" id="alert">
+			<div class="alert alert-error" id="alert" style="display:none;">
 				<strong></strong>
 			</div>
 			<div>
@@ -61,11 +64,18 @@
 	
 	
 	 <div class="span10">
-	 	<div class="pull-right" id="zoomControl">
-	 		<div class="btn" id="zoomIn" ><i class="icon-zoom-in"></i></div>
-	 		<div class="btn" id="zoomOut"><i class="icon-zoom-out"></i></div>
-	 		<div class="btn" id="zoomCenter"><i class="icon-fullscreen"></i></div>
-	 	</div>
+	 
+	 	<p class="breath"><strong>Actors Graph</strong></p>
+		
+		<div class="btn-toolbar">
+		 	<div class="btn-group pull-right" id="zoomControl">
+	 		<div class="btn tip" id="zoomIn" rel="tooltip" title="Zoom in"><i class="icon-zoom-in"></i></div>
+	 		<div class="btn tip" id="zoomOut" rel="tooltip" title="Zoom out"><i class="icon-zoom-out"></i></div>
+	 		<div class="btn tip" id="zoomCenter" rel="tooltip" title="Resize graph"><i class="icon-fullscreen"></i></div>
+	 		</div>
+		  <div class="clear"></div>
+		</div>
+
 		<div class="pull-left" id="graph">
 		</div>
 	</div>
@@ -86,6 +96,7 @@
 	var actorArgs = {}
 	actorArgs.corpus = corpusID;
 	actorArgs.limit = -1; //prende TUTTI gli attori
+	$(".tip").tooltip();
 </script>
 
 <script src="{{ custom.STATIC_URL }}js/sigma/sigma.min.js" type="text/javascript"></script>

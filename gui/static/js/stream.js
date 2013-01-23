@@ -8,10 +8,27 @@ if($.cookie('sven_filters')){
 	
 	args['filters'] = $.cookie('sven_filters');
 	streamArgs['filters'] = $.cookie('sven_filters');
-	
+	$("#reset").show();
 	};
 
-console.log(streamArgs);
+function setFilters(){
+	//args['limit'] = 0;
+	//args['offset'] = 50;
+	var filters = {};
+	filters["ref_date__gte"] = $('#dp1').data('date') + " 00:00";
+	filters["ref_date__lte"] = $('#dp2').data('date') + " 00:00";
+	filters["language__in"] = []
+	d3.select(".filterLang").selectAll("input:checked").each(function(d){filters["language__in"].push(d.key)});
+	if (filters["language__in"].length == 0){delete filters["language__in"]}
+	filters["tags__id__in"] = $("#selectActors").select2("val");
+	//d3.select(".filterActors").selectAll("input:checked").each(function(d){filters["tags__id__in"].push(d.id)});
+	if (filters["tags__id__in"].length == 0){delete filters["tags__id__in"]}
+	args['filters'] = JSON.stringify(filters);
+	streamArgs['filters'] = JSON.stringify(filters);
+	$.cookie('sven_filters', JSON.stringify(filters), { path: '/'});
+	$("#reset").show();
+	updateStream();
+	}
 
 query.getActors(function(response){
 		var actorList = response.objects;
@@ -40,6 +57,8 @@ query.getActors(function(response){
                 width:function(){return $("#filters").width() + "px"},
                 closeOnSelect:false
             });
+        
+         $("#selectActors").on("change", function(){setFilters()});
 		
 		},actorArgs);
 
@@ -71,6 +90,7 @@ query.getDocuments(function(response){
 		.text(function(d){return d.key;})
 		.append("input")
 		.attr("type", "checkbox")
+		.on("change", function(){setFilters();})
 	
 	//datepicker
 	$('#alert').hide();
@@ -100,6 +120,7 @@ query.getDocuments(function(response){
 						$('#alert').hide();
 						startDate = new Date(ev.date);
 						$('#startDate').text($('#dp1').data('date'));
+						setFilters();
 					}
 					$('#dp1').datepicker('hide');
 				});
@@ -111,21 +132,20 @@ query.getDocuments(function(response){
 						$('#alert').hide();
 						endDate = new Date(ev.date);
 						$('#endDate').text($('#dp2').data('date'));
+						setFilters();
 					}
 					$('#dp2').datepicker('hide');
 				});
 	//end datepicker
 	
 	//apply filters
-	d3.select("#filters").append("button")
-		.attr("class", "btn btn-small btn-success")
-		.text("Apply filters")
-		.on("click", function(){setFilters();})
+	// d3.select("#filters").append("button")
+// 		.attr("class", "btn btn-small btn-success")
+// 		.text("Apply filters")
+// 		.on("click", function(){setFilters();})
 		
 	//reset filters
-	d3.select("#filters").append("button")
-		.attr("class", "btn btn-small btn-warning")
-		.text("Reset filters")
+	d3.select("#reset")
 		.on("click", function(){
 			$.removeCookie('sven_filters', { path: '/' });
 			delete args['filters'];
@@ -150,23 +170,7 @@ query.getDocuments(function(response){
 		
 	d3.select("#filter").append("hr")
 	
-	function setFilters(){
-	//args['limit'] = 0;
-	//args['offset'] = 50;
-	var filters = {};
-	filters["ref_date__gte"] = $('#dp1').data('date') + " 00:00";
-	filters["ref_date__lte"] = $('#dp2').data('date') + " 00:00";
-	filters["language__in"] = []
-	d3.select(".filterLang").selectAll("input:checked").each(function(d){filters["language__in"].push(d.key)});
-	if (filters["language__in"].length == 0){delete filters["language__in"]}
-	filters["tags__id__in"] = $("#selectActors").select2("val");
-	//d3.select(".filterActors").selectAll("input:checked").each(function(d){filters["tags__id__in"].push(d.id)});
-	if (filters["tags__id__in"].length == 0){delete filters["tags__id__in"]}
-	args['filters'] = JSON.stringify(filters);
-	streamArgs['filters'] = JSON.stringify(filters);
-	$.cookie('sven_filters', JSON.stringify(filters), { path: '/'});
-	updateStream();
-	}
+
 	
 		if($.cookie('sven_filters')){
 	

@@ -11,7 +11,7 @@ relArgs['corpus'] = args['corpus'];
 if($.cookie('sven_filters')){
 	
 	args['filters'] = $.cookie('sven_filters');
-	
+	$("#reset").show();
 	};
 
 query.getActors(function(response){
@@ -41,7 +41,7 @@ query.getActors(function(response){
                 closeOnSelect:false
             });
 		
-		
+		$("#selectActors").on("change", function(){setFilters()})
 		},actorArgs);
 
 query.getDocuments(function(response){
@@ -95,18 +95,16 @@ query.getDocuments(function(response){
 		.text(function(d){return d.key;})
 		.append("input")
 		.attr("type", "checkbox")
+		.on("change", function(){setFilters()})
 		
 	//apply filters
-	d3.select("#filters").append("button")
-		.attr("class", "btn btn-small btn-success")
-		.text("Apply filters")
-		.on("click", function(){setFilters();})
+// 	d3.select("#filters").append("button")
+// 		.attr("class", "btn btn-small btn-success")
+// 		.text("Apply filters")
+// 		.on("click", function(){setFilters();})
 		
 		//reset filters
-	d3.select("#filters").append("button")
-		.attr("class", "btn btn-small btn-warning")
-		.text("Reset filters")
-		.on("click", function(){
+	d3.select("#reset").on("click", function(){
 			$.removeCookie('sven_filters', { path: '/' });
 			delete args['filters'];
 			args['limit'] = 50;
@@ -121,7 +119,7 @@ query.getDocuments(function(response){
 		  d3.select(".filterLang").selectAll("input").each(function(d){
 		  	d3.select(this).property("checked", false)
 		  })
-			
+		$("#reset").hide();
 		 updateTimeline();
 			
 			
@@ -141,9 +139,12 @@ query.getDocuments(function(response){
 	 .attr("id", "loadMore")
 	 .attr("type", "button")
 	 .attr("data-loading-text", "Loading...")
+	 .attr("rel", "tooltip")
+	 .attr("title", "load more")
 	 .attr('disabled', function(){if(total > nextOffset){$('#loadMore').removeAttr('disabled')}else{return "disabled"}})
-	 .attr("class", function(){if(total > nextOffset){return "btn btn-mini btn-primary"}else{return "btn btn-mini disabled"}})
-	 .text("Load More...")
+	 .attr("class", function(){if(total > nextOffset){return "btn tip"}else{return "btn disabled tip"}})
+	 //.text("Load More...")
+	 .append("i").attr("class", "icon-repeat")
 	 .on("click", function(){
 	 		console.log(args);
 	 		query.getDocuments(function(response){
@@ -161,6 +162,8 @@ query.getDocuments(function(response){
 		for (var i in d.actors)
 			d.actor = d.actor + d.actors[i].name + ' ';
 	})
+	
+
 		    
 		var oldData = timeline.nodes();
 		
@@ -217,6 +220,8 @@ query.getDocuments(function(response){
 	 	
 		d3.select("#timeInfo").insert("span", "toogle-button")
 		.text(" " + data.length + "/" + total + " documents are displayed  ")	
+		
+			$(".tip").tooltip();
 	//TODO: check for limits and offset: we need ALL the relations here!
 	query.getRelations(function(response){
 
@@ -272,6 +277,7 @@ function setFilters(){
 	if (filters["tags__id__in"].length == 0){delete filters["tags__id__in"]}
 	args['filters'] = JSON.stringify(filters);
 	$.cookie('sven_filters', JSON.stringify(filters), { path: '/'});
+	$("#reset").show();
 	updateTimeline();
 	}
 	
@@ -329,7 +335,7 @@ function updateTimeline(){
 			.update()
 			
 			d3.select("#loadMore")
-			.attr("class", function(){if(total > nextOffset){return "btn btn-mini btn-primary"}else{return "btn btn-mini disabled"}})
+			.attr("class", function(){if(total > nextOffset){return "btn btn-mini"}else{return "btn btn-mini disabled"}})
 			.attr('disabled', function(){if(total > nextOffset){$('#loadMore').removeAttr('disabled') }else{return "disabled"}})
 			
 			d3.select("#timeInfo span").text(" " + data.length + "/" + total + " documents are displayed  ")
