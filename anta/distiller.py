@@ -41,27 +41,19 @@ def start_routine( type, corpus=None ):
 	Return the current routine, created or not.
 	"""
 	from sven.anta.models import Routine
+	from django.db.models import Q
 	# exclude finished, closed with error and closed tout-court.
 	try:
-		r = Routine.objects.exclude( status="OK").exclude(status="CLO").exclude(status="RIP").filter( type=type, corpus=corpus ).order_by( "-pk")[0]
-	except Exception, e:
-		# normally List index out of range, create a brand new one
-		r = Routine( type=type, corpus=corpus )
+		r = Routine.objects.get( Q( status=Routine.PENDING ) | Q( status=Routine.START ), type=type, corpus=corpus )
+		r.status = Routine.PENDING
 		r.save()
-		return r
+	except Routine.DoesNotExist, e:
+		r = Routine( type=type, corpus=corpus, status=Routine.START )
+		r.save()
 
-	# completed.
-	if r.status == "OK" :
-		return restart_routine( r, status="RIP")
-	
-	if r.status == "ERR":
-		return restart_routine( r, status="CLO")
-	
-	if r.status == "PN" :
-		raise Exception("routine of this type is already running!")
 	return r
-	
-	
+
+
 
 def restart_routine( routine, status="RIP" ):
 	routine.status	= status

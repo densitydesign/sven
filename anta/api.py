@@ -816,28 +816,28 @@ def tfidf( request, corpus_id ):
 	from distiller import start_routine, stop_routine
 	import subprocess, sys
 
-	response = _json( request, enable_method=False )
+	response = Epoxy( request )
+
+	# _json( request, enable_method=False )
 	
 	try:
 		c = Corpus.objects.get(pk=corpus_id)
-	except Exception, e:
-		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
-	try:
-		routine = start_routine( type='TFIDF', corpus=c )
-	except Exception, e:
-		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION )
-	if routine is None:
-		throw_error( response, error="A very strange error", code=API_EXCEPTION_EMPTY)
-
-	# call a sub process, and pass the related routine id
-	scriptpath = os.path.dirname(__file__) + "/metrics.py"
-	response['routine'] = routine.json()
+	except Corpus.DoesNotExist, e:
+		return throw_error( response, error="%s" % e, code=API_EXCEPTION_DOESNOTEXIST )
 	
-	try:
+	routine = response.add('object', start_routine( type='TFIDF', corpus=c ), jsonify=True )
+
+
+	if routine.status == Routine.START:
+
+
+		logger.info('[%s:%s] TFIDF START via api' % ( c.name, c.id ) )
+		# call a sub process, and pass the related routine id
+		scriptpath = os.path.dirname(__file__) + "/metrics.py"
+	
 		subprocess.Popen([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'standard' ], stdout=None, stderr=None)
-	except Exception, e:
-		return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
-	return render_to_json( response )
+		
+	return response.json()
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def update_tfidf( request, corpus_id ):

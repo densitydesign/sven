@@ -49,6 +49,7 @@ STATUS_CHOICES = (
 	(u'CRE',u'creation'),
 	(u'BOO',u'boo!'),
     (u'PD', u'pending'),
+    (u'PN', u'pending'),
     (u'CLO', u'closed after error'), 
     (u'ERR', u'error'),
 )
@@ -250,6 +251,9 @@ class Analysis(models.Model ):
 	completion = models.FloatField( default=0, null=True )
 	status = models.CharField( max_length=3, choices= STATUS_CHOICES )	
 
+	def __unicode__(self):
+		return "%s %s %s %s" % (self.corpus.name, self.type, self.status, self.document.id )
+
 	def json(self, min=-1, max=1):
 		return {
 			'id'	: self.id,
@@ -263,19 +267,38 @@ class Analysis(models.Model ):
 		}
 
 class Routine(models.Model):
+
+
+	PENDING = 'PN'
+	START = 'BOO'
+	CLOSED = 'CLO'
+	ERROR = 'ERR'
+	COMPLETED = 'OK'
+
+	ROUTINE_STATUS_CHOICES = (
+		(PENDING, 'pending'),
+		(START, 'boo!'),
+		(CLOSED, 'closed'),
+		(ERROR, 'error'),
+		(COMPLETED, 'completed'),
+	)
+
 	"""
 	Verbose logging is inside log file: ~/sven/logs/%s.log % corpus.name
 	last_entry will only show the very last LOG message (Wanring, fatal, info etc... )
 	"""
 	corpus	= models.ForeignKey( Corpus, null=True, blank=True )
 	type	= models.CharField( max_length=8, choices=ROUTINE_CHOICES )
-	status	= models.CharField( max_length=3, default="BOO", choices=STATUS_CHOICES )
+	status	= models.CharField( max_length=3, default="BOO", choices=ROUTINE_STATUS_CHOICES )
 	start_date	= models.DateTimeField( default=datetime.now(), blank=True, null=True )
 	last_entry_date	= models.DateTimeField( default=datetime.now(), blank=True, null=True )
 	end_date	= models.DateTimeField( blank=True, null=True )
 	completion	= models.FloatField( default=0, null=True )
-	last_entry	= models.TextField()
+	last_entry	= models.TextField( default="", blank=True, null=True )
 	analysis = models.ManyToManyField( Analysis )
+
+	def __unicode__(self):
+		return "%s %s %s %s" % (self.corpus.name, self.type, self.status, self.start_date.isoformat() )
 
 	def json(self):
 		return {
