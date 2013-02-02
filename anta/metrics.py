@@ -24,8 +24,9 @@ from django.db import connection, transaction
 from pattern.vector import Document as pvDocument, Corpus as pvCorpus
 
 # use directly the logger name
-logger = logging.getLogger("sven.anta.metrics")
+logger = logging.getLogger("sven.anta.api")
 
+logger.info("opening metrics.py...")
 
 """
 select all stemmed list

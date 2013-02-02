@@ -827,16 +827,17 @@ def tfidf( request, corpus_id ):
 	
 	routine = response.add('object', start_routine( type='TFIDF', corpus=c ), jsonify=True )
 
-
+	logger.info('[%s:%s] TFIDF request via api' % ( c.name, c.id ) )
+		
 	if routine.status == Routine.START:
 
 
-		logger.info('[%s:%s] TFIDF START via api' % ( c.name, c.id ) )
+		logger.info('[%s:%s] TFIDF subprocess.Popen' % ( c.name, c.id ) )
 		# call a sub process, and pass the related routine id
 		scriptpath = os.path.dirname(__file__) + "/metrics.py"
 	
 		subprocess.Popen([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'standard' ], stdout=None, stderr=None)
-		
+	
 	return response.json()
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
