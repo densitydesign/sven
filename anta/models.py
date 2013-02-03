@@ -163,18 +163,24 @@ class Document( models.Model ):
 		)]
 
 	def json(self):
+
+		tags = self.tags.all()
+		actors = [ t.json() for t in tags if t.type == "actor"]
+		not_actors = [ t.json() for t in tags if t.type != "actor"]
+
+
 		return {
 			'id'	: self.id,
 			'title'	: self.title,
 			'language'	: self.language,
 			'date'	: self.ref_date.isoformat() if self.ref_date else '',
 			'mime_type':self.mime_type,
-			'tags'	: [ t.json() for t in self.tags.exclude(type="actor") ],
-			'actors': [ t.json() for t in self.tags.filter(type="actor") ],
-			'concepts': [ c.json() for c in self.concepts.all() ],
+			'tags'	: not_actors,
+			'actors': actors,
+			# 'concepts': [ c.json() for c in self.concepts.all() ],
 			'relations_count': Relation.objects.filter(source__id=self.id).count(),
 			'relations_as_target_count': Relation.objects.filter(target=self).count(),
-			'corpus': self.corpus.json(),
+			#'corpus': self.corpus.json(),
 			'segments': [ s.json() for s in self.segments() ],
 			'status': self.status
 		}

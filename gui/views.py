@@ -62,10 +62,10 @@ def logout_view(request):
 # Documents/Index
 @login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
 def documents(request, id_document=None):
-	data = {}
-	data['custom'] = CUSTOM_SETTINGS
-	data['active'] = "documents"
-	data['corpus'] = {"id":request.session.get("corpus_id", 0), "name":request.session.get("corpus_name", "") }
+	data = _shared_context( request, active="documents" )
+	# data['custom'] = CUSTOM_SETTINGS
+	# data['active'] = "documents"
+	# data['corpus'] = {"id":request.session.get("corpus_id", 0), "name":request.session.get("corpus_name", "") }
 	#print document(request, id_document)
 	if id_document != None:
 		data['id_document'] = id_document
@@ -139,33 +139,43 @@ def _shared_context( request, corpus_name=None, active="" ):
 	data['active'] = active
 	data['custom'] = CUSTOM_SETTINGS
 
+
+	if data['corpus'].id == 0:
+		corpus = Corpus.objects.filter( owners__user = request.user ).order_by("-id")[0]
+		data['corpus'] = corpus
+		request.session["corpus_id"] = corpus.id
+		request.session["corpus_name"] = corpus.name
 	# load or switch corpus via corpus name
 	# data['corpus'] = None
-	
-	if corpus_name != request.session.get("corpus_name", 0):
+	#if corpus_name == None and data['corpus'].id == 0:
+	#	corpus = Corpus.objects.filter( owners__user = request.user ).order_by("-id")[0]
+	#	request.session["corpus_id"] = corpus.id
+	#	request.session["corpus_name"] = corpus.name
+	#	data['info'] = "session corpus created"
+	#elif corpus_name != request.session.get("corpus_name", 0):
 		# switch corpus
-		data['corpus'] = get_object_or_404( Corpus, name=corpus_name, owner=request.user )
-		request.session["corpus_id"] = data['corpus'].id
-		request.session["corpus_name"] = data['corpus'].name
-		data['info'] = "session corpus switched"
+	#	data['corpus'] = get_object_or_404( Corpus, name=corpus_name, owner=request.user )
+	#	request.session["corpus_id"] = data['corpus'].id
+	#	request.session["corpus_name"] = data['corpus'].name
+	#	data['info'] = "session corpus switched"
 
-	elif request.session.get("corpus_id", 0) is 0:
+	#elif request.session.get("corpus_id", 0) is 0:
 		# corpus_name is none, no session stored... load last corpus created
-		try:
+	#	try:
 			# 
-			corpus = Corpus.objects.filter( owners__user = request.user ).order_by("-id")[0]
-			request.session["corpus_id"] = corpus.id
-			request.session["corpus_name"] = corpus.name
-			data['info'] = "session corpus created"
+	#		corpus = Corpus.objects.filter( owners__user = request.user ).order_by("-id")[0]
+	#		request.session["corpus_id"] = corpus.id
+	#		request.session["corpus_name"] = corpus.name
+	#		data['info'] = "session corpus created"
 		
-		except Exception, e:
-			response['warning'] = "Exception: %s" % e
-			request.session["corpus_id"] = 0
-			request.session["corpus_name"] = ""
+	#	except Exception, e:
+	#		data['warning'] = "Exception: %s" % e
+	#		request.session["corpus_id"] = 0
+	#		request.session["corpus_name"] = ""
 
 	
-	else:
-		data['info'] = "session corpus already stored: %s" %corpus_name
+	#else:
+	#	data['info'] = "session corpus already stored: %s" %corpus_name
 		
 
 	return data
