@@ -16,7 +16,7 @@ import codecs, re, logging
 from datetime import datetime
 from optparse import OptionParser
 
-logger = logging.getLogger("sven.anta.metrics")
+logger = logging.getLogger("sven.anta.api")
 
 #
 #    ===================
@@ -127,6 +127,7 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 	# current document (new)
 	documents =  Document.objects.filter(corpus__id=corpus.id, status='NEW')
 
+	logger.info( "['%s':%s] documents to be analyzed: %s" % ( corpus.name, corpus.id, documents.count() ) )
 	# if analysis.document is None:
 	#	documents = Document.objects.filter(corpus__id=corpus.id)
 	#	analysis.document = documents[0]
@@ -195,6 +196,7 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 			distilled = distill( filename=textified, language=d.language.lower(), stopwords=stopwords )
 		except Exception, e:
 			d.status = 'ERR'
+			logger.exception("EXCEPTION distill document")
 			logger.error("%s / %s FAILED distill document '%s' [%s], mimetype %s with Exception: %s" % ( i, total_count, d.title, d.id, d.mime_type, e) )
 			d.save()
 			continue
@@ -326,6 +328,8 @@ def evaporate( document, stopwords, keywords ):
 	"""
 	results = {'keywords':keywords, 'stopwords': stopwords, 'segments':[], 'concepts':{} }
 	
+	logger.info("evaporate")
+
 	for matches in document:
 		for match in matches:
 			# true if the segment-mathc contains at least one salient word (not in stopword)
@@ -400,6 +404,8 @@ def distill( filename, language="en", regexp="NP", stopwords=["the","this","a", 
 	f = codecs.open( filename, "r", "utf-8" )
  	content = f.read()
 	
+	logger.info("distilling...")
+
 	if language == "nl":
 		text = pattern.nl.Text( pattern.nl.parse( content, lemmata=True ) )
 	else:

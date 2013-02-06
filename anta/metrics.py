@@ -56,7 +56,7 @@ def standard( corpus, routine ):
 	try:
 		decant( corpus=corpus, routine=routine, settings=settings, ref_completion=0.5 )
 	except Exception, e:
-		logger.error("Exception: %s" % e)
+		logger.exception("Exception: %s" % e)
 		return close_routine( routine, error="Exception: %s" % e, status="ERR")
 
 	# 2. get all languages in corpus
@@ -245,11 +245,11 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 	"""
 	routine.type = "TFIDF"
 	routine.save()
-	transaction.commit()
-	# 1. get number of document
-	number_of_documents = Document.objects.filter(corpus=corpus ).count()
 	
-	logger.info("ye")
+	# 1. get number of document
+	number_of_documents = Document.objects.filter(corpus=corpus, status='IN').count()
+	
+	logger.info("[%s:%s] TFIDF on %s 'IN' documents" % ( corpus.name, corpus.id, number_of_documents ) )
 
 	# 2. get all languages in corpus
 	number_of_languages = Document.objects.values('language').distinct().count()
@@ -257,6 +257,7 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 	# 3. get GLOBAL number of segments (aka stems, segments grouped by their stemmed version: they do not need to be in the same corpus!!!)
 	number_of_stems = Segment.objects.values('stemmed', 'language').annotate(Count('stemmed'), Count('language')).count()
 
+	logger.info("[%s:%s] %s segment groups" % ( corpus.name, corpus.id, number_of_stems ) )
 	#SELECT COUNT(*), stemmed FROM anta_segment GROUP BY stemmed 
 
 	# out some information
@@ -271,9 +272,11 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 	current_stem = 0
 
 	# 3. for each language, perform a tfidf
-	for i in Document.objects.filter(corpus=corpus ).values('language').annotate(num_document=Count('language')).distinct():
+	for i in Document.objects.filter(corpus=corpus, status='IN' ).values('language').annotate(num_document=Count('language')).distinct():
 		#print "[info] language info: ",i
-		
+		logger.info("[%s:%s] language %s" % ( corpus.name, corpus.id,  i['language'] ) )
+	
+
 		language = i['language']
 		# count tfidf group
 		# SELECT COUNT(*), stemmed FROM anta_segment WHERE language="EN" GROUP BY stemmed 
@@ -281,12 +284,13 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 		
 		# check length. If it's 0, exit with error....
 		if stem_count == 0:
+			logger.error("[%s:%s] not enought segments in your corpus with language %s" % ( corpus.name, corpus.id,  i['language'] ) )
 			close_routine( routine, error="Not enought segments in your corpus. Try standard routine first...", status="ERR")
 			transaction.commit()
 			return 
 
 		# 5. for each segment in this language...
-		cursor.execute("""
+		number_of_groups = cursor.execute("""
 			SELECT
 				COUNT( DISTINCT ds.document_id ) as distribution, 
 				s.language,
@@ -294,15 +298,22 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 			FROM `anta_document_segment` ds
 			JOIN anta_segment s ON ds.segment_id = s.id
 			JOIN anta_document d ON d.id = ds.document_id
-			WHERE d.corpus_id = %s AND s.language = %s
+			WHERE d.corpus_id = %s AND s.language = %s AND s.status = 'IN'
 			GROUP BY s.stemmed ORDER BY distribution DESC, stemmed ASC""", [ corpus.id, language ]
 		)
 		#print "[info] query executed..."
 		
+		logger.info("[%s:%s] distribution query executed, %s groups found in '%s'" % ( corpus.name, corpus.id, number_of_groups, language ) )
+	
+		language_cursor = 0.0
+
 		for row in dictfetchall(cursor):
 			# increment global runner (stats)
 			current_stem = current_stem + 1;
 			
+			language_cursor + 1;
+
+
 			# store tfidf inside each segment-document relationships
 			try:
 				dss = Document_Segment.objects.filter( segment__stemmed=row['stemmed'], segment__language=language)
@@ -310,10 +321,13 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 				df = float( row['distribution'] ) / number_of_documents
 				# print float(current_stem) / number_of_stems * 100.0, row[ column ], row['distribution'], df
 			except Exception, e:
+				logger.exception("[%s:%s] uhandled exception ..." % ( corpus.name, corpus.id ) )
+	
 				#print e
 				close_routine( routine, error="Ho trovato Wally alla liena 281 di metrics.py, Exception: %s" % e, status="ERR")
 				transaction.commit()
 				return
+
 			for ds in dss:
 				ds.tfidf = ds.tf * math.log(1/df) 
 				ds.save()
@@ -322,15 +336,22 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 				# print ds.tf,ds.document.id, ds.segment.content
 			
 
-			if current_stem % 25 == 0:
+			if current_stem % 75 == 0:
+
 				completion = completion_start + (float(current_stem) / number_of_stems)*(completion_score-completion_start)
+
+				logger.info("[%s:%s] language completion: %s, overall (extimated) completion %s" % ( corpus.name, corpus.id, (language_cursor / number_of_groups
+), completion ) )
+	
 				#print "[info] query executed...",completion
 				log_routine( routine, completion = completion )
 				# save percentage and commit transaction
 				transaction.commit()
 	
 	#print "[info] query completed!"
-				
+	
+	logger.info("[%s:%s] tfidf completed!" % ( corpus.name, corpus.id ) )
+	
 	if completion_score == 1.0:
 		close_routine( routine, error="", status="OK" )
 	transaction.commit()
@@ -448,12 +469,14 @@ def similarity( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 	"""
 	# Stories vlows Enter Nebuloses
 	log_routine( routine, entry="similarity measurement started succesfully", completion=0.0, completion_start=completion_start, completion_score=completion_score)
-	transaction.commit()
+	
 
 
 	# 1. get number of document
-	number_of_documents = Document.objects.filter(corpus=corpus ).count()
+	number_of_documents = Document.objects.filter(corpus=corpus, status='IN' ).count()
 	
+	logger.info("[%s:%s] SIMILARITY on %s 'IN' documents" % ( corpus.name, corpus.id, number_of_documents ) )
+
 	# 2. dictionary where keys are the ids of corpus docments and valuse
 	documents = {}
 
@@ -470,21 +493,24 @@ def similarity( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 			FROM anta_document_segment ds
 		JOIN anta_segment s ON ds.segment_id = s.id
 		JOIN anta_document d ON ds.document_id = d.id
-		WHERE d.corpus_id = %s
+		WHERE d.corpus_id = %s AND s.status='IN'
 
 	""",[ corpus.id ] )
 
 	number_of_stems = cursor.fetchone()[0]
 
-	cursor.execute("""
+	
+	number_of_groups = cursor.execute("""
 
 		SELECT s.stemmed, d.id as document_id 
 			FROM anta_document_segment ds
 		JOIN anta_segment s ON ds.segment_id = s.id
 		JOIN anta_document d ON ds.document_id = d.id
-		WHERE d.corpus_id = %s
+		WHERE d.corpus_id = %s AND d.status='IN' AND s.status='IN'
 
 	""",[ corpus.id ] ) # we do not need ORDER BY d.id, ds.id
+	
+	logger.info("[%s:%s] %s document_segment found" % ( corpus.name, corpus.id, number_of_groups ) )
 	
 
 	log_routine( routine, entry="similarity measurement started", completion=0.1, completion_start=completion_start, completion_score=completion_score)
@@ -498,22 +524,24 @@ def similarity( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 		
 		documents[ document_id ].append( stemmed )	
 		
-
+	logger.info("[%s:%s]  creating documents for Pattern" % ( corpus.name, corpus.id ) )
+	
 
 	# translate corpus id
 	pattern_id_translation = {}
 	
 	# reformat each document into a PATTERN compatible document: join space separated stemmed segment values.
 	for d in documents:
-		logger.info( "creating PATTERN document from stemmed version" )
-	
+		
 		documents[d] = pvDocument( " ".join( documents[d] ) )
 		log_routine( routine, entry="join stemmed segments", completion=0.15, completion_start=completion_start, completion_score=completion_score)
 	
 		pattern_id_translation[ documents[d].id ] = d
 	
 	#print "[info] document with segments in corpus:",len(pattern_id_translation)
+	logger.info("[%s:%s] %s documents created for Pattern" % ( corpus.name, corpus.id, pattern_id_translation ) )
 	
+
 	# store document in corpus.
 	c = pvCorpus( documents.values() )
 	# computate and save similarities
@@ -522,8 +550,10 @@ def similarity( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 		neighbors =  c.neighbors( documents[d], top=number_of_documents)
 		if len( neighbors ) == 0:
 			logger.warning( "no neighbors for document: %s" %  pattern_id_translation[ documents[d].id ] )
+			continue
+
 		#print "%s neighbors found for document: %s" % ( len(neighbors), pattern_id_translation[ documents[d].id ] )
-		logger.info( "%s neighbors found for document: %s" % ( len(neighbors), pattern_id_translation[ documents[d].id ] ) )
+		logger.info( "[%s:%s] %s neighbors found for document: %s, completion: %s" % ( corpus.name, corpus.id, len(neighbors), pattern_id_translation[ documents[d].id ], (counter/float(number_of_documents)) ) )
 
 		for n in c.neighbors( documents[d], top=number_of_documents):
 			alpha_id = pattern_id_translation[ documents[d].id ]
@@ -533,9 +563,11 @@ def similarity( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 			try:
 				dist = Distance.objects.get( alpha__id=alpha_id, omega__id=omega_id )
 				#print "[info] distantce exists ( %s - %s ), old value: %s, difference: %s" % ( alpha_id, omega_id, dist.cosine_similarity,(dist.cosine_similarity - cosine_similarity) )
-			except Exception, e:
+			except Distance.DoesNotExist, e:
+
 				#print e
 				dist = Distance( alpha_id=alpha_id, omega_id=omega_id )
+
 				#print "[info] create Distance object", dist.id, cosine_similarity
 			#	print a distance exist between these two document	
 			dist.cosine_similarity = cosine_similarity
@@ -543,14 +575,16 @@ def similarity( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 
 			#
 		
-			log_routine( routine, entry="neighbors computation", completion = (counter + 1.0) / number_of_documents, completion_start=completion_start, completion_score=completion_score)
+		# log_routine( routine, entry="neighbors computation", completion = (counter + 1.0) / number_of_documents, completion_start=completion_start, completion_score=completion_score)
 		
-		transaction.commit()
-
+		
+	
+	logger.info("[%s:%s] similarity neighbours finished !" % ( corpus.name, corpus.id ) )
+	
 	if completion_score == 1.0:
 		close_routine( routine, error="", status="OK" )
+	
 	transaction.commit()
-
 	
 def main( argv):
 	usage = "usage: %prog -f function [ standard|importcsv [-o column] [-x csvfile] ]"
