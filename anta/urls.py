@@ -92,7 +92,10 @@ urlpatterns = patterns('',
 	url(r'^api/segments/import/corpus/(\d+)/$', 'sven.anta.api.segments_import', name='anta_api_segments_import' ),
 	
 	url(r'^api/d3/streamgraph/corpus/(?P<corpus_id>\d+)/$', 'sven.anta.api.d3_streamgraph', name='anta_api_d3_streamgraph' ),
-	
+	url(r'^api/d3/streamgraph/corpus/(?P<corpus_id>\d+)/new/$', 'sven.anta.api.d3_streamgraph_new', name='anta_api_d3_streamgraph_new' ),
+
+	url(r'^api/d3/streamgraph/corpus/(?P<corpus_id>\d+)/tag/(?P<tag_id>\d+)/$', 'sven.anta.api.d3_streamgraph_tag', name='anta_api_d3_streamgraph_tag' ),
+
 	url(r'^api/streamgraph/corpus/(\d+)/$', 'sven.anta.api.streamgraph', name='anta_api_streamgraph' ),
 	# url(r'^api/get-corpora/$', 'sven.anta.api.get_corpora', name='anta_api_get_corpora' ),    
 	# url(r'^api/get-corpus/(\w+)/$', 'sven.anta.api.get_corpus', name='anta_api_get_corpus' ),    

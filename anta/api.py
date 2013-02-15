@@ -924,6 +924,87 @@ def start_metrics( request, corpus_id):
 def start_alchemy(request, corpus):
 	pass
 
+def d3_streamgraph_tag( request, corpus_id, tag_id ):
+	response = Epoxy( request )
+	return response.json()
+
+def d3_streamgraph_new( request, corpus_id ):
+	from django.db import connection
+
+	response = Epoxy( request )
+
+	# get actors
+	documents = [ str(d.id) for d in Document.objects.filter(corpus__id=corpus_id, status='IN').filter( **response.filters ) ] # , document_tag__tag__id=tag_id 
+	response.add('documents', len( documents ) )
+
+	actors = Tag.objects.filter( type='actor', document__in= documents ).annotate(numdocs=Count('document'))
+	response.add('actors', actors.count() )
+
+	objects = {}
+
+	# query 2. concept per actor
+	for actor in actors:
+		cursor = connection.cursor()
+		cursor.execute(
+			"""
+			SELECT 
+				s.stemmed as concept, MAX( ds.tfidf ) as max_tfidf, MAX( ds.tf ) as max_tf, 
+				s.content,
+				COUNT( DISTINCT ds.document_id ) as spreading
+
+			FROM `anta_document_segment` ds
+
+				JOIN anta_segment s ON s.id = ds.segment_id
+				JOIN anta_document_tag dt ON dt.document_id = ds.document_id
+
+			WHERE dt.tag_id = %s 
+				AND s.status = %s """ + 
+			("	AND ds.document_id IN ( %s )" % ",".join(documents) if documents is not None else "") + """
+
+			GROUP BY concept
+			ORDER BY max_tf DESC
+			LIMIT %s, %s
+			""", [actor.id, 'IN', response.offset, response.limit ]
+		)
+
+	
+	
+		for row in cursor.fetchall():
+			k = row[ 0 ] # the concept alias stemmed group
+			max_tf = row[ 2 ]
+			if k not in objects:
+				objects[ k ] = {
+					'key': k,
+					'values': [],
+					'count':0,
+					'label':'', #eligible label, that is the label with maximum value
+					'tf': 0,
+					'tfidf': 0
+				}
+
+			objects[ k ][ 'count' ] += 1
+			
+			if max_tf > objects[ k ][ 'tf' ]:
+				objects[ k ][ 'label' ] =  row[ 3 ] # el
+
+			objects[ k ][ 'tf' ] = max( objects[ k ][ 'tf' ], max_tf )
+			objects[ k ][ 'tfidf' ] = max( objects[ k ][ 'tfidf' ], row[ 1 ] )
+
+			objects[ k ][ 'values' ].append({
+				'step': actor.name,
+				'value': max_tf,
+				# 'tfidf': row[ 1 ], # max tfidf
+				'labels': row[ 3 ], # content
+				# 's': row[ 4 ], # spreading
+			})
+
+	response.add('objects', sorted( objects.values(), key=lambda concept: concept[ 'count' ], reverse=True ) )
+	response.add('num_objects', len( objects ) )
+	return response.json()
+
+
+
+
 def d3_streamgraph( request, corpus_id ):
 	from django.db import connection
 
