@@ -16,5 +16,6 @@ urlpatterns = patterns('',
 	url(r'timeline/$', 'sven.gui.views.timeline', name='gui_timeline'),
 	url(r'dynamics/$', 'sven.gui.views.dynamics', name='gui_dynamics'),
 	url(r'stream/$', 'sven.gui.views.stream', name='gui_stream'),
+	url(r'corpora/$', 'sven.gui.views.corpora', name='gui_corpora'),
 	url(r'viewer/$', 'sven.gui.views.pdfviewer', name='gui_pdfviewer'),
 )

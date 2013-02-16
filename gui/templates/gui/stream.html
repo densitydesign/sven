@@ -21,10 +21,28 @@
 <div class="row-fluid">
 	<div class="span2" id="filters">
 
+
 		<p class="breath">
 			<strong>Filters</strong>
-			<a class="btn btn-mini pull-right tip" rel="tooltip" style="display:none" id="reset" href="#!" title="Reset filters">reset</a>
+			<a class="btn btn-mini pull-right tip" rel="tooltip" style="display:none;" id="reset" href="#!" title="Reset filters">reset</a>
 		</p>
+		<div class="filterMethods filter-block">
+	  		<p class="filter-title">Method</p>
+	  		<input type="hidden" name="option" value="max_tf" id="m-input" />
+			<div class="btn-group" data-toggle="buttons-radio">
+  				<button type="button" class="btn btn-mini active" value="max_tf" data-toggle="button">Tf</button>
+  				<button type="button" class="btn btn-mini" value="max_tfidf" data-toggle="button">Tf/Idf</button>
+			</div>
+		</div>
+
+		<div class="filterRel filter-block">
+	  		<p class="filter-title">Related to</p>
+	  		<input type="hidden" name="option" value="corpus" id="r-input" />
+			<div class="btn-group" data-toggle="buttons-radio">
+  				<button type="button" class="btn active btn-mini" value="corpus">Corpus</button>
+  				<button type="button" class="btn btn-mini" value="actor">Actor</button>
+			</div>
+		</div>
 
 		<!-- Dates -->
 		<div class="filter-block">
