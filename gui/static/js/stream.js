@@ -1,19 +1,44 @@
 var query = new svenjs.Sven("");
 var streamkey;
 
+
 streamArgs['limit'] = 15;
-// get actors
-	
+streamArgs['order_by'] = JSON.stringify(['max_tf DESC','distribution DESC'])
+streamArgs['rt'] = 'corpus';
+
 if($.cookie('sven_filters')){
 	
 	args['filters'] = $.cookie('sven_filters');
 	streamArgs['filters'] = $.cookie('sven_filters');
 	$("#reset").show();
 	};
+	
+d3.select('.filterMethods .btn-group').selectAll('button').on('click',function(){
+	
+	d3.select('#m-input').attr("value", this.value)
+	setFilters();
+});
+
+d3.select('.filterRel .btn-group').selectAll('button').on('click',function(){
+	
+	d3.select('#r-input').attr("value", this.value)
+	setFilters();
+});
+
+// get actors
+	
+
 
 function setFilters(){
 	//args['limit'] = 0;
 	//args['offset'] = 50;
+
+	var methods = d3.select('#m-input').attr("value");
+	streamArgs['order_by'] = JSON.stringify([methods +' DESC','distribution DESC'])
+
+	var rel = d3.select('#r-input').attr("value");
+	streamArgs['rt'] = rel;
+
 	var filters = {};
 	filters["ref_date__gte"] = $('#dp1').data('date') + " 00:00";
 	filters["ref_date__lte"] = $('#dp2').data('date') + " 00:00";
@@ -98,7 +123,7 @@ query.getDocuments(function(response){
 	var dateList = d3.nest()
     .key(function(d) { return d.date; })
     .entries(data);
-    
+
     //console.log(d3.min(dateList.map(function(d){return d.key})), d3.max(dateList.map(function(d){return d.key})));
 	var minDate = d3.min(dateList.map(function(d){return d.key}));
 	var maxDate = d3.max(dateList.map(function(d){return d.key}));
@@ -162,7 +187,7 @@ query.getDocuments(function(response){
 		  d3.select(".filterLang").selectAll("input").each(function(d){
 		  	d3.select(this).property("checked", false)
 		  })
-			
+			$("#reset").hide();
 		 updateStream();
 			
 			
@@ -182,6 +207,7 @@ query.getDocuments(function(response){
 	};
 	
 	},args);
+
 
 query.streamgraph(args['corpus'],function(response){
 	
@@ -297,6 +323,8 @@ function updateStream(){
 	
 	}
 
+
+
 function loadFilters(filter,value){
 		
 		switch (filter){
@@ -328,9 +356,9 @@ function loadFilters(filter,value){
 		  break;
 		case "tags__id__in":
 		  if($("#selectActors")){
-		  	value.forEach(function(d){
-		  		$("#selectActors").select2("val", d)
-		 	 })
+		  	
+		  		$("#selectActors").select2("val", value)
+		 	
 		  }
 		  break;
 		}

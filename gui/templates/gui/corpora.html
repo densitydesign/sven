@@ -1,0 +1,87 @@
+{% extends "gui/base.html" %}
+
+{% block css_1 %}
+<link rel="stylesheet" href="{{ custom.STATIC_URL }}css/datepicker.css" type="text/css"/>
+<link rel="stylesheet" href="{{ custom.STATIC_URL }}css/jquery.fileupload-ui.css" type="text/css"/>
+<link href="{{ custom.STATIC_URL }}css/select2/select2.css" rel="stylesheet"/>
+{% endblock %}
+
+{% block js_head %}
+<!--<script src="{{ custom.STATIC_URL }}js/bootstrap/bootstrap-modal.js"></script>-->
+<script src="{{custom.STATIC_URL}}js/jquery/jquery.ui.widget.js" type="text/javascript" ></script>
+<script src="{{custom.STATIC_URL}}js/jquery/jquery.iframe-transport.js" type="text/javascript" ></script>
+<script src="{{custom.STATIC_URL}}js/jquery/jquery.fileupload.js" type="text/javascript" ></script>
+<script src="{{custom.STATIC_URL}}js/jquery/jquery.validate.min.js"></script>
+<script src="{{ custom.STATIC_URL }}js/bootstrap-datepicker.js"></script>
+<script src="{{ custom.STATIC_URL }}js/jquery/jquery.discontinue.js"></script>
+<script src="{{ custom.STATIC_URL }}js/select2/select2.js"></script>
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<div id="documents-corpus">
+	
+	<p>Ok, it seems you have still to create a corpus for your documents. A corpus is like a collection of documents: all the analysis will be performed inside the documents of the corpus. You can easily create a new corpus entering a corpus name below and pressing the Create button.</p>
+
+
+</div> 
+
+
+<div class="row-fluid">
+
+	<!-- Filters -->
+	<div class="span2" id="filters">
+		<p class="breath"><strong>Create corpus</strong></p>
+		<div class="filter-block">
+			<p class="filter-title"></p>
+			<div class="input-append">
+				<input class="span8" id="corpus-name" placeholder="Corpus name" type="text">
+				<button class="btn btn-primary" type="button" id="create-corpus">Create</button>
+			</div>
+		</div>
+		<div class="corpus-list filter-block">
+		</div>
+		
+
+	</div>
+	<div class="span10" id="docs">
+		
+		<p class="breath"><strong>Corpora list</strong></p>
+		
+		<div class="btn-toolbar">
+			<div class="btn-group">
+				<a class="btn btn-small tip disabled" rel="tooltip" title="Delete corpora" href="#!" id="delete"><i class="icon-trash"></i><span></span></a>
+			</div>
+<!-- 			<div class="btn-group pull-right">
+				<a class="btn btn-small tip" rel="tooltip" title="Export entities as .csv" href="#!" id="export"><i class="icon-download"></i></a>
+				<a class="btn btn-small tip" rel="tooltip" title="Import entities from .csv" href="#!" id="import-button"><i class="icon-upload"></i></a>
+			</div> -->
+
+		</div>
+		
+		<div id="documents-list"></div>
+	</div>
+</div>
+
+{% include "gui/delete.html" %}
+
+{% endblock %}
+
+<!-- this block contains javascript inside html body -->
+{% block js_body %}
+<script>
+var args = {};
+var actorArgs = {}
+$(".tip").tooltip();
+var corpusID = {{corpus.id}}; 
+args.corpus = corpusID;
+
+</script>
+
+<script src="{{ custom.STATIC_URL }}js/corpora.js" type="text/javascript"></script>
+
+{% endblock %}
