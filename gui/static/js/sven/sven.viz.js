@@ -783,14 +783,7 @@
 				"nodeDown",
 				"nodeUp"
 			)
-			/*
-			downnodes,
-			upnodes,
-			downgraph,
-			upgraph,
-			overnodes,
-			outnodes
-			*/
+
 		
 		graph.center = function(){
 			sig.position(0,0,1).draw();
@@ -999,58 +992,6 @@
 			*/
 			
 			// sig.bind('overnodes', function(event){
-// 				
-// 				var _nodes = event.content;
-// 				var _neighbors = {};
-// 				
-// 				sig.iterEdges(function(e){
-// 					if(_nodes.indexOf(e.source)>=0 || _nodes.indexOf(e.target)>=0){
-// 						
-// 						
-// 						 if(!e.attr['grey']){
-//           e.attr['true_color'] = e.color;
-//           e.color = sig.getNodes(e.source).color;
-//           e.attr['grey'] = 1;
-//         }
-//       }else{
-//         e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
-//         e.attr['grey'] = 0;
-//         
-// 						_neighbors[e.source] = 1;
-// 						_neighbors[e.target] = 1;
-// 					}
-// 				}).iterNodes(function(n){
-// 					/*
-// 					if(!_neighbors[n.id]){
-// 						n.hidden = 1;
-// 					}else{
-// 						n.hidden = 0;
-// 					}
-// 					*/
-// 					if(!_neighbors[n.id]){
-//         if(!n.attr['grey']){
-//           n.attr['true_color'] = n.color;
-//           //n.color = "#f5f5f5";
-//           n.attr['grey'] = 1;
-//         }
-//       }else{
-//         n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
-//         n.attr['grey'] = 0;
-//       }
-// 				})//.draw(2,2,2);
-// 			
-// 			}).bind('outnodes',function(){
-// 				sig.iterEdges(function(e){
-// 					//e.hidden = 0;
-// 					e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
-// 				
-//       e.attr['grey'] = 0;
-// 				}).iterNodes(function(n){
-// 					//n.hidden = 0;
-// 					n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
-//       n.attr['grey'] = 0;
-// 				})//.draw(2,2,2);
-// 			});
 
 			var clicked = false;
 					// Bind events :
@@ -1082,15 +1023,7 @@
 				clicked = false;
 					}
 			  })
-			  // .bind('outnodes',function(){
-// 				sig.iterEdges(function(e){
-// 				  e.hidden = 0;
-// 				}).iterNodes(function(n){
-// 				  n.hidden = 0;
-// 				}).draw(2,2,2);
-// 			  });
-						
-			
+
 			return graph;
 		}
 		
@@ -1245,10 +1178,21 @@
 			//.on("mouseover", function(){d3.select(this).selectAll("path").transition().attr("fill-opacity",0.75)})
 			//.on("mouseout", function(){d3.select(this).selectAll("path").transition().attr("fill-opacity",0.5)})
 			.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-			.on("mouseover",function(d){ d3.select(this).selectAll("path").transition().attr("fill-opacity",0.75);
+			.on("mouseover",function(d){ 
+											var label = (d3.nest().key(function(f){return f.label}).entries(d)).filter(function(f){return f.key != 'undefined'});
+											label = label.map(function(f){return f.key});
+											var labelHtml = '';
+											label.forEach(function(f){
+
+												labelHtml = labelHtml + f + "</br>"
+
+											})
+
+											d3.select(this).selectAll("path").transition().attr("fill-opacity",0.75);
 											d3.select(".desc")
 											.select(".tooltip-inner")
-											.text(d[0].category);
+											//.text(d[0].category);
+											.html(labelHtml);
 
 											d3.select(".desc")
 											.attr("class","tooltip fade in desc")
@@ -1258,7 +1202,9 @@
 			.on("mousemove",function(d){d3.select(".desc").attr("style","top: " + (d3.event.pageY - $(".desc").height() - 15) + "px; left:"+ (d3.event.pageX - $(".desc").width()/2) + "px");})
 			.on("mouseout",function(d){
 				d3.select(this).selectAll("path").transition().attr("fill-opacity",0.5);
-				d3.select(".desc").attr("class","tooltip fade out desc")
+				d3.select(".desc").attr("class","tooltip out desc")
+					.attr("style","top: 0px; left: 0px")
+
 				})	
 		
 		var rect = layer.selectAll("rect")
@@ -1416,7 +1362,7 @@
 		stepsY[j] = [];
 		
       for (i = 0; i < n; i++){ 
-      	stepsY[j].push({'y':data[i]['values'][j]['value'],'value': data[i]['values'][j]['value'], 'index':i, 'x':data[i]['values'][j]['step'], 'category':data[i]['key']})
+      	stepsY[j].push({'y':data[i]['values'][j]['value'],'value': data[i]['values'][j]['value'], 'index':i, 'x':data[i]['values'][j]['step'], 'category':data[i]['key'], 'label':data[i]['values'][j]['labels']})
       }
 
 		var sorted = d3.nest().key(function(d){return d.y}).sortKeys(function(a,b){return parseFloat(a) - parseFloat(b); }).entries(stepsY[j]);

@@ -97,6 +97,24 @@ svenjs.Sven.prototype.addCorpus = function(successCallback, args){
     
 };
 
+/* delete corpus */
+svenjs.Sven.prototype.deleteCorpus = function(id, successCallback){
+    
+    var url = this.url + "/anta/api/corpus/" + id + "/" + "?method=DELETE&indent=true";
+    
+    
+    $.ajax({
+        type: 'GET',
+        url: url,
+        complete: function(){
+            console.log(this.url);
+            },
+        success: successCallback,
+        error: successCallback,
+        dataType: 'json'
+    });
+
+};
 
 /* get documents */
 svenjs.Sven.prototype.getDocuments = function(successCallback, args){
@@ -335,13 +353,18 @@ svenjs.Sven.prototype.graph = function(id, successCallback, args){
 /* streamgraph */
 svenjs.Sven.prototype.streamgraph = function(id, successCallback, args){
 		
-	var url = this.url + "/anta/api/d3/streamgraph/corpus/" + id + "/?order_by=[%22max_tfidf%20DESC%22,%22distribution%20DESC%22]"
+	//var url = this.url + "/anta/api/d3/streamgraph/corpus/" + id + "/?order_by=[%22max_tfidf%20DESC%22,%22distribution%20DESC%22]"
+    var url = this.url + "/anta/api/d3/streamgraph/corpus/" + id
+    
     $.ajax({
         type: 'GET',
         url: url,
         data: args,
         success: successCallback,
         error: successCallback,
+        complete: function(){
+            console.log(this.url);
+            },
         dataType: 'json'
     });
     

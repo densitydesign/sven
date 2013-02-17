@@ -117,6 +117,16 @@ def stream(request):
 	data['corpus'] = {"id":request.session.get("corpus_id", 0), "name":request.session.get("corpus_name", "") }
 	c = RequestContext(request, data)
 	return render_to_response("gui/stream.html", c)
+
+# Corpora
+@login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
+def corpora(request):
+	data = {}
+	data['active'] = "corpora"
+	data['custom'] = CUSTOM_SETTINGS
+	data['corpus'] = {"id":request.session.get("corpus_id", 0), "name":request.session.get("corpus_name", "") }
+	c = RequestContext(request, data)
+	return render_to_response("gui/corpora.html", c)
 	
 # PdfViewer
 @login_required( login_url=CUSTOM_SETTINGS['LOGIN_URL'] )
