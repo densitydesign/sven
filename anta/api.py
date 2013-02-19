@@ -938,7 +938,7 @@ def d3_streamgraph_new( request, corpus_id ):
 	response.add('documents', len( documents ) )
 
 	actors = Tag.objects.filter( type='actor', document__in= documents ).annotate(numdocs=Count('document'))
-	response.add('actors', actors.count() )
+	num_of_actors = response.add('actors', actors.count() )
 
 	objects = {}
 
@@ -950,7 +950,7 @@ def d3_streamgraph_new( request, corpus_id ):
 			SELECT 
 				s.stemmed as concept, MAX( ds.tfidf ) as max_tfidf, MAX( ds.tf ) as max_tf, 
 				s.content,
-				COUNT( DISTINCT ds.document_id ) as spreading
+				COUNT( DISTINCT ds.document_id ) as distribution
 
 			FROM `anta_document_segment` ds
 
@@ -962,9 +962,9 @@ def d3_streamgraph_new( request, corpus_id ):
 			("	AND ds.document_id IN ( %s )" % ",".join(documents) if documents is not None else "") + """
 
 			GROUP BY concept
-			ORDER BY max_tf DESC
+			ORDER BY """ + (", ".join( response.order_by ) if len( response.order_by ) > 0 else "max_tf DESC") + """
 			LIMIT %s, %s
-			""", [actor.id, 'IN', response.offset, response.limit ]
+			""", [actor.id, 'IN', response.offset, response.limit if num_of_actors < 10 else response.limit / 2  ]
 		)
 
 	
@@ -975,7 +975,7 @@ def d3_streamgraph_new( request, corpus_id ):
 			if k not in objects:
 				objects[ k ] = {
 					'key': k,
-					'values': [],
+					'values': {},
 					'count':0,
 					'label':'', #eligible label, that is the label with maximum value
 					'tf': 0,
@@ -990,13 +990,25 @@ def d3_streamgraph_new( request, corpus_id ):
 			objects[ k ][ 'tf' ] = max( objects[ k ][ 'tf' ], max_tf )
 			objects[ k ][ 'tfidf' ] = max( objects[ k ][ 'tfidf' ], row[ 1 ] )
 
-			objects[ k ][ 'values' ].append({
+			objects[ k ][ 'values' ][ actor.name ] = {
 				'step': actor.name,
 				'value': max_tf,
 				# 'tfidf': row[ 1 ], # max tfidf
 				'labels': row[ 3 ], # content
 				# 's': row[ 4 ], # spreading
-			})
+			}
+
+	for o in objects:
+		for actor in actors:
+			if actor.name not in objects[o]['values']:
+				objects[o]['values'][ actor.name ] = {
+					'step':actor.name,
+					'value': 0
+				}
+		items = sorted( objects[o]['values'].values(), key=lambda item:item['step'].lower() )
+		objects[o]['values'] =  items# , key=lambda item:item['step'].lower() )
+
+
 
 	response.add('objects', sorted( objects.values(), key=lambda concept: concept[ 'count' ], reverse=True ) )
 	response.add('num_objects', len( objects ) )
@@ -1006,9 +1018,20 @@ def d3_streamgraph_new( request, corpus_id ):
 
 
 def d3_streamgraph( request, corpus_id ):
-	from django.db import connection
 
 	response = Epoxy( request )
+
+	streamgraph_type = request.REQUEST.get('rt', '0' )
+
+	if streamgraph_type not in [ '0', 'actor', 'corpus' ]:
+		return response.throw_error( error="rt params is not valid", code=API_EXCEPTION ).json()
+	elif streamgraph_type == 'actor':
+		return d3_streamgraph_new( request, corpus_id )
+
+
+	from django.db import connection
+
+	
 
 	# query 1: get corpus
 	try:
