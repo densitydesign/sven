@@ -948,7 +948,7 @@ def d3_streamgraph_new( request, corpus_id ):
 		cursor.execute(
 			"""
 			SELECT 
-				s.stemmed as concept, MAX( ds.tfidf ) as max_tfidf, MAX( ds.tf ) as max_tf, 
+				s.stemmed as concept, MAX( ds.tfidf ) as max_tfidf, SUM( ds.tf ) as max_tf, 
 				s.content,
 				COUNT( DISTINCT ds.document_id ) as distribution
 
@@ -1061,7 +1061,7 @@ def d3_streamgraph( request, corpus_id ):
 		SELECT 
 	    	s.stemmed as concept, MAX(ds.tfidf) as max_tfidf, AVG(tf) as avg_tf,
 			count( DISTINCT ds.document_id ) as distribution,
-			MAX(tf) as max_tf
+			SUM(tf) as max_tf
 		FROM `anta_document_segment` ds
 			JOIN anta_segment s ON s.id = ds.segment_id
 			JOIN anta_document d ON d.id = ds.document_id
