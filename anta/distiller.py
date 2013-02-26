@@ -42,15 +42,22 @@ def start_routine( type, corpus=None ):
 	"""
 	from sven.anta.models import Routine
 	from django.db.models import Q
+
+	logger.info( "starting '%s' routine on corpus '%s'[%s]" %( type, corpus.name, corpus.id ) )
+
 	# exclude finished, closed with error and closed tout-court.
+	working_routines = Routine.objects.filter( Q( status=Routine.PENDING ) | Q( status=Routine.START ), corpus=corpus ).order_by("-start_date")
+	if working_routines.count() > 0:
+		logger.warning( "a routine [id:%s] on corpus '%s'[%s] has not been completed. We're busy..." %( working_routines[0].id, corpus.name, corpus.id ) )
+		return working_routines[0]
+
+	# start new routine
 	try:
-		r = Routine.objects.get( Q( status=Routine.PENDING ) | Q( status=Routine.START ), type=type, corpus=corpus )
-		r.status = Routine.PENDING
-		r.save()
-	except Routine.DoesNotExist, e:
 		r = Routine( type=type, corpus=corpus, status=Routine.START )
 		r.save()
-
+	except:
+		logger.exception( "Cannot create a routine object on corpus '%s'[%s]" %( corpus.name, corpus.id )  )
+		return None
 	return r
 
 

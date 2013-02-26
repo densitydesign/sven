@@ -202,15 +202,15 @@ def tf( corpus, routine, completion_start=0.0, completion_score=1.0 ):
 
 	for d in Document.objects.filter(corpus=corpus):
 		# print "document: %s" % d
-		number_of_stems_per_document = Document_Segment.objects.filter( document=d ).values('segment__stemmed').distinct().count()
+		number_of_stems_per_document = Document_Segment.objects.filter( document=d, segment__status='IN' ).values('segment__stemmed').distinct().count()
 		# print "number_of_stems_per_document: %s" % number_of_stems_per_document
 
 		logger.info( "document '%s' [%s], number of 'pseudo-stems': %s" % (d.title, d.id, number_of_stems_per_document) )
 		
 
-		for ds in Document_Segment.objects.filter( document=d ):
+		for ds in Document_Segment.objects.filter( document=d,  segment__status='IN'):
 			# count alliases( segment with same stemmed version )
-			number_of_aliases = Document_Segment.objects.filter( document=d, segment__stemmed=ds.segment.stemmed ).count()
+			number_of_aliases = Document_Segment.objects.filter( document=d,  segment__status='IN', segment__stemmed=ds.segment.stemmed ).count()
 			ds.tf = float(number_of_aliases) / number_of_stems_per_document
 			ds.save()
 			if number_of_aliases > 1: # print just some lines
@@ -243,8 +243,8 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 	---- TFIDF COMPUTATION ----
 	===========================
 	"""
-	routine.type = "TFIDF"
-	routine.save()
+	# routine.type = "TFIDF"
+	# routine.save()
 	
 	# 1. get number of document
 	number_of_documents = Document.objects.filter(corpus=corpus, status='IN').count()
