@@ -1188,7 +1188,11 @@
 
 											})
 
+											svg.selectAll("g").selectAll("path").transition().attr("fill-opacity",0.1);
+											svg.selectAll("g").selectAll("rect").transition().attr("fill-opacity",0.1);
+
 											d3.select(this).selectAll("path").transition().attr("fill-opacity",0.75);
+											d3.select(this).selectAll("rect").transition().attr("fill-opacity",1);
 											d3.select(".desc")
 											.select(".tooltip-inner")
 											//.text(d[0].category);
@@ -1201,7 +1205,9 @@
 							 })
 			.on("mousemove",function(d){d3.select(".desc").attr("style","top: " + (d3.event.pageY - $(".desc").height() - 15) + "px; left:"+ (d3.event.pageX - $(".desc").width()/2) + "px");})
 			.on("mouseout",function(d){
-				d3.select(this).selectAll("path").transition().attr("fill-opacity",0.5);
+				//d3.select(this).selectAll("path").transition().attr("fill-opacity",0.5);
+				svg.selectAll("g").selectAll("path").transition().attr("fill-opacity",0.5);
+				svg.selectAll("g").selectAll("rect").transition().attr("fill-opacity",1);
 				d3.select(".desc").attr("class","tooltip out desc")
 					.attr("style","top: 0px; left: 0px")
 
