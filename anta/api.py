@@ -964,7 +964,7 @@ def d3_streamgraph_new( request, corpus_id ):
 			GROUP BY concept
 			ORDER BY """ + (", ".join( response.order_by ) if len( response.order_by ) > 0 else "max_tf DESC") + """
 			LIMIT %s, %s
-			""", [actor.id, 'IN', response.offset, response.limit if num_of_actors < 10 else response.limit / 2  ]
+			""", [actor.id, 'IN', response.offset, response.limit if num_of_actors < 10 else 5 ]
 		)
 
 	
@@ -985,7 +985,7 @@ def d3_streamgraph_new( request, corpus_id ):
 			objects[ k ][ 'count' ] += 1
 			
 			if max_tf > objects[ k ][ 'tf' ]:
-				objects[ k ][ 'label' ] =  row[ 3 ] # el
+				objects[ k ][ 'label' ] =  row[ 0 ] # el
 
 			objects[ k ][ 'tf' ] = max( objects[ k ][ 'tf' ], max_tf )
 			objects[ k ][ 'tfidf' ] = max( objects[ k ][ 'tfidf' ], row[ 1 ] )
@@ -994,7 +994,7 @@ def d3_streamgraph_new( request, corpus_id ):
 				'step': actor.name,
 				'value': max_tf,
 				# 'tfidf': row[ 1 ], # max tfidf
-				'labels': row[ 3 ], # content
+				'labels': row[ 0 ], # content
 				# 's': row[ 4 ], # spreading
 			}
 

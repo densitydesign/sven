@@ -138,7 +138,7 @@ class Document( models.Model ):
 	title = models.TextField()
 	language = models.CharField( max_length=2, choices=LANGUAGE_CHOICES )
 	status = models.CharField( max_length=3, choices=DOCUMENT_STATUS_CHOICES )
-	url = models.FileField( upload_to="corpus")
+	url = models.FileField( upload_to="corpus", max_length=200)
 	mime_type = models.CharField( max_length = 100)
 	upload_date = models.DateTimeField(  default=datetime.now(), blank=None, null=None )
 	ref_date =  models.DateTimeField(  default=datetime.now(), blank=True, null=True )
