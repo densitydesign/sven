@@ -212,7 +212,14 @@ class Sentence( models.Model ):
 class Owners( models.Model ):
 	corpus= models.ForeignKey( Corpus )
 	user = models.ForeignKey( User )
+
+
+	def __unicode__(self):
+		return "%s | %s " % (self.corpus.name, self.user.username )
+
+
 	class Meta:
+		ordering = ['-corpus__id', '-user__username']
 		unique_together = ("corpus", "user")
 	
 class Relation( models.Model ):
