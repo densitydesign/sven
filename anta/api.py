@@ -12,7 +12,7 @@ from django.core import serializers
 from django.db import IntegrityError
 from django.db.models import Q
 from django.core.exceptions import FieldError
-import os, json, datetime, operator, inspect
+import os, json, datetime, operator, inspect, mimetypes
 from sets import Set
 
 from sven.anta.utils import *
@@ -419,9 +419,26 @@ def create_document( request, response, corpus ):
 		
 		destination.close()
 
+		# guess mimetype
+		mime_type = mimetypes.guess_type( filename )[0]
+
 		# save document
 		try:
-			d = store_document( filename=filename, corpus=corpus )
+			d = Document.objects.get( url=os.path.basename(filename), corpus=corpus )
+			
+		except Document.DoesNotExist, e:
+			# file do not exist, ty to uppload it
+			d = Document(
+				url       =	os.path.basename(filename),
+				mime_type =	mime_type,
+				ref_date  =	presets['ref_date'],
+				corpus    =	corpus,
+				status    = 'NEW',
+				language  = presets['language'],
+				title     =	presets['title']
+			)
+			d.save()
+		
 		except Exception, e:
 			return response.throw_error( error="Exception: %s " % e, code=API_EXCEPTION_EMPTY ).json()
 
@@ -1514,7 +1531,7 @@ def segments_import( request, corpus_id ):
 		# save file
 		for chunk in f.chunks():
 			destination.write(chunk)
-			destination.close()
+		destination.close()
 
 		"""
 		IMPORT SEGMETS metrics.py

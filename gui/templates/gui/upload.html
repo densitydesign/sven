@@ -64,7 +64,7 @@
 					date = date + " 00:00";
 					var actors = d3.select(this).select(".actorInput").property("value");
 					var actorsTag = [];
-					actors = actors.split(',');
+					actors = actors.split(/\s*,\s*/);
 					for(i in actors){
 						actorsTag.push('{"type":"actor","name":"' + actors[i] +'"}');
 						};
@@ -207,7 +207,7 @@
 	      actorInput: {
 	        minlength: 1,
 	        required: true,
-	        regex: /^[A-Za-z0-9\d=-\s]+$/
+	        regex: /^[A-Za-z0-9\d=-\s,]+$/
 	      }
 	    },
 	    highlight: function(label) {
