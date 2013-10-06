@@ -1670,8 +1670,8 @@ def _delete_instance( request, response, instance, attachments=[] ):
 			try:
 				os.remove(urllib.unquote_plus(str(f)));
 			except Exception, e:
-				return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_EMPTY )
-		
+				logger.exception('Unable to remove file')
+				
 	return render_to_json( response );
 	
 def _get_instances( request, response, model_name, app_name="anta" ):
