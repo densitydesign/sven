@@ -134,10 +134,22 @@ class Concept( models.Model ):
 
 
 class Document( models.Model ):
+	STATUS_IN = u'IN'	
+	STATUS_OUT = u'OUT'
+	STATUS_ERR = u'ERR'
+	STATUS_NEW = u'NEW'
+
+	STATUS_CHOICES = (
+		(STATUS_IN, u'included'),
+		(STATUS_OUT, u'excluded'),
+		(STATUS_ERR, u'ERR'),
+		(STATUS_NEW, u'NEW')
+	)
+
 	# the document in the corpus
 	title = models.TextField()
 	language = models.CharField( max_length=2, choices=LANGUAGE_CHOICES )
-	status = models.CharField( max_length=3, choices=DOCUMENT_STATUS_CHOICES )
+	status = models.CharField( max_length=3, choices=STATUS_CHOICES )
 	url = models.FileField( upload_to="corpus", max_length=200)
 	mime_type = models.CharField( max_length = 100)
 	upload_date = models.DateTimeField(  default=datetime.now(), blank=None, null=None )
