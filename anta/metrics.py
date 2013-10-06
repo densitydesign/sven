@@ -301,18 +301,15 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 			WHERE d.corpus_id = %s AND s.language = %s AND s.status = 'IN'
 			GROUP BY s.stemmed ORDER BY distribution DESC, stemmed ASC""", [ corpus.id, language ]
 		)
-		#print "[info] query executed..."
-		
-		logger.info("[%s:%s] distribution query executed, %s groups found in '%s'" % ( corpus.name, corpus.id, number_of_groups, language ) )
+
+		logger.info("[%s:%s] distribution query executed for language '%s'" % (corpus.name, corpus.id, language))
 	
 		language_cursor = 0.0
 
 		for row in dictfetchall(cursor):
 			# increment global runner (stats)
 			current_stem = current_stem + 1;
-			
 			language_cursor + 1;
-
 
 			# store tfidf inside each segment-document relationships
 			try:
@@ -321,7 +318,7 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 				df = float( row['distribution'] ) / number_of_documents
 				# print float(current_stem) / number_of_stems * 100.0, row[ column ], row['distribution'], df
 			except Exception, e:
-				logger.exception("[%s:%s] uhandled exception ..." % ( corpus.name, corpus.id ) )
+				logger.exception("[%s:%s] uhandled exception ..." % (corpus.name, corpus.id))
 	
 				#print e
 				close_routine( routine, error="Ho trovato Wally alla liena 281 di metrics.py, Exception: %s" % e, status="ERR")
@@ -331,32 +328,25 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 			for ds in dss:
 				ds.tfidf = ds.tf * math.log(1/df) 
 				ds.save()
-			
-				# tf is term frequency exactly from words
-				# print ds.tf,ds.document.id, ds.segment.content
-			
 
 			if current_stem % 75 == 0:
-
-				completion = completion_start + (float(current_stem) / number_of_stems)*(completion_score-completion_start)
-
-				logger.info("[%s:%s] language completion: %s, overall (extimated) completion %s" % ( corpus.name, corpus.id, (language_cursor / number_of_groups
-), completion ) )
+				try:
+					completion = completion_start + (float(current_stem) / number_of_stems)*(completion_score-completion_start)
+					logger.info("[%s:%s] language completion: %s" % (corpus.name, corpus.id, completion))
 	
-				#print "[info] query executed...",completion
-				log_routine( routine, completion = completion )
-				# save percentage and commit transaction
-				transaction.commit()
+					log_routine( routine, completion = completion )
+					
+					# save percentage and commit transaction
+					transaction.commit()			
+				except Exception, e:
+					logger.exception("[%s:%s] uhandled exception ..." % ( corpus.name, corpus.id ) )
 	
-	#print "[info] query completed!"
-	
-	logger.info("[%s:%s] tfidf completed!" % ( corpus.name, corpus.id ) )
+	logger.info("[%s:%s] tfidf completed" % (corpus.name, corpus.id))
 	
 	if completion_score == 1.0:
-		close_routine( routine, error="", status="OK" )
-	transaction.commit()
-	return
+		close_routine(routine, error="", status="OK")
 
+	transaction.commit()
 
 
 def export( corpus, language, parser, column="stemmed" ):

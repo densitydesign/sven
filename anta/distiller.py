@@ -132,7 +132,7 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 	total_count = Document.objects.filter(corpus=corpus).count()
 	
 	# current document (new)
-	documents =  Document.objects.filter(corpus__id=corpus.id) # TODO, status='NEW')
+	documents =  Document.objects.filter(corpus__id=corpus.id, status=Document.STATUS_NEW)
 
 	logger.info( "[%s:%s] NEW documents to be analyzed: %s / %s" % (corpus.name, corpus.id, documents.count(), total_count))
 	# if analysis.document is None:
