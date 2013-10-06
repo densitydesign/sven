@@ -29,6 +29,13 @@ Once virtualenvwrapper installed, create a virtualenv directory `sven.local`, ac
 	$ workon sven.local
 	$ pip install -r requirements.txt
 
+lxml installation (required for docx support) troubleshooting on ubuntu
+
+	sudo apt-get install libxml2-dev
+	sudo apt-get install python-libxml2
+	easy_install lxml
+	pip install lxml
+
 
 Configure virtualhost
 ---
