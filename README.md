@@ -36,14 +36,11 @@ lxml installation (required for docx support) troubleshooting on ubuntu
 	easy_install lxml
 	pip install lxml
 
-External dependencies, python modules:
+External dependencies, python modules (available as pip packages):
 
 [python-docx](https://github.com/mikemaccana/python-docx) to enable docx to txt conversion
 [python-unicodecsv](https://github.com/jdunck/python-unicodecsv) to enable unicodecsv download of segments
 
-and of course, Pattern for python
-	
-	pip install pattern
 
 Configure virtualhost
 ---
