@@ -175,3 +175,4 @@ LOGGING = {
 
 ANTA_STATIC_URL = '/anta/static/'
 FILE_UPLOAD_PERMISSIONS = 0777
+PYTHON_INTERPRETER = '/home/.virtualenvs/sven/bin/python'

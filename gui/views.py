@@ -151,10 +151,16 @@ def _shared_context( request, corpus_name=None, active="" ):
 
 
 	if data['corpus'].id == 0:
-		corpus = Corpus.objects.filter( owners__user = request.user ).order_by("-id")[0]
-		data['corpus'] = corpus
-		request.session["corpus_id"] = corpus.id
-		request.session["corpus_name"] = corpus.name
+		corpora = Corpus.objects.filter( owners__user = request.user ).order_by("-id")
+		if corpora.count() == 0:
+			pass
+			# first installation
+			#corpus = get_object_or_404( Corpus, name='test', owner=request.user )
+		else:
+			corpus = corpora[0]
+			data['corpus'] = corpus
+			request.session["corpus_id"] = corpus.id
+			request.session["corpus_name"] = corpus.name
 	# load or switch corpus via corpus name
 	# data['corpus'] = None
 	#if corpus_name == None and data['corpus'].id == 0:

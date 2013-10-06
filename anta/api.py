@@ -830,113 +830,80 @@ def tfidf( request, corpus_id ):
 	Open related sub-process with routine id.
 	Return the routine created.
 	"""
-	from distiller import start_routine, stop_routine
-	import subprocess, sys
-
+	from distiller import start_routine
 	response = Epoxy( request )
 
-	# _json( request, enable_method=False )
-	
 	try:
 		c = Corpus.objects.get(pk=corpus_id)
 	except Corpus.DoesNotExist, e:
 		return throw_error( response, error="%s" % e, code=API_EXCEPTION_DOESNOTEXIST )
 	
-	routine = response.add('object', start_routine( type='TFIDF', corpus=c ), jsonify=True )
+	routine = response.add('object', start_routine(type='TFIDF', corpus=c), jsonify=True)
 
-	logger.info('[%s:%s] TFIDF request via api' % ( c.name, c.id ) )
+	logger.info('[%s:%s] TFIDF request via api' % (c.name, c.id))
 		
 	if routine.status == Routine.START:
-
-
-		logger.info('[%s:%s] TFIDF subprocess.Popen' % ( c.name, c.id ) )
+		logger.info('[%s:%s] TFIDF subprocess.Popen' % (c.name, c.id))
 		# call a sub process, and pass the related routine id
 		scriptpath = os.path.dirname(__file__) + "/metrics.py"
-	
-		subprocess.Popen([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'standard' ], stdout=None, stderr=None)
+		
+		return _start_process([settings.PYTHON_INTERPRETER, scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'standard' ],
+			routine=routine,
+			response=response
+		)
 	
 	return response.json()
 
-@login_required( login_url = API_LOGIN_REQUESTED_URL )
-def update_tfidf( request, corpus_id ):
-	response = _json( request, enable_method=False )
-	
+
+@login_required(login_url = API_LOGIN_REQUESTED_URL)
+def update_tfidf(request, corpus_id):
 	from distiller import start_routine
+	response = Epoxy( request )
 
 	try:
 		c = Corpus.objects.get(pk=corpus_id)
-		routine = start_routine( type='RELTF', corpus=c )
-	except Exception, e:
-		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
+	except Corpus.DoesNotExist, e:
+		return response.throw_error(error="%s" % e, code=API_EXCEPTION_DOESNOTEXIST).json()
+	
+	routine = response.add('object', start_routine(type='RELTF', corpus=c), jsonify=True)
+	
+	logger.info('[%s:%s] UPDATE_TFIDF request via api' % (c.name, c.id))
+		
+	if routine.status == Routine.START:
+		scriptpath = os.path.dirname(__file__) + "/metrics.py"
 
-	# call a sub process, and pass the related routine id
-	scriptpath = os.path.dirname(__file__) + "/metrics.py"
+		return _start_process([settings.PYTHON_INTERPRETER, scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'tf_tfidf' ],
+			routine=routine,
+			response=response
+		)
 
-	return _start_process([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'tf_tfidf' ],
-		routine=routine,
-		response=response
-	)
+	return response.json()
+
 
 @login_required( login_url = API_LOGIN_REQUESTED_URL )
 def update_similarity( request, corpus_id ):
-	response = _json( request, enable_method=False )
-	
 	from distiller import start_routine
+	response = Epoxy( request )
 
 	try:
 		c = Corpus.objects.get(pk=corpus_id)
-		routine = start_routine( type='RELSy', corpus=c )
-	except Exception, e:
-		return throw_error( response, error="Exception: %s" % e, code=API_EXCEPTION_DOESNOTEXIST )
-
-	# call a sub process, and pass the related routine id
-	scriptpath = os.path.dirname(__file__) + "/metrics.py"
-
-	return _start_process([ "python", scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'similarity' ],
-		routine=routine,
-		response=response
-	)
-
-
-# !! DEP. @deprecated:
-def start_metrics( request, corpus_id):
-	from utils import pushdocs
-	from ampoule import decant
-	response = _json( request, enable_method=False )
+	except Corpus.DoesNotExist, e:
+		return response.throw_error(error="%s" % e, code=API_EXCEPTION_DOESNOTEXIST).json()
 	
+	routine = response.add('object', start_routine(type='RELSy', corpus=c), jsonify=True)
 	
-	c =  _get_corpus( corpus_id )
+	logger.info('[%s:%s] update_similarity request via api' % (c.name, c.id))
 	
-	if c is None:
-		# do sync
-		return throw_error( response, "Corpus %s does not exist...," % corpus_id, code=API_EXCEPTION_DOESNOTEXIST )	
-	
-	# standard analysis includes: metrics
-	a = _store_analysis( corpus=c, type="ST" )
+	if routine.status == Routine.START:
+		scriptpath = os.path.dirname(__file__) + "/metrics.py"
 
-	# pushdocs
-	try:
-		a = pushdocs( corpus=c, analysis=a, path=settings.MEDIA_ROOT+c.name)
-	except Exception,e:
-		a.status = "ERR"
-		a.save()
-		return throw_error( response, "Exception: %s " % e, code=API_EXCEPTION_DOESNOTEXIST )	
-	
-	if a.status == "OK":
-		# launch tf stuffs and wait
-		#try:
-		decant( c.name )
-		#subprocess.check_call("python ampoule.py -c %s > /tmp/log.txt" + c.name, shell=False)
-		#except Exception, e:
-		#	return throw_error( response, "Exception: %s " % e, code=API_EXCEPTION_DOESNOTEXIST )	
-	
-	# launch tfidf stuff
+		return _start_process([settings.PYTHON_INTERPRETER, scriptpath, '-r', str(routine.id), '-c', str(c.id), '-f', 'similarity'],
+			routine=routine,
+			response=response
+		)
 
+	return response.json()
 
-
-	# do sync
-	response['analysis'] = a.json()
-	return render_to_json( response )
 
 def start_alchemy(request, corpus):
 	pass
@@ -1632,14 +1599,16 @@ def access_denied( request ):
 def _start_process( popen_args, routine, response ):
 	import subprocess, sys
 
-	response['routine'] = routine.json()
+	# response['routine'] = routine.json()
+	logger.info('Popen: %s' % popen_args)
 
 	try:
 		subprocess.Popen(popen_args, stdout=None, stderr=None)
 	except Exception, e:
-		return throw_error(response, error="Exception: %s" % e, code=API_EXCEPTION)
-	
-	return render_to_json( response )
+		logger.exception('_start_process failed')
+		return response.throw_error(error="Exception: %s" % e, code=API_EXCEPTION).json()	
+	return response.json()
+
 
 def zipdir(folder_path, output_path):
 	import zipfile

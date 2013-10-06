@@ -109,10 +109,10 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 	from sven.anta.utils import textify
 	# path = settings.MEDIA_ROOT + options.corpus
 	# print NL_STOPWORDS
-	logger.info( "starting pattern analysis on corpus: '%s' [%s]" % ( corpus.name, corpus.id ) )
+	logger.info("[%s:%s] starting pattern analysis on corpus" % (corpus.name, corpus.id))
 	# get document corpus
 	
-	log_routine( routine, entry="[info] starting pattern analysis on corpus: %s" % corpus.id )
+	log_routine(routine, entry="[info] starting pattern analysis on corpus: %s" % corpus.id )
 	
 	
 	# current analysis, if any
@@ -121,7 +121,8 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 	except Analysis.DoesNotExist:
 		analysis = Analysis( corpus=corpus, type="PT", start_date=datetime.now(), status="CRE" )
 		analysis.save()
-	except:
+	except Exception, e:
+		logger.exception('ERROR while getting analysis')
 		raise
 
 	routine.analysis.add( analysis )
@@ -129,12 +130,11 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 
 	# total count
 	total_count = Document.objects.filter(corpus=corpus).count()
-
-
+	
 	# current document (new)
-	documents =  Document.objects.filter(corpus__id=corpus.id, status='NEW')
+	documents =  Document.objects.filter(corpus__id=corpus.id) # TODO, status='NEW')
 
-	logger.info( "['%s':%s] documents to be analyzed: %s" % ( corpus.name, corpus.id, documents.count() ) )
+	logger.info( "[%s:%s] NEW documents to be analyzed: %s / %s" % (corpus.name, corpus.id, documents.count(), total_count))
 	# if analysis.document is None:
 	#	documents = Document.objects.filter(corpus__id=corpus.id)
 	#	analysis.document = documents[0]
@@ -162,16 +162,16 @@ def decant( corpus, routine, settings, ref_completion=1.0 ):
 		log_routine( routine, completion=ref_completion * i / total_count )
 
 		# a = Analysis( document=d, )
-		logger.info("%s / %s trying to convert document '%s' [%s], mimetype %s" % ( i, total_count, d.title, d.id, d.mime_type) )
+		logger.info("[%s:%s] %s / %s trying to convert document '%s' [%s], mimetype %s" % (corpus.name, corpus.id, i, total_count, d.title, d.id, d.mime_type))
 
 		try:
 			textified =  textify( d, settings.MEDIA_ROOT )
 		except Exception, e:
+			logger.exception('[%s:%s] Exception: textify function failed on document "%s"[%s]' % (corpus.name, corpus.id, d.title, d.id))
 			analysis.status="ERR"
 			d.status = 'ERR'
 			d.save()
 			analysis.save()
-			logger.error("%s / %s FAILED converting document '%s' [%s], mimetype %s with Exception: %s" % ( i, total_count, d.title, d.id, d.mime_type, e) )
 			continue
 
 		if textified == False:

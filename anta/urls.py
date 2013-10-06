@@ -75,7 +75,7 @@ urlpatterns = patterns('',
 	url(r'^api/attach-tag/document/(\d+)/tag/(\d+)/$', 'sven.anta.api.attach_tag', name='anta_api_attach_tag' ),
 	url(r'^api/detach-tag/document/(\d+)/tag/(\d+)/$', 'sven.anta.api.detach_tag', name='anta_api_detach_tag' ),
 	
-	url(r'^api/start-metrics/(\d+)/$', 'sven.anta.api.start_metrics', name='anta_api_start_metrics' ),
+	#url(r'^api/start-metrics/(\d+)/$', 'sven.anta.api.start_metrics', name='anta_api_start_metrics' ),
 	url(r'^api/tfidf/corpus/(\d+)/$', 'sven.anta.api.tfidf', name='anta_api_tfidf' ),
 	url(r'^api/update-tfidf/corpus/(\d+)/$', 'sven.anta.api.update_tfidf', name='anta_api_update_tfidf' ),
 	url(r'^api/update-similarity/corpus/(\d+)/$', 'sven.anta.api.update_similarity', name='anta_api_update_similarity' ),
