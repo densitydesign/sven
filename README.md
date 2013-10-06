@@ -1,7 +1,7 @@
 sven
 ====
 
-Sven is a django project.
+Sven. An ongoing project on text analysis which integrates Pattern for python.
 
 * * *
 
@@ -36,6 +36,14 @@ lxml installation (required for docx support) troubleshooting on ubuntu
 	easy_install lxml
 	pip install lxml
 
+External dependencies, python modules:
+
+[python-docx](https://github.com/mikemaccana/python-docx) to enable docx to txt conversion
+[python-unicodecsv](https://github.com/jdunck/python-unicodecsv) to enable unicodecsv download of segments
+
+and of course, Pattern for python
+	
+	pip install pattern
 
 Configure virtualhost
 ---
