@@ -32,6 +32,12 @@ Once virtualenvwrapper installed, create a virtualenv directory `sven.local`, ac
 	$ workon sven.local
 	$ pip install -r requirements.txt
 
+If it fails, check that you already have the dev module for python python2.x-dev installed. Here are apt-get commands for ubuntu installation:
+	
+	$ sudo apt-get install python2.7-dev
+	$ sudo apt-get install libxml2-dev
+	$sudo apt-get install libxslt1-dev 
+
 lxml installation (required for docx support) troubleshooting on ubuntu
 
 	sudo apt-get install libxml2-dev
