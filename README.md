@@ -30,30 +30,30 @@ Once virtualenvwrapper installed, create a virtualenv directory `sven.local`, ac
 	$ source /usr/local/bin/virtualenvwrapper.sh
 	$ mkvirtualenv sven.local
 	$ workon sven.local
-	$ pip install -r requirements.txt
+	(sven.local)$ deactivate
 
-If it fails, check that you already have the dev module for python python2.x-dev installed. Here are apt-get commands for ubuntu installation:
-	
+Proceed to lxml installation (required for docx and unicodecsv modules) troubleshooting on ubuntu. The dev module for your python version python2.x-dev should be installed.
+
 	$ sudo apt-get install python2.7-dev
 	$ sudo apt-get install libxml2-dev
-	$sudo apt-get install libxslt1-dev 
+	$ sudo apt-get install libxslt1-dev
+	$
+	$ workon sven.local
+	(sven.local)$ pip install -r requirements.txt
 
-lxml installation (required for docx support) troubleshooting on ubuntu
-
-	sudo apt-get install libxml2-dev
-	sudo apt-get install python-libxml2
-	easy_install lxml
-	pip install lxml
-
-External dependencies, python modules (available as pip packages):
+Other external dependencies, python modules (available as pip packages):
 
 [python-docx](https://github.com/mikemaccana/python-docx) to enable docx to txt conversion
 [python-unicodecsv](https://github.com/jdunck/python-unicodecsv) to enable unicodecsv download of segments
 
 
-Configure virtualhost
+Configure virtualhost for apache
 ---
 You can use the `virtualhost.SAMPLE` file to enable sven site for apache server.
+	
+	$ cd /path/to/sven
+	$ sudo cp virtualhost.SAMPLE /etc/apache2/sites-available/sven
+	
 WSGIScriptAlias directive should point to `/path/to/sven/sven.wsgi`.
 
 	$ sudo a2ensite sven
