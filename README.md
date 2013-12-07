@@ -20,6 +20,9 @@ let's assume `/path/to/` as the parent path for sven installation
 
 Make sure that `settings.py` file is located at `/path/to/sven/settings.py`
 
+	$ cd /pat/to/sven
+	$ cp settings.py.SAMPLE settings.py
+
 Create a sven dedicated virtualenv
 ---
 Once virtualenvwrapper installed, create a virtualenv directory `sven.local`, activate the virtualenv and install the requirements:
