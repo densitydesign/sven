@@ -14,226 +14,227 @@ EN_STOPWORDS = ["i","me","my","myself","we","us","our","ours","ourselves","you",
 logger = logging.getLogger(__name__)
 
 def pushdocs( corpus, path, analysis ):
-	# pull all new documents found
-	# please check that path exists and that corpus is a valid models.Corpus obejct
-	
-	# list document in corpus folder
-	docs = os.listdir(path)
-	number_of_docs = len(docs)
+  # pull all new documents found
+  # please check that path exists and that corpus is a valid models.Corpus obejct
+  
+  # list document in corpus folder
+  docs = os.listdir(path)
+  number_of_docs = len(docs)
 
-	analysis.status = "PD"
-	analysis.save()
+  analysis.status = "PD"
+  analysis.save()
 
-	i = 0
-	# cycle through documents
-	for doc in docs:
-		i = i + 1.0
-		filename = os.path.splitext(doc)[0]
-		parts = filename.split("_",3)
+  i = 0
+  # cycle through documents
+  for doc in docs:
+    i = i + 1.0
+    filename = os.path.splitext(doc)[0]
+    parts = filename.split("_",3)
 
-		# exclude .{ext}.txt from being taken
-		if re.search( "\.[^\.]{3,4}\.[^\.]{3}$", doc ) is not None:
-			print "[sync] skipping dual extension filenames.!", parts
-			continue
+    # exclude .{ext}.txt from being taken
+    if re.search( "\.[^\.]{3,4}\.[^\.]{3}$", doc ) is not None:
+      print "[sync] skipping dual extension filenames.!", parts
+      continue
 
-		# guess mimetype
-		mime_type	=  mimetypes.guess_type( path + "/" + doc )[0]
-		
-		# guess date		
-		date = re.search( r'(\d{8})', filename )
+    # guess mimetype
+    mime_type  =  mimetypes.guess_type( path + "/" + doc )[0]
+    
+    # guess date    
+    date = re.search( r'(\d{8})', filename )
 
-		# validate guessed date
-		if date is None:
-			date = datetime.now()
-		else:
-			try:
-				date	= datetime.strptime( date.group(), "%Y%m%d" ) 
-			except Exception, e:
-				print "[sync] date format %s is not valid, substituted with datetime.now" % date.group(), e
-				date	= datetime.now()
+    # validate guessed date
+    if date is None:
+      date = datetime.now()
+    else:
+      try:
+        date  = datetime.strptime( date.group(), "%Y%m%d" ) 
+      except Exception, e:
+        print "[sync] date format %s is not valid, substituted with datetime.now" % date.group(), e
+        date  = datetime.now()
 
-		# automatically include .txt files
-		print "[sync] detecting mime type:", mime_type
-		print "[sync] detecting date:", date.isoformat()
-	
-		
-		# guess actors and language
-		if len( parts ) == 4:
-			print "[sync] file name seems to be valid:", parts
-			
-			actors		= parts[0].split("-")
-			language	= parts[1]
-			title		= parts[3].replace("_"," ")
-		else:
-			print "[WARNING] autoformat option is True but the file name does not handle enough information. Default applied"
-			actors =[]
-			language = 'EN'
-			date = datetime.now()
-			title = os.path.splitext(doc)[0]
+    # automatically include .txt files
+    print "[sync] detecting mime type:", mime_type
+    print "[sync] detecting date:", date.isoformat()
+  
+    
+    # guess actors and language
+    if len( parts ) == 4:
+      print "[sync] file name seems to be valid:", parts
+      
+      actors    = parts[0].split("-")
+      language  = parts[1]
+      title    = parts[3].replace("_"," ")
+    else:
+      print "[WARNING] autoformat option is True but the file name does not handle enough information. Default applied"
+      actors =[]
+      language = 'EN'
+      date = datetime.now()
+      title = os.path.splitext(doc)[0]
 
-		# save documents
-		try:
-			d = Document.objects.get( url=doc, corpus=corpus )
-			print "[sync] file already stored"
+    # save documents
+    try:
+      d = Document.objects.get( url=doc, corpus=corpus )
+      print "[sync] file already stored"
 
-		except:
-			# file do not exist, ty to save it
-			d = Document( url=doc, mime_type=mime_type, ref_date=date, corpus=corpus, status='IN', language=language, title=title )
-			d.save()
-			print "[sync] file added:", d.id
+    except:
+      # file do not exist, ty to save it
+      d = Document( url=doc, mime_type=mime_type, ref_date=date, corpus=corpus, status='IN', language=language, title=title )
+      d.save()
+      print "[sync] file added:", d.id
 
 
-		# store actors as tags and attach with document_tags
-		for a in actors:
-			
-			# create tag / retrieve aldready created one
-			try:
-				t = Tag.objects.get( name=a, type="actor" )
-			except:
-				t = Tag( name=a, type="actor" )
-				t.save()
-			
-			try:
-				dt = Document_Tag( document=d, tag=t )
-				dt.save()
-				
-			except:
-				print "[warning] document tag relationship exists."
-		
-		# save document
-		d.save()
+    # store actors as tags and attach with document_tags
+    for a in actors:
+      
+      # create tag / retrieve aldready created one
+      try:
+        t = Tag.objects.get( name=a, type="actor" )
+      except:
+        t = Tag( name=a, type="actor" )
+        t.save()
+      
+      try:
+        dt = Document_Tag( document=d, tag=t )
+        dt.save()
+        
+      except:
+        print "[warning] document tag relationship exists."
+    
+    # save document
+    d.save()
 
-		#save checkpoint
-		analysis.document = d
-		analysis.completion = i / number_of_docs * 20 #max: 20 %
-		analysis.save()
+    #save checkpoint
+    analysis.document = d
+    analysis.completion = i / number_of_docs * 20 #max: 20 %
+    analysis.save()
 
-	analysis.status = "OK"
-	return analysis
+  analysis.status = "OK"
+  return analysis
 
 def start_analysis():
-	pass
+  pass
 
 def textify( d, absolute_url ):
-	
-	# return an absolute url
-	output = absolute_url + d.corpus.name + "/" + os.path.basename( d.url.url ).replace("%20"," ")
-	
-	logger.info( "executing texify function for %s" % output )
-	
-	
-	if d.mime_type == "text/plain":
-		logger.info( "file id:%s is already a text/plain" % d.id )
-		clean(output)
-		return output
-	
-	text = output + ".txt"
-	
-	if os.path.exists( text ):
-	#	print "[info]","file id:",d.id," textified version exists"
-		return text
-	
-	#print "[info]","file id:",d.id," transforming ", d.mime_type
-	
-	if d.mime_type == "application/pdf":
-		if pdftotext( output ):
-			# clean
-			clean( text )
-			return text
-		else:
-			return False
-		
-	if d.mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-		if docxtotext( output ):
-			clean( text )
-			return text
-	
-	return False		
+  
+  # return an absolute url
+
+  output = absolute_url + d.corpus.name + "/" + os.path.basename( d.url.url ).replace("%20"," ")
+  
+  logger.info( "executing texify function for %s" % output )
+  
+  
+  if d.mime_type == "text/plain":
+    logger.info( "file id:%s is already a text/plain" % d.id )
+    clean(output)
+    return output
+  
+  text = output + ".txt"
+  
+  if os.path.exists( text ):
+  #  print "[info]","file id:",d.id," textified version exists"
+    return text
+  
+  #print "[info]","file id:",d.id," transforming ", d.mime_type
+  
+  if d.mime_type == "application/pdf":
+    if pdftotext( output ):
+      # clean
+      clean( text )
+      return text
+    else:
+      return False
+    
+  if d.mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+    if docxtotext( output ):
+      clean( text )
+      return text
+  
+  return False    
 
 def clean( txtfile ):
-	logger.info( " cleaning %s" % txtfile )
-	# excuded_pattern = [^\w+ \,\:\;\-\–àçòèé&@°\*\?\!\"\'\n]
-	f = codecs.open( txtfile, encoding='utf-8', mode='r')
-	content = f.read()
-	content = content.replace( u"•","; " )
-	content = re.sub( r"\-+", ", ", content )
-	content = re.sub("\|", "; ", content )
-	content = re.sub(r'[\_\”\"\']+', " ", content )
-	# exclude line with number only pages and so on.
-	content = re.sub("\n+[\.\s\d]+\n+", ".\n", content )
-	content = re.sub("\.+",".", content )
-	content = re.sub("[ \-]+"," ", content )
+  logger.info( " cleaning %s" % txtfile )
+  # excuded_pattern = [^\w+ \,\:\;\-\–àçòèé&@°\*\?\!\"\'\n]
+  f = codecs.open( txtfile, encoding='utf-8', mode='r')
+  content = f.read()
+  content = content.replace( u"•","; " )
+  content = re.sub( r"\-+", ", ", content )
+  content = re.sub("\|", "; ", content )
+  content = re.sub(r'[\_\”\"\']+', " ", content )
+  # exclude line with number only pages and so on.
+  content = re.sub("\n+[\.\s\d]+\n+", ".\n", content )
+  content = re.sub("\.+",".", content )
+  content = re.sub("[ \-]+"," ", content )
 
-	f.close() 	
+  f.close()   
 
-	f = codecs.open(txtfile, "w", "utf8")
-	f.write(content)
-	f.close()
+  f = codecs.open(txtfile, "w", "utf8")
+  f.write(content)
+  f.close()
 
-	# print content
-	# clean more than one \n
-	# f.write( content )
+  # print content
+  # clean more than one \n
+  # f.write( content )
 
 def strip_punctuation( s ):
-	s = s.replace(u"’"," ")
-	punkt = re.sub( r'[«• »\–\‘\’\[\]\\\^”\<\=\>\!\#\$’\-\'\–]',' ', s.replace( u"•","" ) ) # "\#\$\%\&\'\*\+\,-./:;<=>?@\[\\\]\^\_`\{\|\}\~]
-	return re.sub('\s+',' ', punkt )
+  s = s.replace(u"’"," ")
+  punkt = re.sub( r'[«• »\–\‘\’\[\]\\\^”\<\=\>\!\#\$’\-\'\–]',' ', s.replace( u"•","" ) ) # "\#\$\%\&\'\*\+\,-./:;<=>?@\[\\\]\^\_`\{\|\}\~]
+  return re.sub('\s+',' ', punkt )
 
 def uniquefn( filename ):
-	#todo, if exists change filename
-	return filename
+  #todo, if exists change filename
+  return filename
 
 def pdftotext( filename, output="" ):
-	filename = filename.replace("%20"," ")
-	#f = codecs.open('test', encoding='utf-8', mode='w+')
-	if len( output ) == 0:
-		# handle bugus %20 replacement.... don't know where these are coming frm
-		output = uniquefn( filename + ".txt" )
-		comparison = filename + ".dif.txt"
-	
-	print "[transforming pdf]", filename
-		
-	try:
-		subprocess.check_call("pdftotext -enc UTF-8 " + filename.replace(" ","\\ ") +" " + output.replace(" ","\\ "), shell=True)
-	except Exception,e:
-		return e.returncode == 1
-	#	print e.returncode
-	#return subprocess.check_call("pdftotext -enc UTF-8 " + filename.replace(" ","\\ ") +" " + output.replace(" ","\\ "), shell=True) == 1
-	return True
-	
+  filename = filename.replace("%20"," ")
+  #f = codecs.open('test', encoding='utf-8', mode='w+')
+  if len( output ) == 0:
+    # handle bugus %20 replacement.... don't know where these are coming frm
+    output = uniquefn( filename + ".txt" )
+    comparison = filename + ".dif.txt"
+  
+  print "[transforming pdf]", filename
+    
+  try:
+    subprocess.check_call("pdftotext -enc UTF-8 " + filename.replace(" ","\\ ") +" " + output.replace(" ","\\ "), shell=True)
+  except Exception,e:
+    return e.returncode == 1
+  #  print e.returncode
+  #return subprocess.check_call("pdftotext -enc UTF-8 " + filename.replace(" ","\\ ") +" " + output.replace(" ","\\ "), shell=True) == 1
+  return True
+  
 def docxtotext( docx, output="" ):
-	# convert a .docx to a .txt utf8 or similar
-	docx = docx.replace("%20"," ")
-	if len( output ) == 0:
-		output = uniquefn( docx + ".txt" )
-	
-	
-	try:
-		document = opendocx( docx )
-		output = open( output, 'w' ) 
-	except:
-		return False
-	
-	paratextlist = getdocumenttext(document)    
+  # convert a .docx to a .txt utf8 or similar
+  docx = docx.replace("%20"," ")
+  if len( output ) == 0:
+    output = uniquefn( docx + ".txt" )
+  
+  
+  try:
+    document = opendocx( docx )
+    output = open( output, 'w' ) 
+  except:
+    return False
+  
+  paratextlist = getdocumenttext(document)    
 
-	# Make explicit unicode version    
-	newparatextlist = []
-	for paratext in paratextlist:
-		newparatextlist.append( paratext.encode( "utf-8" ) )                  
+  # Make explicit unicode version    
+  newparatextlist = []
+  for paratext in paratextlist:
+    newparatextlist.append( paratext.encode( "utf-8" ) )                  
     
     ## Print our documnts test with two newlines under each paragraph
-	output.write( '\n\n'.join( newparatextlist ) )
+  output.write( '\n\n'.join( newparatextlist ) )
     
-	return True
+  return True
 
 if __name__ == '__main__':
-	# test here
-	
-	# pdftotext("../media/ecodesign/DG Environment_EN_20120101_Product Environmental Footprint Guide.pdf")
-	print strip_punctuation("• • • • <=> product system’’ –‘intelligent’ money here!”braunhart-cradle’-delft-dienst-e.-manzini-mcdonough-product-systeem-tu")
-	clean("/home/daniele/public/sven/media/ecodesign/OVAM_NL_20080530_Ecodesign.pdf.txt")
-	
+  # test here
+  
+  # pdftotext("../media/ecodesign/DG Environment_EN_20120101_Product Environmental Footprint Guide.pdf")
+  print strip_punctuation("• • • • <=> product system’’ –‘intelligent’ money here!”braunhart-cradle’-delft-dienst-e.-manzini-mcdonough-product-systeem-tu")
+  clean("/home/daniele/public/sven/media/ecodesign/OVAM_NL_20080530_Ecodesign.pdf.txt")
+  
 
 
 
-	
+  

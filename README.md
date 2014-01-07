@@ -46,6 +46,18 @@ Other external dependencies, python modules (available as pip packages):
 [python-docx](https://github.com/mikemaccana/python-docx) to enable docx to txt conversion
 [python-unicodecsv](https://github.com/jdunck/python-unicodecsv) to enable unicodecsv download of segments
 
+known issues on MAC os(pip and MAMP)
+---
+WHen used with mysql databases, python needs support of MySQLdb module. Normally doing
+
+	(sven.local)$ pip install mysql-python
+
+solves the problem. Otherwise try:
+EnvironmentError: mysql_config not found
+	
+	$ export PATH="$PATH:/Applications/MAMP/Library/bin"
+	
+2. 
 
 Configure virtualhost for apache
 ---

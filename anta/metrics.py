@@ -332,7 +332,7 @@ def tfidf( corpus, routine, completion_start=0.0, completion_score=1.0, column="
 			if current_stem % 75 == 0:
 				try:
 					completion = completion_start + (float(current_stem) / number_of_stems)*(completion_score-completion_start)
-					logger.info("[%s:%s] language completion: %s" % (corpus.name, corpus.id, completion))
+					logger.info("[%s:%s] language completion: %s" % (corpus.name, corpus.id, (float(current_stem) / number_of_stems)))
 	
 					log_routine( routine, completion = completion )
 					
