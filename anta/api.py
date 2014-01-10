@@ -1113,6 +1113,9 @@ def d3_streamgraph( request, corpus_id ):
         objects[ i ][ 'values' ][ t ][ 'tfidf' ] = concepts[ c ][ t ][ 'tfidf' ]
     objects[ i ][ 'values' ] = objects[ i ][ 'values'].values()
 
+    items = sorted( objects[ i ][ 'values' ], key=lambda item:item['step'].lower() )
+    objects[ i ][ 'values' ] = items
+    
   response.add('objects', objects )
   #response.add('concepts', concepts )
   return response.json()

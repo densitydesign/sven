@@ -1,5 +1,6 @@
 import os, csv, codecs
 from optparse import make_option
+from datetime import datetime
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -27,6 +28,26 @@ class Command(BaseCommand):
           dest='corpus',
           default=False,
           help='corpus name'),
+      make_option('--date',
+          action='store',
+          dest='datefield',
+          default=False,
+          help='field names for _date_columns. Default: YYYYmmdd'),
+      make_option('--text',
+          action='store',
+          dest='textfields',
+          default=False,
+          help='comma separated field names for _text_columns. Search for contents inside each column till find something'),
+      make_option('--actors',
+          action='store',
+          dest='actorfields',
+          default=False,
+          help='comma separated field names for the _actors_ columns. Cell values containing a PIPE char are then splitted'),
+      make_option('--tags',
+          action='store',
+          dest='tagfields',
+          default=False,
+          help='comma separated field names for the _tag_ columns. Cell values containing a PIPE char are then splitted'),
   )
 
   def handle(self, *args, **options):
@@ -54,38 +75,83 @@ class Command(BaseCommand):
     corpus_path = get_corpus_path(corpus)
     
     # actors and tags (csv header)
-    actors_fields = ('City', 'Country', 'Year')
+    actors_fields = [i for i in options['actorfields'].split(',')] if options['actorfields'] else []
+    tags_fields = [i for i in options['tagfields'].split(',')] if options['tagfields'] else []
+    text_field = [i for i in options['textfields'].split(',')]
 
+    
     #
     # 2. get data
     #
     for counter,row in enumerate(c):
       self.stdout.write("\n    (line %s)" % counter)
-      title = slugify('%s %s' % (row['itle'], row['id']))
-      content = row['text']
 
+      title = row['headline']
+      filename = slugify('%s %s' % (row['headline'], counter))
+      content = ''
 
-      filepath = os.path.join(corpus_path, title + '.txt')
+      # recursive search for text
+      for candidate in text_field:
+        if len(content) < len(row.get(candidate)):
+          content = row.get(candidate)
+
+      if not len(content):
+        raise CommandError("\n    Aborted. Content at this line does not contain anything!")
+        continue
+      
+      date = datetime.strptime(row.get(options['datefield']),'%Y%m%d')
+      actors = [row.get(a) for a in actors_fields]
+      tags = [row.get(t).split('|') for t in tags_fields]
+      self.stdout.write("\n    title: %s, datetime: %s" % (title, date))
+
+      
+      
+      # check everything before doing strange stuff
+      if counter == 0:
+        self.stdout.write("\n    actors fields: %s" % (', '.join(actors)))
+        self.stdout.write("\n    tags fields ")
+        print tags
+        self.stdout.write("\n    content sample: %s" % content)
+
+        while True:
+          accept = raw_input('\n\nType Y if fields/value above are correct, any key otherwise...')
+          if accept.upper() == 'Y':
+            break
+          else:
+            raise CommandError("\n    Aborted.")
+
+      
+      
+      filepath = os.path.join(corpus_path, filename + '.txt')
 
       try:
-        d = Document.objects.get(title=title)
+        d = Document.objects.get(url=os.path.basename(filepath))
       except Document.DoesNotExist, e:
         f = codecs.open(filepath, encoding='utf-8', mode='w')
         f.write(content)
 
-        d = Document(title=title, corpus=corpus, language='en', mime_type="text/plain", url=os.path.basename(filepath))
+        d = Document(title=title, corpus=corpus, language='EN', mime_type="text/plain", status=Document.STATUS_NEW, url=os.path.basename(filepath))
         
         d.save()
 
         self.stdout.write("\n        document %s created" % d.title)
 
-      for a in actors_fields:
-        actor_name = row.get(a)
-
+      for actor_name in actors:
         if len(actor_name):
           t,created = Tag.objects.get_or_create(name=actor_name, type='actor')
           self.stdout.write("\n        tag:actor %s created" % actor_name)
           Document_Tag.objects.get_or_create(document=d, tag=t)
+
+      for tag_collection in tags:        
+        for tag_name in tag_collection:
+          if len(tag_name):
+            t,created = Tag.objects.get_or_create(name=tag_name.lower(), type='keyword')
+            #self.stdout.write("\n        tag:%s %s created" % (t, tag_name))
+            Document_Tag.objects.get_or_create(document=d, tag=t)
+
+      if date:
+        d.ref_date = date
+        d.save()
 
     self.stdout.write("\n\n-----------  finish  ---------------------\n\n")
 
