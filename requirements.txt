@@ -1,7 +1,7 @@
 Django==1.4.3
-PIL==1.1.7
-Pattern==2.5
-docx==0.2.0
-lxml==3.2.3
+Pattern==2.6
+Pillow==2.4.0
+docx==0.2.4
+lxml==3.3.4
 unicodecsv==0.9.4
 wsgiref==0.1.2

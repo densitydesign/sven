@@ -4,7 +4,7 @@
 settings.py
 # manage.py
 sven.wsgi
-
+*.sublime-workspace
 media/*
 env/*
 libs/*
